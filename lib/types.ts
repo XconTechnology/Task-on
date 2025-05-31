@@ -4,6 +4,7 @@ export interface Project {
   description?: string
   startDate?: string
   endDate?: string
+  workspaceId: string
   createdAt: string
   updatedAt: string
 }
@@ -27,8 +28,22 @@ export interface User {
   id: string
   username: string
   email: string
+  password?: string // Only for database operations
   profilePictureUrl?: string
-  teamId?: string
+  workspaceId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Workspace {
+  id: string
+  name: string
+  ownerId: string
+  usageType: "work" | "personal" | "school"
+  managementType: string[]
+  features: string[]
+  referralSource?: string
+  invitedEmails?: string[]
   createdAt: string
   updatedAt: string
 }
@@ -77,6 +92,7 @@ export interface Task {
 export interface Team {
   id: string
   teamName: string
+  workspaceId: string
   productOwnerUserId?: string
   projectManagerUserId?: string
   createdAt: string
@@ -105,4 +121,13 @@ export interface PaginatedResponse<T> {
     total: number
     totalPages: number
   }
+}
+
+export interface OnboardingData {
+  usageType: "work" | "personal" | "school"
+  managementType: string[]
+  features: string[]
+  workspaceName: string
+  invitedEmails: string[]
+  referralSource: string
 }
