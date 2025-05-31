@@ -1,3 +1,178 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Typography System */
+@layer components {
+  /* Headers */
+  .header-large {
+    @apply text-3xl font-bold tracking-tight text-gray-900;
+  }
+
+  .header-medium {
+    @apply text-2xl font-semibold tracking-tight text-gray-900;
+  }
+
+  .header-small {
+    @apply text-xl font-semibold text-gray-900;
+  }
+
+  .header-extra-small {
+    @apply text-lg font-semibold text-gray-900;
+  }
+
+  /* Body Text */
+  .text-large {
+    @apply text-base text-gray-900;
+  }
+
+  .text-medium {
+    @apply text-sm text-gray-900;
+  }
+
+  .text-small {
+    @apply text-xs text-gray-900;
+  }
+
+  .text-extra-small {
+    @apply text-[10px] text-gray-900;
+  }
+
+  /* Description Text */
+  .text-description {
+    @apply text-sm text-gray-600;
+  }
+
+  .text-description-small {
+    @apply text-xs text-gray-500;
+  }
+
+  /* Muted Text */
+  .text-muted {
+    @apply text-sm text-gray-500;
+  }
+
+  .text-muted-small {
+    @apply text-xs text-gray-400;
+  }
+
+  /* Labels */
+  .text-label {
+    @apply text-sm font-medium text-gray-700;
+  }
+
+  .text-label-small {
+    @apply text-xs font-medium text-gray-600;
+  }
+
+  /* Interactive Text */
+  .text-link {
+    @apply text-sm text-blue-600 hover:text-blue-700 cursor-pointer;
+  }
+
+  .text-link-small {
+    @apply text-xs text-blue-600 hover:text-blue-700 cursor-pointer;
+  }
+
+  /* Status Text */
+  .text-success {
+    @apply text-sm text-green-700;
+  }
+
+  .text-error {
+    @apply text-sm text-red-700;
+  }
+
+  .text-warning {
+    @apply text-sm text-orange-700;
+  }
+
+  .text-info {
+    @apply text-sm text-blue-700;
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+    border: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Draggable Task Cursors */
+  .task-card {
+    cursor: pointer;
+  }
+
+  .task-card.dragging {
+    cursor: grabbing !important;
+  }
+
+  .task-card:active {
+    cursor: grabbing;
+  }
+}
