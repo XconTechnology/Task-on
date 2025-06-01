@@ -30,28 +30,28 @@ type ListViewProps = {
 }
 
 const statusConfig = {
-  [Status.Completed]: {
+  [Status?.Completed]: {
     label: "COMPLETE",
     icon: CheckCircle,
     color: "bg-green-600",
     textColor: "text-white",
     count: 0,
   },
-  [Status.WorkInProgress]: {
+  [Status?.WorkInProgress]: {
     label: "IN PROGRESS",
     icon: Play,
     color: "bg-blue-600",
     textColor: "text-white",
     count: 0,
   },
-  [Status.ToDo]: {
+  [Status?.ToDo]: {
     label: "TO DO",
     icon: Circle,
     color: "bg-gray-600",
     textColor: "text-white",
     count: 0,
   },
-  [Status.UnderReview]: {
+  [Status?.UnderReview]: {
     label: "UNDER REVIEW",
     icon: Pause,
     color: "bg-orange-600",
@@ -139,7 +139,7 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
   }
 
   // Order statuses to match ClickUp: Complete, In Progress, To Do, Under Review
-  const statusOrder = [Status.Completed, Status.WorkInProgress, Status.ToDo, Status.UnderReview]
+  const statusOrder = [Status?.Completed, Status?.WorkInProgress, Status?.ToDo, Status?.UnderReview]
   const visibleStatuses = statusOrder.filter((status) => tasksByStatus[status]?.length > 0)
 
   return (
@@ -243,11 +243,11 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
                           <div className="flex items-center space-x-3">
                             <div
                               className={`w-2 h-2 rounded-full ${
-                                status === Status.Completed
+                                status === Status?.Completed
                                   ? "bg-green-500"
-                                  : status === Status.WorkInProgress
+                                  : status === Status?.WorkInProgress
                                     ? "bg-blue-500"
-                                    : status === Status.UnderReview
+                                    : status === Status?.UnderReview
                                       ? "bg-orange-500"
                                       : "bg-gray-400"
                               }`}

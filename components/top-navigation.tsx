@@ -22,30 +22,17 @@ export default function TopNavigation() {
 
   return (
     <>
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 border-b border-purple-800 px-4 py-2">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 border-b border-blue-800 px-4 py-1">
         <div className="flex items-center justify-between">
           {/* Left Section */}
           <div className="flex items-center space-x-4">
             {/* Logo */}
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 font-bold text-medium">PM</span>
+              <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-purple-600 font-bold text-xs">PM</span>
               </div>
-              <span className="text-white font-semibold text-medium hidden sm:block">ProjectFlow</span>
             </div>
 
-            {/* Navigation Items */}
-            <div className="hidden md:flex items-center space-x-1">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-purple-500/20">
-                <span className="text-small">Dashboards</span>
-              </Button>
-              <Button variant="ghost" size="sm" className="text-white hover:bg-purple-500/20">
-                <span className="text-small">Projects</span>
-              </Button>
-              <Button variant="ghost" size="sm" className="text-white hover:bg-purple-500/20">
-                <span className="text-small">Teams</span>
-              </Button>
-            </div>
           </div>
 
           {/* Center Section - Search */}

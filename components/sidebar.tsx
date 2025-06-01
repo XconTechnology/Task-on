@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import InviteModal from "./modals/invite-modal"
 import CreateTeamModal from "./modals/create-team-modal"
+import CreateProjectModal from "./modals/create-project-modal"
 
 export default function Sidebar() {
   const router = useRouter()
@@ -33,6 +34,7 @@ export default function Sidebar() {
   const { isSidebarCollapsed, setSidebarCollapsed } = useAppStore()
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false)
   const [activeItem, setActiveItem] = useState(() => {
     if (pathname.startsWith("/dashboard")) return "dashboard"
     if (pathname.startsWith("/projects")) return "projects"
@@ -59,11 +61,16 @@ export default function Sidebar() {
     router.push(item.path)
   }
 
+  const handleProjectCreated = (newProject: any) => {
+    // Refresh projects or navigate to new project
+    router.push(`/projects/${newProject.id}`)
+  }
+
   return (
     <>
       <div
         className={`bg-white border-r border-gray-200 transition-all duration-300 ${
-          isSidebarCollapsed ? "w-16" : "w-80"
+          isSidebarCollapsed ? "w-16" : "w-64"
         } flex flex-col h-full custom-scrollbar overflow-y-auto`}
       >
         {/* Header */}
@@ -93,7 +100,10 @@ export default function Sidebar() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <Input placeholder="Search projects, tasks..." className="pl-10 bg-gray-50 border-gray-200" />
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/projects/new")}>
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={() => setIsCreateProjectModalOpen(true)}
+              >
                 <Plus size={16} className="mr-2" />
                 <span className="text-medium text-white">New Project</span>
               </Button>
@@ -129,7 +139,7 @@ export default function Sidebar() {
           {!isSidebarCollapsed && (
             <>
               {/* Recent Projects */}
-              <RecentProjectsSection />
+              <RecentProjectsSection onCreateProject={() => setIsCreateProjectModalOpen(true)} />
 
               {/* Teams */}
               <TeamsSection onCreateTeam={() => setIsCreateTeamModalOpen(true)} />
@@ -155,11 +165,16 @@ export default function Sidebar() {
 
       <InviteModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
       <CreateTeamModal isOpen={isCreateTeamModalOpen} onClose={() => setIsCreateTeamModalOpen(false)} />
+      <CreateProjectModal
+        isOpen={isCreateProjectModalOpen}
+        onClose={() => setIsCreateProjectModalOpen(false)}
+        onSuccess={handleProjectCreated}
+      />
     </>
   )
 }
 
-function RecentProjectsSection() {
+function RecentProjectsSection({ onCreateProject }: { onCreateProject: () => void }) {
   const router = useRouter()
   const [projects, setProjects] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -187,7 +202,7 @@ function RecentProjectsSection() {
     <div className="p-4 border-t border-gray-100">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-label">Recent Projects</h3>
-        <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={() => router.push("/projects/new")}>
+        <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={onCreateProject}>
           <Plus size={12} />
         </Button>
       </div>
@@ -229,6 +244,10 @@ function RecentProjectsSection() {
         ) : (
           <div className="text-center py-4">
             <p className="text-muted-small">No projects yet</p>
+            <Button variant="ghost" size="sm" onClick={onCreateProject} className="mt-2">
+              <Plus size={12} className="mr-1" />
+              <span className="text-small">Create first project</span>
+            </Button>
           </div>
         )}
       </div>
@@ -299,6 +318,10 @@ function TeamsSection({ onCreateTeam }: { onCreateTeam: () => void }) {
         ) : (
           <div className="text-center py-4">
             <p className="text-muted-small">No teams yet</p>
+            <Button variant="ghost" size="sm" onClick={onCreateTeam} className="mt-2">
+              <Plus size={12} className="mr-1" />
+              <span className="text-small">Create first team</span>
+            </Button>
           </div>
         )}
       </div>

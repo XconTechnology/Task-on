@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
-import type { Project } from "@/lib/types"
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,32 +12,39 @@ export async function GET(request: NextRequest) {
     }
 
     const db = await getDatabase()
-    const projectsCollection = db.collection("projects")
     const usersCollection = db.collection("users")
+    const workspacesCollection = db.collection("workspaces")
 
-    // Get user's workspace
+    // Get user's workspace and role
     const userData = await usersCollection.findOne({ id: user.userId })
     if (!userData?.workspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
-    // Get all projects in the workspace
-    const projects = await projectsCollection
-      .find({ workspaceId: userData.workspaceId })
-      .sort({ createdAt: -1 })
-      .toArray()
+    // Check permissions
+    const userRole = getUserRole(userData.role)
+    if (!canUserPerformAction(userRole, "workspace", "read")) {
+      return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
+    }
+
+    // Get workspace settings
+    const workspace = await workspacesCollection.findOne({ id: userData.workspaceId })
 
     return NextResponse.json({
       success: true,
-      data: projects,
+      data: {
+        workspaceName: workspace?.name || "My Workspace",
+        defaultRole: workspace?.defaultRole || "Member",
+        allowMemberInvites: workspace?.allowMemberInvites !== false,
+      },
     })
   } catch (error) {
-    console.error("Get projects error:", error)
+    console.error("Get workspace settings error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     const user = getUserFromRequest(request)
 
@@ -47,20 +53,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, startDate, endDate, teamId } = body
-
-    // Validation
-    if (!name?.trim()) {
-      return NextResponse.json({ success: false, error: "Project name is required" }, { status: 400 })
-    }
-
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      return NextResponse.json({ success: false, error: "End date must be after start date" }, { status: 400 })
-    }
+    const { workspaceName, defaultRole, allowMemberInvites } = body
 
     const db = await getDatabase()
-    const projectsCollection = db.collection("projects")
     const usersCollection = db.collection("users")
+    const workspacesCollection = db.collection("workspaces")
 
     // Get user's workspace and role
     const userData = await usersCollection.findOne({ id: user.userId })
@@ -68,36 +65,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
+    // Check permissions
     const userRole = getUserRole(userData.role)
-    if (!canUserPerformAction(userRole, "project", "create")) {
+    if (!canUserPerformAction(userRole, "workspace", "update")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Create project
-    const projectId = `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const newProject: Project = {
-      id: projectId,
-      name: name.trim(),
-      description: description?.trim() || "",
-      workspaceId: userData.workspaceId,
-      createdBy: user.userId,
-      teamId: teamId && teamId !== "none" ? teamId : undefined,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-      status: "active",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    await projectsCollection.insertOne(newProject)
+    // Update workspace settings
+    const updatedWorkspace = await workspacesCollection.findOneAndUpdate(
+      { id: userData.workspaceId },
+      {
+        $set: {
+          name: workspaceName,
+          defaultRole: defaultRole,
+          allowMemberInvites: allowMemberInvites,
+          updatedAt: new Date().toISOString(),
+        },
+      },
+      { returnDocument: "after" },
+    )
 
     return NextResponse.json({
       success: true,
-      data: newProject,
-      message: "Project created successfully",
+      data: updatedWorkspace.value,
+      message: "Workspace settings updated successfully",
     })
   } catch (error) {
-    console.error("Create project error:", error)
+    console.error("Update workspace settings error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

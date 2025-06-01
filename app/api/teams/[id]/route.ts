@@ -12,31 +12,50 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const db = await getDatabase()
-    const projectsCollection = db.collection("projects")
+    const teamsCollection = db.collection("teams")
     const usersCollection = db.collection("users")
 
-    // Get user's workspace
+    // Get user's role
     const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    const userRole = getUserRole(userData?.role)
+
+    if (!canUserPerformAction(userRole, "team", "read")) {
+      return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Get project
-    const project = await projectsCollection.findOne({
-      id: params.id,
-      workspaceId: userData.workspaceId,
-    })
+    // Get team details
+    const team = await teamsCollection.findOne({ id: params.id })
 
-    if (!project) {
-      return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
+    if (!team) {
+      return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
+    }
+
+    // Get team members
+    const teamMembers = await usersCollection
+      .find({
+        workspaceId: userData?.workspaceId,
+        teamIds: { $in: [params.id] },
+      })
+      .toArray()
+
+    const teamWithMembers = {
+      ...team,
+      members: teamMembers.map((member) => ({
+        id: member.id,
+        username: member.username,
+        email: member.email,
+        role: member.role,
+        profilePictureUrl: member.profilePictureUrl,
+        createdAt: member.createdAt,
+      })),
     }
 
     return NextResponse.json({
       success: true,
-      data: project,
+      data: teamWithMembers,
     })
   } catch (error) {
-    console.error("Get project error:", error)
+    console.error("Get team error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
@@ -50,58 +69,48 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const body = await request.json()
-    const { name, description, startDate, endDate, teamId } = body
+    const { teamName, description } = body
 
-    if (!name?.trim()) {
-      return NextResponse.json({ success: false, error: "Project name is required" }, { status: 400 })
-    }
-
-    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      return NextResponse.json({ success: false, error: "End date must be after start date" }, { status: 400 })
+    if (!teamName?.trim()) {
+      return NextResponse.json({ success: false, error: "Team name is required" }, { status: 400 })
     }
 
     const db = await getDatabase()
-    const projectsCollection = db.collection("projects")
+    const teamsCollection = db.collection("teams")
     const usersCollection = db.collection("users")
 
     // Get user's role
     const userData = await usersCollection.findOne({ id: user.userId })
     const userRole = getUserRole(userData?.role)
 
-    if (!canUserPerformAction(userRole, "project", "update")) {
+    if (!canUserPerformAction(userRole, "team", "update")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Update project
-    const updatedProject = await projectsCollection.findOneAndUpdate(
-      {
-        id: params.id,
-        workspaceId: userData?.workspaceId,
-      },
+    // Update team
+    const updatedTeam = await teamsCollection.findOneAndUpdate(
+      { id: params.id },
       {
         $set: {
-          name: name.trim(),
+          teamName: teamName.trim(),
           description: description?.trim() || "",
-          teamId: teamId && teamId !== "none" ? teamId : undefined,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
           updatedAt: new Date().toISOString(),
         },
       },
       { returnDocument: "after" },
     )
 
-    if (!updatedProject.value) {
-      return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
+    if (!updatedTeam.value) {
+      return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
     }
 
     return NextResponse.json({
       success: true,
-      data: updatedProject.value,
-      message: "Project updated successfully",
+      data: updatedTeam.value,
+      message: "Team updated successfully",
     })
   } catch (error) {
-    console.error("Update project error:", error)
+    console.error("Update team error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
@@ -115,40 +124,39 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const db = await getDatabase()
-    const projectsCollection = db.collection("projects")
-    const tasksCollection = db.collection("tasks")
+    const teamsCollection = db.collection("teams")
     const usersCollection = db.collection("users")
+    const projectsCollection = db.collection("projects")
 
     // Get user's role
     const userData = await usersCollection.findOne({ id: user.userId })
     const userRole = getUserRole(userData?.role)
 
-    if (!canUserPerformAction(userRole, "project", "delete")) {
+    if (!canUserPerformAction(userRole, "team", "delete")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Check if project exists
-    const project = await projectsCollection.findOne({
-      id: params.id,
-      workspaceId: userData?.workspaceId,
-    })
-
-    if (!project) {
-      return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
+    // Check if team exists
+    const team = await teamsCollection.findOne({ id: params.id })
+    if (!team) {
+      return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
     }
 
-    // Delete all tasks in the project
-    await tasksCollection.deleteMany({ projectId: params.id })
+    // Remove team from all users
+    await usersCollection.updateMany({ teamIds: { $in: [params.id] } }, { $pull: { teamIds: params.id } })
 
-    // Delete the project
-    await projectsCollection.deleteOne({ id: params.id })
+    // Update projects to remove team assignment
+    await projectsCollection.updateMany({ teamId: params.id }, { $unset: { teamId: "" } })
+
+    // Delete the team
+    await teamsCollection.deleteOne({ id: params.id })
 
     return NextResponse.json({
       success: true,
-      message: "Project and all associated tasks deleted successfully",
+      message: "Team deleted successfully",
     })
   } catch (error) {
-    console.error("Delete project error:", error)
+    console.error("Delete team error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

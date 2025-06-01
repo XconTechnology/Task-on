@@ -1,81 +1,115 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { useAppStore } from "@/lib/store"
-import { taskApi } from "@/lib/api"
-import { Status, Priority, type Task } from "@/lib/types"
-import { Calendar } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useUser } from "@/lib/user-context";
+import { Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Priority, Status } from "@/lib/types";
 
 type CreateTaskModalProps = {
-  isOpen: boolean
-  onClose: () => void
-  projectId: string
-}
+  isOpen: boolean;
+  onClose: () => void;
+  projectId: string;
+  onTaskCreated?: (task: any) => void;
+};
 
-export default function CreateTaskModal({ isOpen, onClose, projectId }: CreateTaskModalProps) {
-  const { addTask, users } = useAppStore()
-  const [isLoading, setIsLoading] = useState(false)
+export default function CreateTaskModal({
+  isOpen,
+  onClose,
+  projectId,
+  onTaskCreated,
+}: CreateTaskModalProps) {
+  const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    status: Status.ToDo,
-    priority: Priority.Backlog,
-    tags: "",
-    startDate: "",
+    status: "TO DO",
+    priority: "medium",
+    assignedTo: "",
     dueDate: "",
-    authorUserId: "user_1", // Default to first user
-    assignedUserId: "unassigned", // Default to unassigned
-    points: 0,
-  })
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchUsers();
+    }
+  }, [isOpen]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("/api/workspace/members");
+      const data = await response.json();
+      if (data.success) {
+        setUsers(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.title.trim()) return
+    e.preventDefault();
+    if (!formData.title.trim()) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const newTask: Partial<Task> = {
-        ...formData,
-        projectId,
-        points: formData.points || undefined,
-        assignedUserId: formData.assignedUserId || undefined,
-      }
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          projectId,
+          assignedTo: formData.assignedTo || undefined,
+        }),
+      });
 
-      const response = await taskApi.createTask(newTask)
-      if (response.success && response.data) {
-        addTask(response.data)
-        onClose()
+      const data = await response.json();
+
+      if (data.success) {
+        onTaskCreated?.(data.data);
+        onClose();
         // Reset form
         setFormData({
           title: "",
           description: "",
-          status: Status.ToDo,
-          priority: Priority.Backlog,
-          tags: "",
-          startDate: "",
+          status: "todo",
+          priority: "medium",
+          assignedTo: "",
           dueDate: "",
-          authorUserId: "user_1",
-          assignedUserId: "unassigned",
-          points: 0,
-        })
+        });
+      } else {
+        console.error("Failed to create task:", data.error);
       }
     } catch (error) {
-      console.error("Failed to create task:", error)
+      console.error("Failed to create task:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -90,7 +124,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId }: CreateTa
           {/* Title */}
           <div className="space-y-2">
             <label htmlFor="title" className="text-label">
-              Title
+              Title *
             </label>
             <Input
               id="title"
@@ -121,14 +155,21 @@ export default function CreateTaskModal({ isOpen, onClose, projectId }: CreateTa
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-label">Status</label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleInputChange("status", value)}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={Status.ToDo}>To Do</SelectItem>
-                  <SelectItem value={Status.WorkInProgress}>Work In Progress</SelectItem>
-                  <SelectItem value={Status.UnderReview}>Under Review</SelectItem>
+                  <SelectItem value={Status.WorkInProgress}>
+                    Work In Progress
+                  </SelectItem>
+                  <SelectItem value={Status.UnderReview}>
+                    Under Review
+                  </SelectItem>
                   <SelectItem value={Status.Completed}>Completed</SelectItem>
                 </SelectContent>
               </Select>
@@ -136,7 +177,10 @@ export default function CreateTaskModal({ isOpen, onClose, projectId }: CreateTa
 
             <div className="space-y-2">
               <label className="text-label">Priority</label>
-              <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => handleInputChange("priority", value)}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -151,119 +195,55 @@ export default function CreateTaskModal({ isOpen, onClose, projectId }: CreateTa
             </div>
           </div>
 
-          {/* Tags */}
+          {/* Assignee */}
           <div className="space-y-2">
-            <label htmlFor="tags" className="text-label">
-              Tags (comma separated)
-            </label>
-            <Input
-              id="tags"
-              value={formData.tags}
-              onChange={(e) => handleInputChange("tags", e.target.value)}
-              placeholder="e.g. frontend, urgent, bug"
-              className="w-full"
-            />
+            <label className="text-label">Assign To</label>
+            <Select
+              value={formData.assignedTo}
+              onValueChange={(value) => handleInputChange("assignedTo", value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select assignee (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.username} ({user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="startDate" className="text-label">
-                Start Date
-              </label>
-              <div className="relative">
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => handleInputChange("startDate", e.target.value)}
-                  className="w-full"
-                />
-                <Calendar
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                  size={16}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="dueDate" className="text-label">
-                Due Date
-              </label>
-              <div className="relative">
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => handleInputChange("dueDate", e.target.value)}
-                  className="w-full"
-                />
-                <Calendar
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-                  size={16}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Author and Assignee */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-label">Author User ID</label>
-              <Select value={formData.authorUserId} onValueChange={(value) => handleInputChange("authorUserId", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.username}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-label">Assigned User ID</label>
-              <Select
-                value={formData.assignedUserId}
-                onValueChange={(value) => handleInputChange("assignedUserId", value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select assignee..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.username}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Points */}
+          {/* Due Date */}
           <div className="space-y-2">
-            <label htmlFor="points" className="text-label">
-              Story Points
+            <label htmlFor="dueDate" className="text-label">
+              Due Date
             </label>
-            <Input
-              id="points"
-              type="number"
-              value={formData.points}
-              onChange={(e) => handleInputChange("points", Number.parseInt(e.target.value) || 0)}
-              placeholder="0"
-              min="0"
-              className="w-full"
-            />
+            <div className="relative">
+              <Input
+                id="dueDate"
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => handleInputChange("dueDate", e.target.value)}
+                className="w-full"
+              />
+              <Calendar
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                size={16}
+              />
+            </div>
           </div>
 
           {/* Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
               <span className="text-medium">Cancel</span>
             </Button>
             <Button
@@ -271,11 +251,13 @@ export default function CreateTaskModal({ isOpen, onClose, projectId }: CreateTa
               disabled={isLoading || !formData.title.trim()}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              <span className="text-medium text-white">{isLoading ? "Creating..." : "Create Task"}</span>
+              <span className="text-medium text-white">
+                {isLoading ? "Creating..." : "Create Task"}
+              </span>
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

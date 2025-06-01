@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import StatusDropdown from "./status-dropdown"
 import { format } from "date-fns"
 
@@ -57,6 +57,9 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl h-[90vh] p-0 bg-white overflow-hidden">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Task Details: {task.title}</DialogTitle>
+        </DialogHeader>
         <div className="flex h-full">
           {/* Main Content */}
           <div className="flex-1 flex flex-col">

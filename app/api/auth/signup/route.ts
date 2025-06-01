@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase()
     const usersCollection = db.collection("users")
+    const workspacesCollection = db.collection("workspaces")
 
     // Check if user already exists
     const existingUser = await usersCollection.findOne({
@@ -57,18 +58,37 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password)
 
-    // Create user
+    // Create workspace first
+    const workspaceId = `workspace_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const newWorkspace = {
+      id: workspaceId,
+      name: `${username}'s Workspace`,
+      ownerId: "",
+      defaultRole: "Member",
+      allowMemberInvites: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    // Create user as Owner
     const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const newUser: User = {
       id: userId,
       username,
       email: email.toLowerCase(),
       password: hashedPassword,
+      role: "Owner", // Set as Owner for workspace creator
+      workspaceId,
       profilePictureUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
 
+    // Update workspace with owner ID
+    newWorkspace.ownerId = userId
+
+    // Insert both workspace and user
+    await workspacesCollection.insertOne(newWorkspace)
     await usersCollection.insertOne(newUser)
 
     // Generate JWT token

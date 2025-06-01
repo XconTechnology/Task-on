@@ -17,7 +17,7 @@ type StatusDropdownProps = {
 
 const statusOptions = [
   {
-    value: Status.ToDo,
+    value: Status?.ToDo,
     label: "TO DO",
     icon: Circle,
     color: "text-gray-500",
@@ -25,7 +25,7 @@ const statusOptions = [
     category: "Active",
   },
   {
-    value: Status.WorkInProgress,
+    value: Status?.WorkInProgress,
     label: "IN PROGRESS",
     icon: Play,
     color: "text-blue-600",
@@ -33,7 +33,7 @@ const statusOptions = [
     category: "Active",
   },
   {
-    value: Status.UnderReview,
+    value: Status?.UnderReview,
     label: "UNDER REVIEW",
     icon: Pause,
     color: "text-orange-500",
@@ -41,7 +41,7 @@ const statusOptions = [
     category: "Active",
   },
   {
-    value: Status.Completed,
+    value: Status?.Completed,
     label: "COMPLETE",
     icon: CheckCircle,
     color: "text-green-600",
@@ -55,11 +55,11 @@ export default function StatusDropdown({ currentStatus, onStatusChange, children
   const [activeTab, setActiveTab] = useState("status")
 
   const filteredStatuses = statusOptions.filter((status) =>
-    status.label.toLowerCase().includes(searchQuery.toLowerCase()),
+    status?.label.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const activeStatuses = filteredStatuses.filter((status) => status.category === "Active")
-  const doneStatuses = filteredStatuses.filter((status) => status.category === "Done")
+  const activeStatuses = filteredStatuses.filter((status) => status?.category === "Active")
+  const doneStatuses = filteredStatuses.filter((status) => status?.category === "Done")
 
   return (
     <DropdownMenu>
@@ -125,12 +125,12 @@ export default function StatusDropdown({ currentStatus, onStatusChange, children
                 const Icon = status.icon
                 return (
                   <DropdownMenuItem
-                    key={status.value}
+                    key={status?.value}
                     className={`flex items-center space-x-3 px-3 py-2 rounded-md cursor-pointer ${status.bgColor}`}
-                    onClick={() => onStatusChange(status.value)}
+                    onClick={() => onStatusChange(status?.value)}
                   >
-                    <Icon className={status.color} size={16} />
-                    <span className="text-sm text-gray-700">{status.label}</span>
+                    <Icon className={status?.color} size={16} />
+                    <span className="text-sm text-gray-700">{status?.label}</span>
                     {currentStatus === status.value && <Check className="ml-auto text-blue-600" size={16} />}
                   </DropdownMenuItem>
                 )

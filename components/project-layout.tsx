@@ -58,11 +58,7 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
             <div className="px-6 py-3 border-b border-gray-100">
               <div className="flex items-center space-x-2">
                 <a href="#" className="text-link">
-                  Team Space
-                </a>
-                <span className="text-muted">/</span>
-                <a href="#" className="text-link">
-                  Projects
+                  projects
                 </a>
                 <span className="text-muted">/</span>
                 <span className="text-medium font-medium">Project 1</span>

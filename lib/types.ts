@@ -1,14 +1,52 @@
-export interface Project {
+export interface User {
   id: string
-  name: string
-  description?: string
-  startDate?: string
-  endDate?: string
-  workspaceId: string
+  username: string
+  email: string
+  password: string
+  role?: "Owner" | "Admin" | "Member"
+  workspaceId?: string
+  teamIds?: string[]
+  profilePictureUrl?: string
+  isInvited?: boolean
+  tempPassword?: string
   createdAt: string
   updatedAt: string
 }
 
+export interface Workspace {
+  id: string
+  name: string
+  ownerId: string
+  defaultRole: "Admin" | "Member"
+  allowMemberInvites: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Team {
+  id: string
+  teamName: string
+  description?: string
+  workspaceId: string
+  createdBy: string
+  memberCount?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Project {
+  id: string
+  name: string
+  description?: string
+  workspaceId: string
+  createdBy: string
+  teamId?: string
+  startDate?: string
+  endDate?: string
+  status: "active" | "completed" | "archived"
+  createdAt: string
+  updatedAt: string
+}
 export enum Priority {
   Urgent = "Urgent",
   High = "High",
@@ -24,116 +62,59 @@ export enum Status {
   Completed = "Completed",
 }
 
-export interface User {
-  id: string
-  username: string
-  email: string
-  password?: string // Only for database operations
-  profilePictureUrl?: string
-  workspaceId?: string
-  teamId?: string
-  role?: string
-  isInvited?: boolean
-  tempPassword?: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface Workspace {
-  id: string
-  name: string
-  ownerId: string
-  usageType: "work" | "personal" | "school"
-  managementType: string[]
-  features: string[]
-  referralSource?: string
-  invitedEmails?: string[]
-  createdAt: string
-  updatedAt: string
-}
-
-export interface Attachment {
-  id: string
-  fileURL: string
-  fileName: string
-  taskId: string
-  uploadedById: string
-  createdAt: string
-}
-
-export interface Comment {
-  id: string
-  text: string
-  taskId: string
-  userId: string
-  user?: User
-  createdAt: string
-  updatedAt: string
-}
-
 export interface Task {
   id: string
   title: string
   description?: string
   status: Status
   priority: Priority
-  tags?: string
-  startDate?: string
-  dueDate?: string
-  points?: number
   projectId: string
-  authorUserId: string
-  assignedUserId?: string
-  createdAt: string
-  updatedAt: string
-
-  author?: User
-  assignee?: User
-  comments?: Comment[]
-  attachments?: Attachment[]
-}
-
-export interface Team {
-  id: string
-  teamName: string
-  description?: string
   workspaceId: string
-  productOwnerUserId?: string
-  projectManagerUserId?: string
-  memberCount?: number
+  createdBy: string // Auto-assigned from current user
+  assignedTo?: string
+  dueDate?: string
   createdAt: string
   updatedAt: string
-}
 
-export interface SearchResults {
-  tasks?: Task[]
-  projects?: Project[]
-  users?: User[]
-}
-
-export interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: string
-  message?: string
-}
-
-export interface PaginatedResponse<T> {
-  success: boolean
-  data: T[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
+  // Populated fields
+  author?: {
+    id: string
+    username: string
+    email: string
+  }
+  assignee?: {
+    id: string
+    username: string
+    email: string
   }
 }
 
+export interface ProjectStats {
+  totalTasks: number
+  completedTasks: number
+  inProgressTasks: number
+  todoTasks: number
+  progress: number
+  teamMembers: number
+  assignedMembers: User[]
+}
+
 export interface OnboardingData {
-  usageType: "work" | "personal" | "school"
+  usageType: string
   managementType: string[]
   features: string[]
   workspaceName: string
-  invitedEmails: string[]
+  teamInvites: string[]
   referralSource: string
+}
+
+export interface DashboardStats {
+  totalTasks: number
+  completedTasks: number
+  inProgressTasks: number
+  totalProjects: number
+  activeProjects: number
+  completedProjects: number
+  teamMembers: number
+  recentActivity: any[]
 }

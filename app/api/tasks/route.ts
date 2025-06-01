@@ -1,26 +1,53 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { MOCK_TASKS, MOCK_USERS } from "@/lib/constants"
-import { type Task, Status, Priority } from "@/lib/types"
+import { getDatabase } from "@/lib/mongodb"
+import { getUserFromRequest } from "@/lib/auth"
+import { canUserPerformAction, getUserRole } from "@/lib/permissions"
 
 // GET /api/tasks - Get tasks with optional projectId filter
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const projectId = searchParams.get("projectId")
+    const user = getUserFromRequest(request)
 
-    let tasks = [...MOCK_TASKS]
-
-    // Filter by project if projectId provided
-    if (projectId) {
-      tasks = tasks.filter((task) => task.projectId === projectId)
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    
+    const projectId = searchParams.get("projectId")
+console.log(projectId)
+    const db = await getDatabase()
+    const tasksCollection = db.collection("tasks")
+    const usersCollection = db.collection("users")
+
+    // Get user's workspace
+    const userData = await usersCollection.findOne({ id: user.userId })
+    if (!userData?.workspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    }
+
+    // Build query
+    const query: any = { workspaceId: userData.workspaceId }
+    if (projectId) {
+      query.projectId = projectId
+    }
+
+    // Get tasks
+    const tasks = await tasksCollection.find(query).toArray()
+
     // Populate author and assignee data
-    const populatedTasks = tasks.map((task) => ({
-      ...task,
-      author: MOCK_USERS.find((user) => user.id === task.authorUserId),
-      assignee: MOCK_USERS.find((user) => user.id === task.assignedUserId),
-    }))
+    const populatedTasks = await Promise.all(
+      tasks.map(async (task) => {
+        const author = task.createdBy ? await usersCollection.findOne({ id: task.createdBy }) : null
+        const assignee = task.assignedTo ? await usersCollection.findOne({ id: task.assignedTo }) : null
+
+        return {
+          ...task,
+          author: author ? { id: author.id, username: author.username, email: author.email } : null,
+          assignee: assignee ? { id: assignee.id, username: assignee.username, email: assignee.email } : null,
+        }
+      }),
+    )
 
     return NextResponse.json({
       success: true,
@@ -28,58 +55,85 @@ export async function GET(request: NextRequest) {
       message: "Tasks retrieved successfully",
     })
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch tasks",
-      },
-      { status: 500 },
-    )
+    console.error("Get tasks error:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
 // POST /api/tasks - Create new task
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const user = getUserFromRequest(request)
 
-    // Validate required fields
-    if (!body.title || !body.projectId || !body.authorUserId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Title, projectId, and authorUserId are required",
-        },
-        { status: 400 },
-      )
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
-    // Create new task with generated ID
-    const newTask: Task = {
-      id: `task_${Date.now()}`,
-      title: body.title,
-      description: body.description || "",
-      status: body.status || Status.ToDo,
-      priority: body.priority || Priority.Medium,
-      tags: body.tags || "",
-      startDate: body.startDate,
-      dueDate: body.dueDate,
-      points: body.points || 0,
-      projectId: body.projectId,
-      authorUserId: body.authorUserId,
-      assignedUserId: body.assignedUserId,
+    const body = await request.json()
+    const { title, description, status, priority, projectId, assignedTo, dueDate } = body
+
+    // Validate required fields
+    if (!title?.trim()) {
+      return NextResponse.json({ success: false, error: "Task title is required" }, { status: 400 })
+    }
+
+    if (!projectId) {
+      return NextResponse.json({ success: false, error: "Project ID is required" }, { status: 400 })
+    }
+
+    const db = await getDatabase()
+    const tasksCollection = db.collection("tasks")
+    const usersCollection = db.collection("users")
+    const projectsCollection = db.collection("projects")
+
+    // Get user's workspace and role
+    const userData = await usersCollection.findOne({ id: user.userId })
+    if (!userData?.workspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    }
+
+    const userRole = getUserRole(userData.role)
+    if (!canUserPerformAction(userRole, "task", "create")) {
+      return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
+    }
+
+    // Verify project exists and belongs to user's workspace
+    const project = await projectsCollection.findOne({
+      id: projectId,
+      workspaceId: userData.workspaceId,
+    })
+
+    if (!project) {
+      return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
+    }
+
+    // Create new task
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const newTask = {
+      id: taskId,
+      title: title.trim(),
+      description: description?.trim() || "",
+      status: status || "todo",
+      priority: priority || "medium",
+      projectId,
+      workspaceId: userData.workspaceId,
+      createdBy: user.userId, // Auto-assign from current user
+      assignedTo: assignedTo || undefined,
+      dueDate: dueDate || undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
 
-    // In real app, save to MongoDB here
-    MOCK_TASKS.push(newTask)
+    await tasksCollection.insertOne(newTask)
 
-    // Populate author and assignee data
+    // Get populated task data
+    const author = await usersCollection.findOne({ id: user.userId })
+    const assignee = assignedTo ? await usersCollection.findOne({ id: assignedTo }) : null
+
     const populatedTask = {
       ...newTask,
-      author: MOCK_USERS.find((user) => user.id === newTask.authorUserId),
-      assignee: MOCK_USERS.find((user) => user.id === newTask.assignedUserId),
+      author: author ? { id: author.id, username: author.username, email: author.email } : null,
+      assignee: assignee ? { id: assignee.id, username: assignee.username, email: assignee.email } : null,
     }
 
     return NextResponse.json({
@@ -88,12 +142,7 @@ export async function POST(request: NextRequest) {
       message: "Task created successfully",
     })
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to create task",
-      },
-      { status: 500 },
-    )
+    console.error("Create task error:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

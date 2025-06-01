@@ -11,7 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import InviteModal from "@/components/modals/invite-modal"
 import CreateTeamModal from "@/components/modals/create-team-modal"
+import EditTeamModal from "@/components/modals/edit-team-modal"
 import { teamApi } from "@/lib/api/teams"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function TeamsContent() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -21,10 +23,19 @@ export default function TeamsContent() {
   const [isLoadingMembers, setIsLoadingMembers] = useState(true)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)
+  const [editingTeam, setEditingTeam] = useState(null)
+  const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false)
+  const [workspaceSettings, setWorkspaceSettings] = useState({
+    workspaceName: "",
+    defaultRole: "Member",
+    allowMemberInvites: true,
+  })
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false)
 
   useEffect(() => {
     fetchTeams()
     fetchMembers()
+    fetchWorkspaceSettings()
   }, [])
 
   const fetchTeams = async () => {
@@ -54,8 +65,59 @@ export default function TeamsContent() {
     }
   }
 
+  const fetchWorkspaceSettings = async () => {
+    setIsLoadingSettings(true)
+    try {
+      const response = await fetch("/api/workspace/settings")
+      const data = await response.json()
+      if (data.success) {
+        setWorkspaceSettings(data.data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch workspace settings:", error)
+    } finally {
+      setIsLoadingSettings(false)
+    }
+  }
+
+  const handleSaveSettings = async () => {
+    setIsLoadingSettings(true)
+    try {
+      const response = await fetch("/api/workspace/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(workspaceSettings),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        alert("Settings saved successfully!")
+      } else {
+        alert(data.error || "Failed to save settings")
+      }
+    } catch (error) {
+      console.error("Failed to save settings:", error)
+      alert("Failed to save settings")
+    } finally {
+      setIsLoadingSettings(false)
+    }
+  }
+
+  const handleEditTeam = (team: any) => {
+    setEditingTeam(team)
+    setIsEditTeamModalOpen(true)
+  }
+
   const handleTeamCreated = (newTeam: any) => {
     setTeams((prev) => [newTeam, ...prev])
+  }
+
+  const handleTeamUpdated = (updatedTeam: any) => {
+    setTeams((prev) => prev.map((team: any) => (team.id === updatedTeam.id ? updatedTeam : team)))
+  }
+
+  const handleTeamDeleted = (teamId: string) => {
+    setTeams((prev) => prev.filter((team: any) => team.id !== teamId))
   }
 
   const handleInviteSuccess = () => {
@@ -163,6 +225,7 @@ export default function TeamsContent() {
                           variant="ghost"
                           size="sm"
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleEditTeam(team)}
                         >
                           <MoreHorizontal size={16} />
                         </Button>
@@ -302,24 +365,49 @@ export default function TeamsContent() {
               <CardContent className="space-y-6">
                 <div>
                   <h4 className="text-label mb-2">Workspace Name</h4>
-                  <Input defaultValue="My Workspace" />
+                  <Input
+                    value={workspaceSettings.workspaceName}
+                    onChange={(e) => setWorkspaceSettings((prev) => ({ ...prev, workspaceName: e.target.value }))}
+                    disabled={isLoadingSettings}
+                  />
                 </div>
                 <div>
                   <h4 className="text-label mb-2">Default Role for New Members</h4>
-                  <select className="w-full p-2 border border-gray-300 rounded-md">
-                    <option>Member</option>
-                    <option>Admin</option>
-                  </select>
+                  <Select
+                    value={workspaceSettings.defaultRole}
+                    onValueChange={(value) => setWorkspaceSettings((prev) => ({ ...prev, defaultRole: value }))}
+                    disabled={isLoadingSettings}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Member">Member</SelectItem>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-label">Allow members to invite others</h4>
                     <p className="text-description-small">Members can send invitations to join the workspace</p>
                   </div>
-                  <input type="checkbox" className="rounded" defaultChecked />
+                  <input
+                    type="checkbox"
+                    className="rounded"
+                    checked={workspaceSettings.allowMemberInvites}
+                    onChange={(e) =>
+                      setWorkspaceSettings((prev) => ({ ...prev, allowMemberInvites: e.target.checked }))
+                    }
+                    disabled={isLoadingSettings}
+                  />
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <span className="text-medium">Save Changes</span>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={handleSaveSettings}
+                  disabled={isLoadingSettings}
+                >
+                  {isLoadingSettings ? "Saving..." : "Save Changes"}
                 </Button>
               </CardContent>
             </Card>
@@ -336,6 +424,13 @@ export default function TeamsContent() {
         isOpen={isCreateTeamModalOpen}
         onClose={() => setIsCreateTeamModalOpen(false)}
         onSuccess={handleTeamCreated}
+      />
+      <EditTeamModal
+        isOpen={isEditTeamModalOpen}
+        onClose={() => setIsEditTeamModalOpen(false)}
+        team={editingTeam}
+        onSuccess={handleTeamUpdated}
+        onDelete={handleTeamDeleted}
       />
     </>
   )

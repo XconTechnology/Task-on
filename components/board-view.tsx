@@ -18,28 +18,28 @@ type BoardProps = {
   setIsModalNewTaskOpen: (isOpen: boolean) => void
 }
 
-const taskStatus = [Status.ToDo, Status.WorkInProgress, Status.UnderReview, Status.Completed]
+const taskStatus = [Status?.ToDo, Status?.WorkInProgress, Status?.UnderReview, Status?.Completed]
 
 const statusConfig = {
-  [Status.ToDo]: {
+  [Status?.ToDo]: {
     color: "#3B82F6",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-300",
     label: "To Do",
   },
-  [Status.WorkInProgress]: {
+  [Status?.WorkInProgress]: {
     color: "#10B981",
     bgColor: "bg-green-50",
     borderColor: "border-green-300",
     label: "Work In Progress",
   },
-  [Status.UnderReview]: {
+  [Status?.UnderReview]: {
     color: "#F59E0B",
     bgColor: "bg-orange-50",
     borderColor: "border-orange-300",
     label: "Under Review",
   },
-  [Status.Completed]: {
+  [Status?.Completed]: {
     color: "#6B7280",
     bgColor: "bg-gray-50",
     borderColor: "border-gray-300",
@@ -52,6 +52,7 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false)
 
+  console.log('main tasks', tasks)
   useEffect(() => {
     const fetchTasks = async () => {
       setLoading(true)
@@ -111,7 +112,7 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2 xl:grid-cols-4 bg-gray-50 min-h-screen custom-scrollbar">
+      <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-4 bg-gray-50 min-h-screen custom-scrollbar">
         {taskStatus.map((status) => (
           <TaskColumn
             key={status}
@@ -153,10 +154,11 @@ function TaskColumn({ status, tasks, moveTask, setIsModalNewTaskOpen, onTaskClic
       isOver: !!monitor.isOver(),
     }),
   }))
+console.log('tasks', tasks)
 
   const columnTasks = tasks.filter((task) => task.status === status)
   const config = statusConfig[status]
-
+console.log('columnTasks', columnTasks)
   return (
     <div
       ref={drop}
