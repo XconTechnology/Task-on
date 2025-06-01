@@ -48,10 +48,8 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Top Navigation */}
-      <TopNavigation />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
 
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Project Header */}

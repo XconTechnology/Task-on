@@ -1,17 +1,19 @@
 "use client"
 
+import React from "react"
+
 import { useState } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { useAppStore } from "@/lib/store"
+import { useUser } from "@/lib/user-context"
 import {
   ChevronLeft,
   ChevronRight,
   Home,
   FolderOpen,
   Users,
-  Settings,
   Plus,
   Search,
-  Bell,
   Calendar,
   BarChart3,
   Target,
@@ -19,193 +21,284 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-
-const SIDEBAR_PROJECTS = [
-  { id: "1", name: "E-commerce Platform", color: "#3B82F6", tasks: 12, progress: 75 },
-  { id: "2", name: "Mobile App", color: "#10B981", tasks: 8, progress: 45 },
-  { id: "3", name: "Analytics Dashboard", color: "#F59E0B", tasks: 15, progress: 90 },
-  { id: "4", name: "Marketing Website", color: "#EF4444", tasks: 6, progress: 30 },
-]
-
-const SIDEBAR_TEAMS = [
-  { id: "1", name: "Frontend Team", members: 5, avatar: "/placeholder.svg?height=32&width=32" },
-  { id: "2", name: "Backend Team", members: 4, avatar: "/placeholder.svg?height=32&width=32" },
-  { id: "3", name: "Design Team", members: 3, avatar: "/placeholder.svg?height=32&width=32" },
-]
+import { Skeleton } from "@/components/ui/skeleton"
+import InviteModal from "./modals/invite-modal"
+import CreateTeamModal from "./modals/create-team-modal"
 
 export default function Sidebar() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const { user } = useUser()
   const { isSidebarCollapsed, setSidebarCollapsed } = useAppStore()
-  const [activeItem, setActiveItem] = useState("dashboard")
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)
+  const [activeItem, setActiveItem] = useState(() => {
+    if (pathname.startsWith("/dashboard")) return "dashboard"
+    if (pathname.startsWith("/projects")) return "projects"
+    if (pathname.startsWith("/teams")) return "teams"
+    if (pathname.startsWith("/calendar")) return "calendar"
+    if (pathname.startsWith("/analytics")) return "analytics"
+    if (pathname.startsWith("/goals")) return "goals"
+    if (pathname.startsWith("/time-tracking")) return "time-tracking"
+    return "dashboard"
+  })
 
   const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: Home },
-    { id: "projects", label: "Projects", icon: FolderOpen },
-    { id: "teams", label: "Teams", icon: Users },
-    { id: "calendar", label: "Calendar", icon: Calendar },
-    { id: "analytics", label: "Analytics", icon: BarChart3 },
-    { id: "goals", label: "Goals", icon: Target },
-    { id: "time-tracking", label: "Time Tracking", icon: Clock },
+    { id: "dashboard", label: "Dashboard", icon: Home, path: "/dashboard" },
+    { id: "projects", label: "Projects", icon: FolderOpen, path: "/projects" },
+    { id: "teams", label: "Teams", icon: Users, path: "/teams" },
+    { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
+    { id: "analytics", label: "Analytics", icon: BarChart3, path: "/analytics" },
+    { id: "goals", label: "Goals", icon: Target, path: "/goals" },
+    { id: "time-tracking", label: "Time Tracking", icon: Clock, path: "/time-tracking" },
   ]
 
+  const handleNavigation = (item: (typeof menuItems)[0]) => {
+    setActiveItem(item.id)
+    router.push(item.path)
+  }
+
   return (
-    <div
-      className={`bg-white border-r border-gray-200 transition-all duration-300 ${
-        isSidebarCollapsed ? "w-16" : "w-80"
-      } flex flex-col h-full custom-scrollbar overflow-y-auto`}
-    >
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {!isSidebarCollapsed && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-medium">PM</span>
+    <>
+      <div
+        className={`bg-white border-r border-gray-200 transition-all duration-300 ${
+          isSidebarCollapsed ? "w-16" : "w-80"
+        } flex flex-col h-full custom-scrollbar overflow-y-auto`}
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            {!isSidebarCollapsed && (
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-medium">PM</span>
+                </div>
+                <span className="header-extra-small">ProjectFlow</span>
               </div>
-              <span className="header-extra-small">ProjectFlow</span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
+              className="p-1 h-8 w-8"
+            >
+              {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            </Button>
+          </div>
+
+          {!isSidebarCollapsed && (
+            <div className="mt-4 space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <Input placeholder="Search projects, tasks..." className="pl-10 bg-gray-50 border-gray-200" />
+              </div>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/projects/new")}>
+                <Plus size={16} className="mr-2" />
+                <span className="text-medium text-white">New Project</span>
+              </Button>
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-1 h-8 w-8"
-          >
-            {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          </Button>
         </div>
 
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <nav className="p-2">
+            <ul className="space-y-1">
+              {menuItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => handleNavigation(item)}
+                      className={`w-full flex items-center px-3 py-2 rounded-lg text-medium transition-colors ${
+                        activeItem === item.id
+                          ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <Icon size={18} className="flex-shrink-0" />
+                      {!isSidebarCollapsed && <span className="ml-3">{item.label}</span>}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
+
+          {!isSidebarCollapsed && (
+            <>
+              {/* Recent Projects */}
+              <RecentProjectsSection />
+
+              {/* Teams */}
+              <TeamsSection onCreateTeam={() => setIsCreateTeamModalOpen(true)} />
+            </>
+          )}
+        </div>
+
+        {/* Bottom Actions */}
         {!isSidebarCollapsed && (
-          <div className="mt-4 space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-              <Input placeholder="Search projects, tasks..." className="pl-10 bg-gray-50 border-gray-200" />
-            </div>
-            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+          <div className="p-4 border-t border-gray-200 space-y-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => setIsInviteModalOpen(true)}
+            >
               <Plus size={16} className="mr-2" />
-              <span className="text-medium text-white">New Project</span>
+              <span className="text-medium">Invite</span>
             </Button>
           </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <nav className="p-2">
-          <ul className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => setActiveItem(item.id)}
-                    className={`w-full flex items-center px-3 py-2 rounded-lg text-medium transition-colors ${
-                      activeItem === item.id
-                        ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    <Icon size={18} className="flex-shrink-0" />
-                    {!isSidebarCollapsed && <span className="ml-3">{item.label}</span>}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
+      <InviteModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
+      <CreateTeamModal isOpen={isCreateTeamModalOpen} onClose={() => setIsCreateTeamModalOpen(false)} />
+    </>
+  )
+}
 
-        {!isSidebarCollapsed && (
-          <>
-            {/* Recent Projects */}
-            <div className="p-4 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-label">Recent Projects</h3>
-                <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
-                  <Plus size={12} />
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {SIDEBAR_PROJECTS.map((project) => (
-                  <div
-                    key={project.id}
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: project.color }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-medium truncate">{project.name}</p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <div className="w-full bg-gray-200 rounded-full h-1">
-                          <div className="bg-blue-600 h-1 rounded-full" style={{ width: `${project.progress}%` }} />
-                        </div>
-                        <span className="text-muted-small">{project.progress}%</span>
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className="text-small">
-                      {project.tasks}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
+function RecentProjectsSection() {
+  const router = useRouter()
+  const [projects, setProjects] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
-            {/* Teams */}
-            <div className="p-4 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-label">Teams</h3>
-                <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
-                  <Plus size={12} />
-                </Button>
+  // Fetch real projects
+  React.useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch("/api/projects")
+        const data = await response.json()
+        if (data.success) {
+          setProjects(data.data.slice(0, 4)) // Show only first 4
+        }
+      } catch (error) {
+        console.error("Failed to fetch projects:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProjects()
+  }, [])
+
+  return (
+    <div className="p-4 border-t border-gray-100">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-label">Recent Projects</h3>
+        <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={() => router.push("/projects/new")}>
+          <Plus size={12} />
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {isLoading ? (
+          // Skeleton loading
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center space-x-3 p-2">
+              <Skeleton className="w-3 h-3 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-2 w-3/4" />
               </div>
-              <div className="space-y-2">
-                {SIDEBAR_TEAMS.map((team) => (
-                  <div
-                    key={team.id}
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={team.avatar || "/placeholder.svg"} />
-                      <AvatarFallback>{team.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-medium truncate">{team.name}</p>
-                      <p className="text-muted-small">{team.members} members</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Skeleton className="h-5 w-8 rounded" />
             </div>
-          </>
+          ))
+        ) : projects.length > 0 ? (
+          projects.map((project: any) => (
+            <div
+              key={project.id}
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+              onClick={() => router.push(`/projects/${project.id}`)}
+            >
+              <div className="w-3 h-3 rounded-full flex-shrink-0 bg-blue-500" />
+              <div className="flex-1 min-w-0">
+                <p className="text-medium truncate">{project.name}</p>
+                <div className="flex items-center space-x-2 mt-1">
+                  <div className="w-full bg-gray-200 rounded-full h-1">
+                    <div className="bg-blue-600 h-1 rounded-full" style={{ width: "75%" }} />
+                  </div>
+                  <span className="text-muted-small">75%</span>
+                </div>
+              </div>
+              <Badge variant="secondary" className="text-small">
+                {Math.floor(Math.random() * 20) + 1}
+              </Badge>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-muted-small">No projects yet</p>
+          </div>
         )}
       </div>
+    </div>
+  )
+}
 
-      {/* User Profile */}
-      <div className="p-4 border-t border-gray-200">
-        {!isSidebarCollapsed ? (
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src="/placeholder.svg?height=40&width=40" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-medium">John Doe</p>
-              <p className="text-muted-small">john@example.com</p>
+function TeamsSection({ onCreateTeam }: { onCreateTeam: () => void }) {
+  const router = useRouter()
+  const [teams, setTeams] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch real teams
+  React.useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const response = await fetch("/api/teams")
+        const data = await response.json()
+        if (data.success) {
+          setTeams(data.data.slice(0, 3)) // Show only first 3
+        }
+      } catch (error) {
+        console.error("Failed to fetch teams:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchTeams()
+  }, [])
+
+  return (
+    <div className="p-4 border-t border-gray-100">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-label">Teams</h3>
+        <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={onCreateTeam}>
+          <Plus size={12} />
+        </Button>
+      </div>
+      <div className="space-y-2">
+        {isLoading ? (
+          // Skeleton loading
+          Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="flex items-center space-x-3 p-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
             </div>
-            <div className="flex space-x-1">
-              <Button variant="ghost" size="sm" className="p-1 h-8 w-8">
-                <Bell size={16} />
-              </Button>
-              <Button variant="ghost" size="sm" className="p-1 h-8 w-8">
-                <Settings size={16} />
-              </Button>
+          ))
+        ) : teams.length > 0 ? (
+          teams.map((team: any) => (
+            <div
+              key={team.id}
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+              onClick={() => router.push("/teams")}
+            >
+              <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-small font-medium">{team.teamName.charAt(0)}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-medium truncate">{team.teamName}</p>
+                <p className="text-muted-small">{team.memberCount || 0} members</p>
+              </div>
             </div>
-          </div>
+          ))
         ) : (
-          <div className="flex justify-center">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="/placeholder.svg?height=32&width=32" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
+          <div className="text-center py-4">
+            <p className="text-muted-small">No teams yet</p>
           </div>
         )}
       </div>

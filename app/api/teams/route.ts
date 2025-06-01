@@ -1,67 +1,99 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { MOCK_TEAMS } from "@/lib/constants"
+import { getDatabase } from "@/lib/mongodb"
+import { getUserFromRequest } from "@/lib/auth"
 import type { Team } from "@/lib/types"
 
-// GET /api/teams - Get all teams
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const user = getUserFromRequest(request)
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
+    }
+
+    const db = await getDatabase()
+    const usersCollection = db.collection("users")
+    const teamsCollection = db.collection("teams")
+
+    // Get user's workspace
+    const userData = await usersCollection.findOne({ id: user.userId })
+    if (!userData?.workspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    }
+
+    // Get teams for the workspace
+    const teams = await teamsCollection.find({ workspaceId: userData.workspaceId }).toArray()
+
+    // Get member counts for each team
+    const teamsWithCounts = await Promise.all(
+      teams.map(async (team) => {
+        const memberCount = await usersCollection.countDocuments({ teamId: team.id })
+        return {
+          ...team,
+          memberCount,
+        }
+      }),
+    )
+
     return NextResponse.json({
       success: true,
-      data: MOCK_TEAMS,
+      data: teamsWithCounts,
       message: "Teams retrieved successfully",
     })
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch teams",
-      },
-      { status: 500 },
-    )
+    console.error("Get teams error:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
-// POST /api/teams - Create new team
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const user = getUserFromRequest(request)
 
-    // Validate required fields
-    if (!body.teamName) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Team name is required",
-        },
-        { status: 400 },
-      )
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
-    // Create new team with generated ID
+    const body = await request.json()
+    const { teamName, description } = body
+
+    // Validation
+    if (!teamName) {
+      return NextResponse.json({ success: false, error: "Team name is required" }, { status: 400 })
+    }
+
+    const db = await getDatabase()
+    const usersCollection = db.collection("users")
+    const teamsCollection = db.collection("teams")
+
+    // Get user's workspace
+    const userData = await usersCollection.findOne({ id: user.userId })
+    if (!userData?.workspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    }
+
+    // Create new team
+    const teamId = `team_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const newTeam: Team = {
-      id: `team_${Date.now()}`,
-      teamName: body.teamName,
-      productOwnerUserId: body.productOwnerUserId,
-      projectManagerUserId: body.projectManagerUserId,
+      id: teamId,
+      teamName,
+      description: description || "",
+      workspaceId: userData.workspaceId,
+      productOwnerUserId: user.userId,
+      projectManagerUserId: user.userId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
 
-    // In real app, save to MongoDB here
-    MOCK_TEAMS.push(newTeam)
+    await teamsCollection.insertOne(newTeam)
 
     return NextResponse.json({
       success: true,
-      data: newTeam,
+      data: { ...newTeam, memberCount: 0 },
       message: "Team created successfully",
     })
   } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to create team",
-      },
-      { status: 500 },
-    )
+    console.error("Create team error:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

@@ -31,6 +31,10 @@ export interface User {
   password?: string // Only for database operations
   profilePictureUrl?: string
   workspaceId?: string
+  teamId?: string
+  role?: string
+  isInvited?: boolean
+  tempPassword?: string
   createdAt: string
   updatedAt: string
 }
@@ -92,9 +96,11 @@ export interface Task {
 export interface Team {
   id: string
   teamName: string
+  description?: string
   workspaceId: string
   productOwnerUserId?: string
   projectManagerUserId?: string
+  memberCount?: number
   createdAt: string
   updatedAt: string
 }
