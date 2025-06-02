@@ -12,6 +12,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import TaskDetailModal from "./task-detail-modal"
+import UpdateTaskModal from "./tasks/update-task-modal"
+import DeleteTaskDialog from "./tasks/delete-task-dialog"
+import TaskActionsDropdown from "./tasks/task-actions-dropdown"
 
 type BoardProps = {
   projectId: string
@@ -51,8 +54,11 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
   const { tasks, setTasks, updateTaskStatus, isLoading, setLoading, setError } = useAppStore()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false)
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [taskToUpdate, setTaskToUpdate] = useState<Task | null>(null)
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null)
 
-  console.log('main tasks', tasks)
   useEffect(() => {
     const fetchTasks = async () => {
       setLoading(true)
@@ -88,11 +94,32 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
     setIsTaskDetailOpen(true)
   }
 
+  const handleEditTask = (task: Task) => {
+    setTaskToUpdate(task)
+    setIsUpdateModalOpen(true)
+  }
+
+  const handleDeleteTask = (task: Task) => {
+    setTaskToDelete(task)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleTaskUpdated = (updatedTask: Task) => {
+    const updatedTasks = tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+    setTasks(updatedTasks)
+    setTaskToUpdate(null)
+  }
+
+  const handleTaskDeleted = (taskId: string) => {
+    const updatedTasks = tasks.filter((task) => task.id !== taskId)
+    setTasks(updatedTasks)
+    setTaskToDelete(null)
+  }
+
   const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
     try {
       const response = await taskApi.updateTask(taskId, updates)
       if (response.success && response.data) {
-        // Update the task in the store
         const updatedTasks = tasks.map((task) => (task.id === taskId ? response.data! : task))
         setTasks(updatedTasks)
         setSelectedTask(response.data)
@@ -121,6 +148,8 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
             moveTask={moveTask}
             setIsModalNewTaskOpen={setIsModalNewTaskOpen}
             onTaskClick={handleTaskClick}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
           />
         ))}
       </div>
@@ -134,6 +163,26 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
         }}
         onUpdateTask={handleUpdateTask}
       />
+
+      <UpdateTaskModal
+        task={taskToUpdate}
+        isOpen={isUpdateModalOpen}
+        onClose={() => {
+          setIsUpdateModalOpen(false)
+          setTaskToUpdate(null)
+        }}
+        onTaskUpdated={handleTaskUpdated}
+      />
+
+      <DeleteTaskDialog
+        task={taskToDelete}
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false)
+          setTaskToDelete(null)
+        }}
+        onTaskDeleted={handleTaskDeleted}
+      />
     </DndProvider>
   )
 }
@@ -144,9 +193,19 @@ type TaskColumnProps = {
   moveTask: (taskId: string, toStatus: Status) => void
   setIsModalNewTaskOpen: (isOpen: boolean) => void
   onTaskClick: (task: Task) => void
+  onEditTask: (task: Task) => void
+  onDeleteTask: (task: Task) => void
 }
 
-function TaskColumn({ status, tasks, moveTask, setIsModalNewTaskOpen, onTaskClick }: TaskColumnProps) {
+function TaskColumn({
+  status,
+  tasks,
+  moveTask,
+  setIsModalNewTaskOpen,
+  onTaskClick,
+  onEditTask,
+  onDeleteTask,
+}: TaskColumnProps) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: "task",
     drop: (item: { id: string }) => moveTask(item.id, status),
@@ -154,11 +213,9 @@ function TaskColumn({ status, tasks, moveTask, setIsModalNewTaskOpen, onTaskClic
       isOver: !!monitor.isOver(),
     }),
   }))
-console.log('tasks', tasks)
 
   const columnTasks = tasks.filter((task) => task.status === status)
   const config = statusConfig[status]
-console.log('columnTasks', columnTasks)
   return (
     <div
       ref={drop}
@@ -197,7 +254,13 @@ console.log('columnTasks', columnTasks)
       {/* Tasks */}
       <div className="space-y-3 min-h-[400px] custom-scrollbar overflow-y-auto">
         {columnTasks.map((task) => (
-          <TaskCard key={task.id} task={task} onTaskClick={onTaskClick} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            onTaskClick={onTaskClick}
+            onEditTask={onEditTask}
+            onDeleteTask={onDeleteTask}
+          />
         ))}
 
         {columnTasks.length === 0 && (
@@ -213,9 +276,11 @@ console.log('columnTasks', columnTasks)
 type TaskCardProps = {
   task: Task
   onTaskClick: (task: Task) => void
+  onEditTask: (task: Task) => void
+  onDeleteTask: (task: Task) => void
 }
 
-function TaskCard({ task, onTaskClick }: TaskCardProps) {
+function TaskCard({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "task",
     item: { id: task.id },
@@ -244,17 +309,6 @@ function TaskCard({ task, onTaskClick }: TaskCardProps) {
       }`}
     >
       <CardContent className="p-0">
-        {/* Task Image - only show if task has attachments */}
-        {task.attachments && task.attachments.length > 0 && (
-          <div className="relative">
-            <img
-              src="/placeholder.svg?height=120&width=280"
-              alt="Task attachment"
-              className="w-full h-24 object-cover rounded-t-lg"
-            />
-          </div>
-        )}
-
         <div className={`${task.attachments && task.attachments.length > 0 ? "p-4" : "p-4 pt-4"}`}>
           {/* Priority and Tags */}
           <div className="flex items-center justify-between mb-3">
@@ -270,17 +324,7 @@ function TaskCard({ task, onTaskClick }: TaskCardProps) {
                 </Badge>
               ))}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-1 h-6 w-6 text-gray-400"
-              onClick={(e) => {
-                e.stopPropagation()
-                // Handle menu click
-              }}
-            >
-              <EllipsisVertical size={14} />
-            </Button>
+            <TaskActionsDropdown task={task} onEdit={onEditTask} onDelete={onDeleteTask} size="sm" />
           </div>
 
           {/* Task Title */}

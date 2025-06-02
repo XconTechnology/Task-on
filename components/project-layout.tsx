@@ -11,7 +11,7 @@ import TimelineView from "./timeline-view"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { LayoutGrid, List, Table, Calendar, Settings, Share, Star, MoreHorizontal } from "lucide-react"
-import CreateTaskModal from "./create-task-modal"
+import CreateTaskModal from "./modals/create-task-modal"
 
 type ProjectLayoutProps = {
   projectId: string
@@ -44,6 +44,7 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
         return <BoardView {...props} />
     }
   }
+
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">

@@ -22,7 +22,10 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import StatusDropdown from "./status-dropdown"
+import UpdateTaskModal from "./tasks/update-task-modal"
+import DeleteTaskDialog from "./tasks/delete-task-dialog"
 import { format } from "date-fns"
+import TaskActionsDropdown from "./tasks/task-actions-dropdown"
 
 type ListViewProps = {
   projectId: string
@@ -72,6 +75,10 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
   const { tasks, setTasks, updateTaskStatus, isLoading, setLoading, setError } = useAppStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [collapsedSections, setCollapsedSections] = useState<Set<Status>>(new Set())
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [taskToUpdate, setTaskToUpdate] = useState<Task | null>(null)
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null)
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -128,6 +135,28 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
     } catch (error) {
       console.error("Failed to update task status:", error)
     }
+  }
+
+  const handleEditTask = (task: Task) => {
+    setTaskToUpdate(task)
+    setIsUpdateModalOpen(true)
+  }
+
+  const handleDeleteTask = (task: Task) => {
+    setTaskToDelete(task)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleTaskUpdated = (updatedTask: Task) => {
+    const updatedTasks = tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+    setTasks(updatedTasks)
+    setTaskToUpdate(null)
+  }
+
+  const handleTaskDeleted = (taskId: string) => {
+    const updatedTasks = tasks.filter((task) => task.id !== taskId)
+    setTasks(updatedTasks)
+    setTaskToDelete(null)
   }
 
   if (isLoading) {
@@ -231,7 +260,7 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
                     <div className="col-span-2 text-label">Due date</div>
                     <div className="col-span-1 text-label">Priority</div>
                     <div className="col-span-2 text-label">Status</div>
-                    <div className="col-span-1 text-label">Comments</div>
+                    <div className="col-span-1 text-label">Actions</div>
                   </div>
 
                   {/* Task Rows */}
@@ -318,11 +347,19 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
                           </StatusDropdown>
                         </div>
 
-                        {/* Comments */}
+                        {/* Actions */}
                         <div className="col-span-1">
-                          <div className="flex items-center space-x-1 text-gray-500">
-                            <MessageSquare size={14} />
-                            <span className="text-medium">{task.comments?.length || 0}</span>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1 text-gray-500">
+                              <MessageSquare size={14} />
+                              <span className="text-medium">{task.comments?.length || 0}</span>
+                            </div>
+                            <TaskActionsDropdown
+                              task={task}
+                              onEdit={handleEditTask}
+                              onDelete={handleDeleteTask}
+                              size="sm"
+                            />
                           </div>
                         </div>
                       </div>
@@ -361,6 +398,26 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
           </div>
         )}
       </div>
+
+      <UpdateTaskModal
+        task={taskToUpdate}
+        isOpen={isUpdateModalOpen}
+        onClose={() => {
+          setIsUpdateModalOpen(false)
+          setTaskToUpdate(null)
+        }}
+        onTaskUpdated={handleTaskUpdated}
+      />
+
+      <DeleteTaskDialog
+        task={taskToDelete}
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false)
+          setTaskToDelete(null)
+        }}
+        onTaskDeleted={handleTaskDeleted}
+      />
     </div>
   )
 }

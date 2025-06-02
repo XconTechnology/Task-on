@@ -1,42 +1,48 @@
-import { MongoClient, type Db } from "mongodb"
+// lib/mongodb.ts
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"')
-}
+import { MongoClient, Db } from "mongodb"
 
 const uri = process.env.MONGODB_URI
-const options = {
-  maxPoolSize: 10,
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
+const dbName = process.env.MONGODB_DB || "projectflow"
+
+if (!uri) {
+  throw new Error('Missing environment variable: "MONGODB_URI"')
 }
 
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
 
-if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>
-  }
+// Development: use globalThis to persist across reloads
+const globalWithMongo = globalThis as typeof globalThis & {
+  _mongoClientPromise?: Promise<MongoClient>
+}
 
+if (process.env.NODE_ENV === "development") {
   if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options)
+    client = new MongoClient(uri, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 100000, // give more time
+      socketTimeoutMS: 60000,
+    })
     globalWithMongo._mongoClientPromise = client.connect()
   }
   clientPromise = globalWithMongo._mongoClientPromise
 } else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options)
+  client = new MongoClient(uri)
   clientPromise = client.connect()
 }
 
-// Export a module-scoped MongoClient promise. By doing this in a
-// separate module, the client can be shared across functions.
-export default clientPromise
-
+/**
+ * Returns the connected MongoDB database instance
+ */
 export async function getDatabase(): Promise<Db> {
-  const client = await clientPromise
-  return client.db("projectflow")
+  try {
+    const client = await clientPromise
+    return client.db(dbName)
+  } catch (err) {
+    console.error("Failed to connect to MongoDB:", err)
+    throw err // Let the API route fail with 500
+  }
 }
+
+export default clientPromise

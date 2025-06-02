@@ -104,7 +104,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       { returnDocument: "after" },
     )
 
-    if (!updatedTask.value) {
+    if (!updatedTask?.value) {
       return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
     }
 

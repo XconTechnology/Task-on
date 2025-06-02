@@ -2,32 +2,36 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { X, Users } from "lucide-react"
+import { Calendar, Users, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { teamApi } from "@/lib/api/teams"
-import { successToast, errorToast } from "@/lib/toast-utils"
 
-type CreateTeamModalProps = {
+type CreateTaskModalProps = {
   isOpen: boolean
   onClose: () => void
-  onSuccess?: (team: any) => void
+  projectId: string
+  onTaskCreated?: (task: any) => void
 }
 
-export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTeamModalProps) {
-  const [formData, setFormData] = useState({
-    teamName: "",
-    description: "",
-  })
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([])
-  const [availableMembers, setAvailableMembers] = useState([])
+export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCreated }: CreateTaskModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMembers, setIsLoadingMembers] = useState(false)
+  const [availableMembers, setAvailableMembers] = useState([])
+  const [selectedMember, setSelectedMember] = useState<string>("")
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    status: "todo" as "todo" | "in-progress" | "done",
+    priority: "medium" as "low" | "medium" | "high",
+    dueDate: "",
+    createdBy: "", // Will be set from available members
+  })
 
   useEffect(() => {
     if (isOpen) {
@@ -42,6 +46,10 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
       const data = await response.json()
       if (data.success) {
         setAvailableMembers(data.data || [])
+        // Set first user as default creator
+        if (data.data && data.data.length > 0) {
+          setFormData((prev) => ({ ...prev, createdBy: data.data[0].id }))
+        }
       }
     } catch (error) {
       console.error("Failed to fetch members:", error)
@@ -52,63 +60,56 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.teamName.trim()) return
+    if (!formData.title.trim()) return
 
     setIsLoading(true)
     try {
-      const response = await teamApi.createTeam(formData)
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          projectId,
+          assignedTo: selectedMember || undefined,
+        }),
+      })
 
-      if (response.success) {
-        // If members were selected, add them to the team
-        if (selectedMembers.length > 0) {
-          try {
-            await fetch(`/api/teams/${response.data.id}/members`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userIds: selectedMembers }),
-            })
-          } catch (memberError) {
-            console.error("Failed to add members:", memberError)
-            // Continue with success flow even if adding members fails
-          }
-        }
+      const data = await response.json()
 
-        successToast({
-          title: "Team Created",
-          description: "The team has been successfully created.",
-        })
-
-        onSuccess?.(response.data)
+      if (data.success) {
+        onTaskCreated?.(data.data)
         handleClose()
       } else {
-        errorToast({
-          title: "Team Creation Failed",
-          description: response.error || "Failed to create team. Please try again.",
-        })
+        console.error("Failed to create task:", data.error)
       }
     } catch (error) {
-      console.error("Failed to create team:", error)
-      errorToast({
-        title: "Team Creation Failed",
-        description: "An unexpected error occurred. Please try again.",
-      })
+      console.error("Failed to create task:", error)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleClose = () => {
-    setFormData({ teamName: "", description: "" })
-    setSelectedMembers([])
+    setFormData({
+      title: "",
+      description: "",
+      status: "todo",
+      priority: "medium",
+      dueDate: "",
+      createdBy: availableMembers.length > 0 ? (availableMembers[0] as any).id : "",
+    })
+    setSelectedMember("")
     onClose()
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const toggleMember = (memberId: string) => {
-    setSelectedMembers((prev) => (prev.includes(memberId) ? prev.filter((id) => id !== memberId) : [...prev, memberId]))
+    setSelectedMember(selectedMember === memberId ? "" : memberId)
   }
 
   return (
@@ -116,7 +117,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
       <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold text-gray-900">Create Team</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-gray-900">Create New Task</DialogTitle>
             <Button variant="ghost" size="sm" onClick={handleClose} className="p-1 h-8 w-8">
               <X size={16} />
             </Button>
@@ -124,16 +125,16 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Team Name */}
+          {/* Title */}
           <div className="space-y-2">
-            <label htmlFor="teamName" className="text-medium font-medium text-gray-900">
-              Team Name
+            <label htmlFor="title" className="text-medium font-medium text-gray-900">
+              Title
             </label>
             <Input
-              id="teamName"
-              value={formData.teamName}
-              onChange={(e) => handleInputChange("teamName", e.target.value)}
-              placeholder="Enter team name"
+              id="title"
+              value={formData.title}
+              onChange={(e) => handleInputChange("title", e.target.value)}
+              placeholder="Enter task title..."
               className="w-full"
               disabled={isLoading}
               required
@@ -149,19 +150,88 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Describe what this team does..."
+              placeholder="Enter task description..."
               rows={3}
               className="w-full resize-none"
               disabled={isLoading}
             />
           </div>
 
-          {/* Team Members */}
+          {/* Status and Priority */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-medium font-medium text-gray-900">Status</label>
+              <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-medium font-medium text-gray-900">Priority</label>
+              <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Due Date */}
+          <div className="space-y-2">
+            <label htmlFor="dueDate" className="text-medium font-medium text-gray-900">
+              Due Date (Optional)
+            </label>
+            <div className="relative">
+              <Input
+                id="dueDate"
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => handleInputChange("dueDate", e.target.value)}
+                className="w-full"
+                disabled={isLoading}
+              />
+              <Calendar
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                size={16}
+              />
+            </div>
+          </div>
+
+          {/* Created By */}
+          <div className="space-y-2">
+            <label className="text-medium font-medium text-gray-900">Created By</label>
+            <Select value={formData.createdBy} onValueChange={(value) => handleInputChange("createdBy", value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableMembers.map((user: any) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.username}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Assign To Member */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-medium font-medium text-gray-900">Add Team Members (Optional)</label>
+              <label className="text-medium font-medium text-gray-900">Assign To Member (Optional)</label>
               <Badge variant="secondary" className="text-small">
-                {selectedMembers.length} selected
+                {selectedMember ? "1 selected" : "0 selected"}
               </Badge>
             </div>
 
@@ -185,15 +255,15 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
                     <div
                       key={member.id}
                       className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                        selectedMembers.includes(member.id) ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50"
+                        selectedMember === member.id ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50"
                       }`}
                     >
                       <Checkbox
-                        checked={selectedMembers.includes(member.id)}
+                        checked={selectedMember === member.id}
                         onCheckedChange={(checked) => {
                           if (checked) {
                             toggleMember(member.id)
-                          } else {
+                          } else if (selectedMember === member.id) {
                             toggleMember(member.id)
                           }
                         }}
@@ -231,17 +301,14 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
               </div>
             )}
 
-            {selectedMembers.length > 0 && (
+            {selectedMember && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-small text-blue-700 mb-2">Selected members will be added to this team:</p>
+                <p className="text-small text-blue-700 mb-2">Selected member will be assigned to this task:</p>
                 <div className="flex flex-wrap gap-2">
-                  {selectedMembers.map((memberId) => {
-                    const member = availableMembers.find((m: any) => m.id === memberId)
+                  {(() => {
+                    const member = availableMembers.find((m: any) => m.id === selectedMember)
                     return (
-                      <div
-                        key={memberId}
-                        className="flex items-center space-x-2 bg-white border border-blue-200 rounded-full px-3 py-1"
-                      >
+                      <div className="flex items-center space-x-2 bg-white border border-blue-200 rounded-full px-3 py-1">
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={member?.profilePictureUrl || "/placeholder.svg"} />
                           <AvatarFallback className="text-extra-small">
@@ -254,13 +321,13 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
                           variant="ghost"
                           size="sm"
                           className="p-0 h-4 w-4 text-gray-400 hover:text-red-500"
-                          onClick={() => toggleMember(memberId)}
+                          onClick={() => setSelectedMember("")}
                         >
                           <X size={12} />
                         </Button>
                       </div>
                     )
-                  })}
+                  })()}
                 </div>
               </div>
             )}
@@ -273,7 +340,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !formData.teamName.trim()}
+              disabled={isLoading || !formData.title.trim()}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               {isLoading ? (
@@ -282,10 +349,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
                   <span className="text-medium">Creating...</span>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2">
-                  <Users size={16} />
-                  <span className="text-medium">Create Team</span>
-                </div>
+                <span className="text-medium">Create Task</span>
               )}
             </Button>
           </div>

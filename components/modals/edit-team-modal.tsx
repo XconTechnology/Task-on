@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { successToast, errorToast } from "@/lib/toast-utils"
 
 type EditTeamModalProps = {
   isOpen: boolean
@@ -91,21 +92,37 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
       if (data.success) {
         // Add new members if any selected
         if (selectedUsers.length > 0) {
-          await fetch(`/api/teams/${team.id}/members`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userIds: selectedUsers }),
-          })
+          try {
+            await fetch(`/api/teams/${team.id}/members`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userIds: selectedUsers }),
+            })
+          } catch (memberError) {
+            console.error("Failed to add members:", memberError)
+            // Continue with success flow even if adding members fails
+          }
         }
+
+        successToast({
+          title: "Team Updated",
+          description: "The team has been successfully updated.",
+        })
 
         onSuccess?.(data.data)
         handleClose()
       } else {
-        alert(data.error || "Failed to update team")
+        errorToast({
+          title: "Update Failed",
+          description: data.error || "Failed to update team. Please try again.",
+        })
       }
     } catch (error) {
       console.error("Failed to update team:", error)
-      alert("Failed to update team")
+      errorToast({
+        title: "Update Failed",
+        description: "An unexpected error occurred. Please try again.",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -123,14 +140,25 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
       const data = await response.json()
 
       if (data.success) {
+        successToast({
+          title: "Team Deleted",
+          description: "The team has been successfully deleted.",
+        })
+
         onDelete?.(team.id)
         handleClose()
       } else {
-        alert(data.error || "Failed to delete team")
+        errorToast({
+          title: "Delete Failed",
+          description: data.error || "Failed to delete team. Please try again.",
+        })
       }
     } catch (error) {
       console.error("Failed to delete team:", error)
-      alert("Failed to delete team")
+      errorToast({
+        title: "Delete Failed",
+        description: "An unexpected error occurred. Please try again.",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -145,14 +173,25 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
       const data = await response.json()
 
       if (data.success) {
+        successToast({
+          title: "Member Removed",
+          description: "The member has been removed from the team.",
+        })
+
         setMembers(members.filter((member: any) => member.id !== userId))
         fetchAvailableUsers() // Refresh available users
       } else {
-        alert(data.error || "Failed to remove member")
+        errorToast({
+          title: "Remove Failed",
+          description: data.error || "Failed to remove member. Please try again.",
+        })
       }
     } catch (error) {
       console.error("Failed to remove member:", error)
-      alert("Failed to remove member")
+      errorToast({
+        title: "Remove Failed",
+        description: "An unexpected error occurred. Please try again.",
+      })
     }
   }
 
