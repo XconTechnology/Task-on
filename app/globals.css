@@ -61,7 +61,7 @@
   }
 
   .header-extra-small {
-    @apply text-lg font-semibold text-gray-900;
+    @apply text-base font-semibold text-gray-900;
   }
 
   /* Body Text */

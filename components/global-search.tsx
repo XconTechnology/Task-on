@@ -81,7 +81,7 @@ export default function GlobalSearch() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim() && setIsOpen(true)}
-          className="pl-10 bg-purple-500/20 border-purple-400/30 text-white placeholder:text-purple-200 focus:bg-white focus:text-gray-900 focus:placeholder:text-gray-500 transition-all"
+          className="pl-10 h-8 bg-purple-500/20 border-purple-400/30 text-white placeholder:text-purple-200 focus:bg-white focus:text-gray-900 focus:placeholder:text-gray-500 transition-all"
         />
       </div>
 

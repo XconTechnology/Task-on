@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { type Task, Status, Priority } from "@/lib/types"
-import { X, Calendar, User, Flag, Clock, Tag, Activity, MoreHorizontal, Star, Share } from "lucide-react"
+import { X, Calendar, User, Flag, Clock, Activity, MoreHorizontal, Star, Share } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -183,25 +183,6 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                     <span className="text-label">Time Estimate</span>
                   </div>
                   <span className="text-muted">Empty</span>
-                </div>
-
-                {/* Tags */}
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 w-24">
-                    <Tag size={16} className="text-gray-400" />
-                    <span className="text-label">Tags</span>
-                  </div>
-                  {task.tags ? (
-                    <div className="flex flex-wrap gap-1">
-                      {task.tags.split(",").map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-small">
-                          {tag.trim()}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-muted">Empty</span>
-                  )}
                 </div>
               </div>
 

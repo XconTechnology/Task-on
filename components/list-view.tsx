@@ -3,16 +3,12 @@
 import { useEffect, useState } from "react"
 import { useAppStore } from "@/lib/store"
 import { taskApi } from "@/lib/api"
-import { Status, Priority, type Task } from "@/lib/types"
+import { Status, type Task } from "@/lib/types"
 import {
   Search,
   Plus,
   ChevronDown,
   ChevronRight,
-  Circle,
-  Play,
-  Pause,
-  CheckCircle,
   Calendar,
   MessageSquare,
   MoreHorizontal,
@@ -26,50 +22,14 @@ import UpdateTaskModal from "./tasks/update-task-modal"
 import DeleteTaskDialog from "./tasks/delete-task-dialog"
 import { format } from "date-fns"
 import TaskActionsDropdown from "./tasks/task-actions-dropdown"
+import { ListPriorityConfig, ListStatusConfig } from "@/lib/constants"
 
 type ListViewProps = {
   projectId: string
   setIsModalNewTaskOpen: (isOpen: boolean) => void
 }
 
-const statusConfig = {
-  [Status?.Completed]: {
-    label: "COMPLETE",
-    icon: CheckCircle,
-    color: "bg-green-600",
-    textColor: "text-white",
-    count: 0,
-  },
-  [Status?.WorkInProgress]: {
-    label: "IN PROGRESS",
-    icon: Play,
-    color: "bg-blue-600",
-    textColor: "text-white",
-    count: 0,
-  },
-  [Status?.ToDo]: {
-    label: "TO DO",
-    icon: Circle,
-    color: "bg-gray-600",
-    textColor: "text-white",
-    count: 0,
-  },
-  [Status?.UnderReview]: {
-    label: "UNDER REVIEW",
-    icon: Pause,
-    color: "bg-orange-600",
-    textColor: "text-white",
-    count: 0,
-  },
-}
 
-const priorityConfig = {
-  [Priority.Urgent]: { color: "bg-red-100 text-red-700", label: "Urgent" },
-  [Priority.High]: { color: "bg-orange-100 text-orange-700", label: "High" },
-  [Priority.Medium]: { color: "bg-yellow-100 text-yellow-700", label: "Medium" },
-  [Priority.Low]: { color: "bg-green-100 text-green-700", label: "Low" },
-  [Priority.Backlog]: { color: "bg-gray-100 text-gray-700", label: "Backlog" },
-}
 
 export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewProps) {
   const { tasks, setTasks, updateTaskStatus, isLoading, setLoading, setError } = useAppStore()
@@ -208,7 +168,7 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
       {/* Task Lists */}
       <div className="p-6 space-y-6">
         {visibleStatuses.map((status) => {
-          const config = statusConfig[status]
+          const config = ListStatusConfig[status]
           const statusTasks = tasksByStatus[status] || []
           const isCollapsed = collapsedSections.has(status)
           const Icon = config.icon
@@ -317,8 +277,8 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
                         {/* Priority */}
                         <div className="col-span-1">
                           {task.priority && (
-                            <Badge className={priorityConfig[task.priority].color}>
-                              <span className="text-small">{priorityConfig[task.priority].label}</span>
+                            <Badge className={ListPriorityConfig[task.priority].color}>
+                              <span className="text-small">{ListPriorityConfig[task.priority].label}</span>
                             </Badge>
                           )}
                         </div>
@@ -342,7 +302,7 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
                                       : "bg-gray-600 text-white border-gray-600 hover:bg-gray-700"
                               }`}
                             >
-                              <span className="text-small text-white">{statusConfig[status].label}</span>
+                              <span className="text-small text-white">{ListStatusConfig[status].label}</span>
                             </Button>
                           </StatusDropdown>
                         </div>
@@ -352,7 +312,7 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
                           <div className="flex items-center space-x-2">
                             <div className="flex items-center space-x-1 text-gray-500">
                               <MessageSquare size={14} />
-                              <span className="text-medium">{task.comments?.length || 0}</span>
+                              <span className="text-medium">{task?.comments?.length || 0}</span>
                             </div>
                             <TaskActionsDropdown
                               task={task}

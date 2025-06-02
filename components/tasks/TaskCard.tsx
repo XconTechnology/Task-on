@@ -1,16 +1,19 @@
-import { useDrag } from "react-dnd"
+import {  useDrag } from "react-dnd"
 import { type Task } from "@/lib/types"
-import { EllipsisVertical, MessageSquareMore } from "lucide-react"
+import {  MessageSquareMore } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import TaskActionsDropdown from "./task-actions-dropdown"
 
 type TaskCardProps = {
   task: Task
+  onTaskClick: (task: Task) => void
+  onEditTask: (task: Task) => void
+  onDeleteTask: (task: Task) => void
 }
 
-const TaskCard =({ task }: TaskCardProps) =>{
+const TaskCard =({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "task",
     item: { id: task.id },
@@ -19,7 +22,6 @@ const TaskCard =({ task }: TaskCardProps) =>{
     }),
   }))
 
-  const taskTags = task.tags ? task.tags.split(",").map((tag) => tag.trim()) : []
   const numberOfComments = task.comments?.length || 0
 
   const priorityConfig = {
@@ -33,23 +35,13 @@ const TaskCard =({ task }: TaskCardProps) =>{
   return (
     <Card
       ref={drag}
-      className={`cursor-move transition-all duration-200 hover:shadow-lg bg-white border border-gray-200 ${
-        isDragging ? "opacity-50 rotate-1 scale-105 shadow-xl" : "opacity-100"
+      onClick={() => onTaskClick(task)}
+      className={`task-card transition-all duration-200 hover:shadow-lg bg-white border border-gray-200 ${
+        isDragging ? "dragging opacity-50 rotate-1 scale-105 shadow-xl" : "opacity-100"
       }`}
     >
       <CardContent className="p-0">
-        {/* Task Image - only show if task has attachments */}
-        {task.attachments && task.attachments.length > 0 && (
-          <div className="relative">
-            <img
-              src="/placeholder.svg?height=120&width=280"
-              alt="Task attachment"
-              className="w-full h-24 object-cover rounded-t-lg"
-            />
-          </div>
-        )}
-
-        <div className={`${task.attachments && task.attachments.length > 0 ? "p-4" : "p-4 pt-4"}`}>
+        <div className="p-4 pt-4">
           {/* Priority and Tags */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
@@ -58,15 +50,9 @@ const TaskCard =({ task }: TaskCardProps) =>{
                   {task.priority}
                 </Badge>
               )}
-              {taskTags.slice(0, 2).map((tag, index) => (
-                <Badge key={index} variant="secondary" className="text-small bg-blue-100 text-blue-700">
-                  {tag}
-                </Badge>
-              ))}
+            
             </div>
-            <Button variant="ghost" size="sm" className="p-1 h-6 w-6 text-gray-400">
-              <EllipsisVertical size={14} />
-            </Button>
+            <TaskActionsDropdown task={task} onEdit={onEditTask} onDelete={onDeleteTask} size="sm" />
           </div>
 
           {/* Task Title */}
@@ -108,8 +94,6 @@ const TaskCard =({ task }: TaskCardProps) =>{
                 </div>
               )}
 
-              {/* Points */}
-              {task.points && <div className="text-small font-medium">{task.points}</div>}
             </div>
           </div>
         </div>
