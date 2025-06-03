@@ -72,6 +72,11 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+       gridTemplateColumns: {
+        // Adds support for grid-cols-13
+        13: 'repeat(13, minmax(0, 1fr))',
+        14: 'repeat(14, minmax(0, 1fr))',
+      },
     },
   },
   plugins: [],

@@ -1,5 +1,5 @@
-import { CheckCircle, Circle, Pause, Play } from "lucide-react"
-import { type Project, type Task, type User, type Team, Priority, Status } from "./types"
+import { ArrowUpRight, Award, BarChart3, Calendar, CheckCircle, Circle, Clock, Pause, Play, TrendingUp, Zap } from "lucide-react"
+import { Priority, Status } from "./types"
 
 
 export const taskStatus = [Status?.ToDo, Status?.WorkInProgress, Status?.UnderReview, Status?.Completed]
@@ -15,7 +15,7 @@ export const statusConfig = {
     color: "#10B981",
     bgColor: "bg-green-50",
     borderColor: "border-green-300",
-    label: "Work In Progress",
+    label: "In Progress",
   },
   [Status?.UnderReview]: {
     color: "#F59E0B",
@@ -31,6 +31,84 @@ export const statusConfig = {
   },
 }
 
+// Constants for metric boxes
+ export const MAIN_STATS_DATA = [
+  {
+    id: "total",
+    label: "Total Tasks",
+    key: "totalTasks",
+    icon: BarChart3,
+    color: "blue",
+    bgColor: "bg-blue-100",
+    iconColor: "text-blue-600",
+    subtext: "All time",
+    subtextIcon: TrendingUp,
+    subtextColor: "text-green-600",
+  },
+  {
+    id: "completed",
+    label: "Completed",
+    key: "completedTasks",
+    icon: CheckCircle,
+    color: "green",
+    bgColor: "bg-green-100",
+    iconColor: "text-green-600",
+    subtext: "completion rate",
+    subtextIcon: CheckCircle,
+    subtextColor: "text-green-600",
+    showPercentage: true,
+  },
+  {
+    id: "progress",
+    label: "In Progress",
+    key: "inProgressTasks",
+    icon: Clock,
+    color: "orange",
+    bgColor: "bg-orange-100",
+    iconColor: "text-orange-600",
+    subtext: "Active tasks",
+    subtextIcon: Zap,
+    subtextColor: "text-orange-600",
+  },
+]
+
+
+
+export const TIME_STATS_DATA = [
+  {
+    id: "today",
+    label: "TODAY",
+    key: "todayCompletedTasks",
+    subtitle: "Completed today",
+    icon: Calendar,
+    color: "from-blue-500 to-blue-600",
+    iconBg: "bg-white/20",
+    footerText: "Updated in real-time",
+    footerIcon: ArrowUpRight,
+  },
+  {
+    id: "week",
+    label: "THIS WEEK",
+    key: "weekCompletedTasks",
+    subtitle: "Completed this week",
+    icon: Zap,
+    color: "from-green-500 to-green-600",
+    iconBg: "bg-white/20",
+    footerText: "Since last Sunday",
+    footerIcon: ArrowUpRight,
+  },
+  {
+    id: "month",
+    label: "THIS MONTH",
+    key: "monthCompletedTasks",
+    subtitle: "Completed this month",
+    icon: Award,
+    color: "from-purple-500 to-purple-600",
+    iconBg: "bg-white/20",
+    footerText: "Since the 1st",
+    footerIcon: ArrowUpRight,
+  },
+]
 
 export const ListStatusConfig = {
   [Status?.Completed]: {

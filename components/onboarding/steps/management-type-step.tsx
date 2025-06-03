@@ -1,5 +1,5 @@
 "use client"
-
+import { Check } from "lucide-react"
 import type { OnboardingData } from "@/lib/types"
 
 type ManagementTypeStepProps = {
@@ -8,20 +8,64 @@ type ManagementTypeStepProps = {
 }
 
 const managementOptions = [
-  "Personal Use",
-  "Operations",
-  "Startup",
-  "Software Development",
-  "Sales & CRM",
-  "Finance & Accounting",
-  "Creative & Design",
-  "Support",
-  "HR & Recruiting",
-  "IT",
-  "Marketing",
-  "Professional Services",
-  "PMO",
-  "Other",
+  {
+    id: "personal-use",
+    name: "Personal Use",
+    icon: "👤",
+  },
+  {
+    id: "operations",
+    name: "Operations",
+    icon: "⚙️",
+  },
+  {
+    id: "startup",
+    name: "Startup",
+    icon: "🚀",
+  },
+  {
+    id: "software-development",
+    name: "Software Development",
+    icon: "💻",
+  },
+  {
+    id: "sales-crm",
+    name: "Sales & CRM",
+    icon: "📊",
+  },
+  {
+    id: "finance-accounting",
+    name: "Finance & Accounting",
+    icon: "💰",
+  },
+  {
+    id: "creative-design",
+    name: "Creative & Design",
+    icon: "🎨",
+  },
+ 
+  {
+    id: "hr-recruiting",
+    name: "HR & Recruiting",
+    icon: "👥",
+  },
+
+  {
+    id: "marketing",
+    name: "Marketing",
+    icon: "📣",
+  },
+  {
+    id: "professional-services",
+    name: "Professional Services",
+    icon: "👔",
+  },
+
+  {
+    id: "other",
+    name: "Other",
+    icon: "✨",
+  },
 ]
 
 export default function ManagementTypeStep({ data, updateData }: ManagementTypeStepProps) {
@@ -37,24 +81,39 @@ export default function ManagementTypeStep({ data, updateData }: ManagementTypeS
   return (
     <div className="text-center space-y-8">
       <div>
-        <h1 className="header-medium mb-4">What would you like to</h1>
-        <h1 className="header-medium mb-4">manage?</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">What would you like to</h1>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text">
+          manage?
+        </h1>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-3xl mx-auto">
-        {managementOptions.map((option) => (
-          <button
-            key={option}
-            onClick={() => handleToggle(option)}
-            className={`p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
-              data.managementType?.includes(option)
-                ? "border-purple-500 bg-purple-50 text-purple-700"
-                : "border-gray-200 hover:border-gray-300 text-gray-700"
-            }`}
-          >
-            <span className="text-medium font-medium">{option}</span>
-          </button>
-        ))}
+      <div className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
+        {managementOptions.map((option) => {
+          const isSelected = data.managementType?.includes(option.name)
+          return (
+            <button
+              key={option.id}
+              onClick={() => handleToggle(option.name)}
+              className={`relative group flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${
+                isSelected
+                  ? "bg-gradient-to-r from-purple-500/10 to-blue-500/10 border-2 border-purple-500"
+                  : "bg-white border-2 border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              {isSelected && (
+                <div className="absolute -top-2 -right-2 w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                  <Check size={12} className="text-white" />
+                </div>
+              )}
+              <div className="flex items-center space-x-2">
+                <span className="text-xl">{option.icon}</span>
+                <span className={`text-medium font-medium ${isSelected ? "text-purple-700" : "text-gray-700"}`}>
+                  {option.name}
+                </span>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       <p className="text-description-small text-gray-500 max-w-md mx-auto">

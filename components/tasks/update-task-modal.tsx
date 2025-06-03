@@ -234,7 +234,7 @@ export default function UpdateTaskModal({
                 <SelectContent>
                   <SelectItem value={Status.ToDo}>To Do</SelectItem>
                   <SelectItem value={Status.WorkInProgress}>
-                    Work In Progress
+                    In Progress
                   </SelectItem>
                   <SelectItem value={Status.UnderReview}>
                     Under Review

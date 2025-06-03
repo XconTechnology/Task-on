@@ -2,16 +2,15 @@
 
 import { useState } from "react"
 import { useAppStore } from "@/lib/store"
-import TopNavigation from "./top-navigation"
-import Sidebar from "./sidebar"
 import BoardView from "./board-view"
 import ListView from "./list-view"
 import TableView from "./table-view"
 import TimelineView from "./timeline-view"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { LayoutGrid, List, Table, Calendar, Settings, Share, Star, MoreHorizontal } from "lucide-react"
+import { LayoutGrid, List, Table, Calendar, Star } from "lucide-react"
 import CreateTaskModal from "./modals/create-task-modal"
+import SearchFilterBar from "./search-filter-bar"
 
 type ProjectLayoutProps = {
   projectId: string
@@ -45,13 +44,9 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
     }
   }
 
-
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Top Navigation */}
-
       <div className="flex flex-1 overflow-hidden">
-
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Project Header */}
           <div className="bg-white border-b border-gray-200">
@@ -82,43 +77,37 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
                     </Button>
                   </div>
                 </div>
-
-                <div className="flex items-center space-x-3">
-                  <Button variant="outline" size="sm">
-                    <Share size={16} className="mr-2" />
-                    <span className="text-medium">Share</span>
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Settings size={16} className="mr-2" />
-                    <span className="text-medium">Settings</span>
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal size={16} />
-                  </Button>
-                </div>
               </div>
 
-              {/* View Tabs */}
-              <div className="flex items-center space-x-6 mt-4">
-                {viewOptions.map((option) => {
-                  const Icon = option.icon
-                  return (
-                    <button
-                      key={option.id}
-                      onClick={() => setActiveView(option.id)}
-                      className={`flex items-center space-x-2 px-1 py-2 border-b-2 transition-colors ${
-                        activeView === option.id
-                          ? "text-gray-900 border-gray-900"
-                          : "text-gray-500 border-transparent hover:text-gray-700"
-                      }`}
-                    >
-                      <Icon size={16} />
-                      <span className={`text-medium ${activeView === option.id ? "font-medium" : ""}`}>
-                        {option.label}
-                      </span>
-                    </button>
-                  )
-                })}
+              {/* View Tabs and Search/Filter Bar */}
+              <div className="flex w-full items-center mt-4 justify-between">
+                {/* View Tabs */}
+                <div className="flex items-center space-x-6">
+                  {viewOptions.map((option) => {
+                    const Icon = option.icon
+                    return (
+                      <button
+                        key={option.id}
+                        onClick={() => setActiveView(option.id)}
+                        className={`flex items-center space-x-2 px-1 py-2 border-b-2 transition-colors ${
+                          activeView === option.id
+                            ? "text-gray-900 border-gray-900"
+                            : "text-gray-500 border-transparent hover:text-gray-700"
+                        }`}
+                      >
+                        <Icon size={16} />
+                        <span className={`text-medium ${activeView === option.id ? "font-medium" : ""}`}>
+                          {option.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Search and Filter Bar */}
+                <div className="max-w-2xl ml-8">
+                  <SearchFilterBar onAddTask={() => setIsModalNewTaskOpen(true)} />
+                </div>
               </div>
             </div>
           </div>
@@ -127,6 +116,7 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
           <div className="flex-1 overflow-auto custom-scrollbar">{renderView()}</div>
         </div>
       </div>
+
       <CreateTaskModal isOpen={isModalNewTaskOpen} onClose={() => setIsModalNewTaskOpen(false)} projectId={projectId} />
     </div>
   )

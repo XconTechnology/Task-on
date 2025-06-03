@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     // Calculate stats
     const totalTasks = allTasks.length
     const completedTasks = allTasks.filter((task) => task.status === "Completed").length
-    const inProgressTasks = allTasks.filter((task) => task.status === "Work In Progress").length
+    const inProgressTasks = allTasks.filter((task) => task.status === "In Progress").length
     const todoTasks = allTasks.filter((task) => task.status === "To Do").length
 
     // Today's completed tasks

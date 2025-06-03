@@ -214,7 +214,7 @@ export default function CalendarContent() {
                           className={`text-extra-small p-1 rounded truncate cursor-pointer ${
                             task.status === "Completed"
                               ? "bg-green-100 text-green-700"
-                              : task.status === "Work In Progress"
+                              : task.status === "In Progress"
                                 ? "bg-blue-100 text-blue-700"
                                 : task.status === "Under Review"
                                   ? "bg-orange-100 text-orange-700"
@@ -320,7 +320,7 @@ function TodaysTasks({ tasks, isLoading }: { tasks: Task[]; isLoading: boolean }
               className={
                 task.status === "Completed"
                   ? "bg-green-100 text-green-700"
-                  : task.status === "Work In Progress"
+                  : task.status === "In Progress"
                     ? "bg-blue-100 text-blue-700"
                     : "bg-gray-100 text-gray-700"
               }

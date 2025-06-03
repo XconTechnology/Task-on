@@ -1,48 +1,45 @@
-"use client"
+"use client";
 
-import type { OnboardingData } from "@/lib/types"
+import type { OnboardingData } from "@/lib/types";
 
 type FeaturesStepProps = {
-  data: Partial<OnboardingData>
-  updateData: (data: Partial<OnboardingData>) => void
-}
+  data: Partial<OnboardingData>;
+  updateData: (data: Partial<OnboardingData>) => void;
+};
 
 const featureOptions = [
   "Forms",
   "Tasks & Projects",
   "Automations",
   "Whiteboards",
-  "Boards & Kanban",
   "Workload",
   "Scheduling",
-  "Goals & OKRs",
-  "Docs & Wikis",
   "Dashboards",
   "Time Tracking",
   "Ask AI",
   "Chat",
-  "Sprints",
   "Calendar",
-  "Gantt Charts",
-  "Clips",
-  "CRM",
-]
+];
 
 export default function FeaturesStep({ data, updateData }: FeaturesStepProps) {
   const handleToggle = (feature: string) => {
-    const currentFeatures = data.features || []
+    const currentFeatures = data.features || [];
     const newFeatures = currentFeatures.includes(feature)
       ? currentFeatures.filter((f) => f !== feature)
-      : [...currentFeatures, feature]
+      : [...currentFeatures, feature];
 
-    updateData({ features: newFeatures })
-  }
+    updateData({ features: newFeatures });
+  };
 
   return (
-    <div className="text-center space-y-8">
+    <div className="text-center  space-y-8">
       <div>
-        <h1 className="header-medium mb-4">Which features are you interested in</h1>
-        <h1 className="header-medium mb-4">trying?</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Which features are you interested in
+        </h1>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text">
+          trying?
+        </h1>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-4xl mx-auto max-h-80 overflow-y-auto custom-scrollbar">
@@ -65,5 +62,5 @@ export default function FeaturesStep({ data, updateData }: FeaturesStepProps) {
         Don't worry, you'll have access to all of these in your Workspace.
       </p>
     </div>
-  )
+  );
 }

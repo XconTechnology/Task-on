@@ -2,16 +2,15 @@
 
 import { useEffect, useState } from "react"
 import { useAppStore } from "@/lib/store"
+import { useSearchFilterStore } from "@/lib/search-filter-store"
 import { taskApi } from "@/lib/api"
-import { Status, Priority } from "@/lib/types"
-import { Search, MoreHorizontal, Plus, ArrowUpDown, Calendar } from "lucide-react"
+import { Status } from "@/lib/types"
+import { MoreHorizontal, Plus, ArrowUpDown, Calendar } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { format } from "date-fns"
 
 type TableViewProps = {
@@ -21,9 +20,7 @@ type TableViewProps = {
 
 export default function TableView({ projectId, setIsModalNewTaskOpen }: TableViewProps) {
   const { tasks, setTasks, isLoading, setLoading, setError } = useAppStore()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [priorityFilter, setPriorityFilter] = useState<string>("all")
+  const { filterTasks } = useSearchFilterStore()
   const [sortBy, setSortBy] = useState<string>("dueDate")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
 
@@ -47,45 +44,35 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
     fetchTasks()
   }, [projectId, setTasks, setLoading, setError])
 
-  // Filter and sort tasks
-  const filteredTasks = tasks
-    .filter((task) => {
-      const matchesSearch =
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesStatus = statusFilter === "all" || task.status === statusFilter
-      const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter
+  // Apply search and filters, then sort
+  const filteredAndSortedTasks = filterTasks(tasks).sort((a, b) => {
+    let comparison = 0
 
-      return matchesSearch && matchesStatus && matchesPriority
-    })
-    .sort((a, b) => {
-      let comparison = 0
+    switch (sortBy) {
+      case "dueDate":
+        if (!a.dueDate) return 1
+        if (!b.dueDate) return -1
+        comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+        break
+      case "priority":
+        const priorityOrder = { Urgent: 0, High: 1, Medium: 2, Low: 3, Backlog: 4 }
+        comparison = priorityOrder[a.priority] - priorityOrder[b.priority]
+        break
+      case "title":
+        comparison = a.title.localeCompare(b.title)
+        break
+      case "status":
+        comparison = a.status.localeCompare(b.status)
+        break
+      case "points":
+        comparison = (a.points || 0) - (b.points || 0)
+        break
+      default:
+        return 0
+    }
 
-      switch (sortBy) {
-        case "dueDate":
-          if (!a.dueDate) return 1
-          if (!b.dueDate) return -1
-          comparison = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-          break
-        case "priority":
-          const priorityOrder = { Urgent: 0, High: 1, Medium: 2, Low: 3, Backlog: 4 }
-          comparison = priorityOrder[a.priority] - priorityOrder[b.priority]
-          break
-        case "title":
-          comparison = a.title.localeCompare(b.title)
-          break
-        case "status":
-          comparison = a.status.localeCompare(b.status)
-          break
-        case "points":
-          comparison = (a.points || 0) - (b.points || 0)
-          break
-        default:
-          return 0
-      }
-
-      return sortOrder === "asc" ? comparison : -comparison
-    })
+    return sortOrder === "asc" ? comparison : -comparison
+  })
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -125,60 +112,13 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Task Table</h2>
-          <p className="text-gray-600 mt-1">{filteredTasks.length} tasks found</p>
+          <p className="text-gray-600 mt-1">{filteredAndSortedTasks.length} tasks found</p>
         </div>
         <Button onClick={() => setIsModalNewTaskOpen(true)} className="bg-blue-600 hover:bg-blue-700">
           <Plus size={16} className="mr-2" />
           Add Task
         </Button>
       </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-              <Input
-                placeholder="Search tasks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value={Status.ToDo}>To Do</SelectItem>
-                <SelectItem value={Status.WorkInProgress}>In Progress</SelectItem>
-                <SelectItem value={Status.UnderReview}>Under Review</SelectItem>
-                <SelectItem value={Status.Completed}>Completed</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Priority Filter */}
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Filter by priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value={Priority.Urgent}>Urgent</SelectItem>
-                <SelectItem value={Priority.High}>High</SelectItem>
-                <SelectItem value={Priority.Medium}>Medium</SelectItem>
-                <SelectItem value={Priority.Low}>Low</SelectItem>
-                <SelectItem value={Priority.Backlog}>Backlog</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Table */}
       <Card>
@@ -221,7 +161,7 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTasks.map((task) => (
+              {filteredAndSortedTasks.map((task) => (
                 <TableRow key={task.id} className="hover:bg-gray-50">
                   <TableCell>
                     <div>
@@ -242,7 +182,7 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={statusConfig[task.status].color}>{statusConfig[task.status].label}</Badge>
+                    <Badge className={statusConfig[task.status]?.color}>{statusConfig[task.status]?.label}</Badge>
                   </TableCell>
                   <TableCell>
                     {task.priority && (
@@ -293,10 +233,9 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
             </TableBody>
           </Table>
 
-          {filteredTasks.length === 0 && (
+          {filteredAndSortedTasks.length === 0 && (
             <div className="p-8 text-center">
               <div className="text-gray-400 mb-4">
-                <Search size={48} className="mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
                 <p>Try adjusting your search or filters, or create a new task.</p>
               </div>

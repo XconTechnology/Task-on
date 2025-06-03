@@ -4,12 +4,12 @@ import { useEffect, useState } from "react"
 import { DndProvider} from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
 import { useAppStore } from "@/lib/store"
+import { useSearchFilterStore } from "@/lib/search-filter-store"
 import { taskApi } from "@/lib/api"
 import { type Task, Status } from "@/lib/types"
 import TaskDetailModal from "./task-detail-modal"
 import UpdateTaskModal from "./tasks/update-task-modal"
 import DeleteTaskDialog from "./tasks/delete-task-dialog"
-import {  taskStatus } from "@/lib/constants"
 import TaskColumn from "./tasks/TaskColumn"
 
 type BoardProps = {
@@ -17,9 +17,11 @@ type BoardProps = {
   setIsModalNewTaskOpen: (isOpen: boolean) => void
 }
 
+const taskStatus = [Status?.ToDo, Status?.WorkInProgress, Status?.UnderReview, Status?.Completed]
 
 export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardProps) {
   const { tasks, setTasks, updateTaskStatus, isLoading, setLoading, setError } = useAppStore()
+  const { filterTasks } = useSearchFilterStore()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false)
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
@@ -46,6 +48,9 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
 
     fetchTasks()
   }, [projectId, setTasks, setLoading, setError])
+
+  // Apply search and filters
+  const filteredTasks = filterTasks(tasks)
 
   const moveTask = async (taskId: string, toStatus: Status) => {
     updateTaskStatus(taskId, toStatus)
@@ -112,7 +117,7 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
           <TaskColumn
             key={status}
             status={status}
-            tasks={tasks}
+            tasks={filteredTasks}
             moveTask={moveTask}
             setIsModalNewTaskOpen={setIsModalNewTaskOpen}
             onTaskClick={handleTaskClick}

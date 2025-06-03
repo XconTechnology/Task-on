@@ -2,19 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useAppStore } from "@/lib/store"
+import { useSearchFilterStore } from "@/lib/search-filter-store"
 import { taskApi } from "@/lib/api"
 import { Status, type Task } from "@/lib/types"
-import {
-  Search,
-  Plus,
-  ChevronDown,
-  ChevronRight,
-  Calendar,
-  MessageSquare,
-  MoreHorizontal,
-} from "lucide-react"
+import { Plus, ChevronDown, ChevronRight, Calendar, MessageSquare, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import StatusDropdown from "./status-dropdown"
@@ -29,11 +21,9 @@ type ListViewProps = {
   setIsModalNewTaskOpen: (isOpen: boolean) => void
 }
 
-
-
 export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewProps) {
   const { tasks, setTasks, updateTaskStatus, isLoading, setLoading, setError } = useAppStore()
-  const [searchQuery, setSearchQuery] = useState("")
+  const { filterTasks } = useSearchFilterStore()
   const [collapsedSections, setCollapsedSections] = useState<Set<Status>>(new Set())
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -60,11 +50,8 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
     fetchTasks()
   }, [projectId, setTasks, setLoading, setError])
 
-  const filteredTasks = tasks.filter(
-    (task) =>
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  // Apply search and filters
+  const filteredTasks = filterTasks(tasks)
 
   // Group tasks by status and only show sections that have tasks
   const tasksByStatus = filteredTasks.reduce(
@@ -133,38 +120,6 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Header with search */}
-      <div className="border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h2 className="text-label">Group: Status</h2>
-            <div className="flex items-center space-x-2">
-              <span className="text-muted">Subtasks</span>
-              <span className="text-muted">Columns</span>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-              <Input
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-64 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-            <Button
-              onClick={() => setIsModalNewTaskOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              size="sm"
-            >
-              <span className="text-medium text-white">Add Task</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Task Lists */}
       <div className="p-6 space-y-6">
         {visibleStatuses.map((status) => {
@@ -347,9 +302,8 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
         {visibleStatuses.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
-              <Search size={48} className="mx-auto mb-4" />
               <h3 className="header-small mb-2">No tasks found</h3>
-              <p className="text-description">Create your first task to get started.</p>
+              <p className="text-description">Try adjusting your search or filters.</p>
             </div>
             <Button onClick={() => setIsModalNewTaskOpen(true)} className="bg-blue-600 hover:bg-blue-700">
               <Plus size={16} className="mr-2" />

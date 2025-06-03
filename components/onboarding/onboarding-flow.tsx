@@ -10,9 +10,8 @@ import ManagementTypeStep from "./steps/management-type-step"
 import FeaturesStep from "./steps/features-step"
 import WorkspaceNameStep from "./steps/workspace-name-step"
 import InviteTeamStep from "./steps/invite-team-step"
-import ReferralSourceStep from "./steps/referral-source-step"
 
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 5
 
 export default function OnboardingFlow() {
   const router = useRouter()
@@ -74,7 +73,7 @@ export default function OnboardingFlow() {
       const data = await response.json()
 
       if (data.success) {
-        router.push("/projects/project_1")
+        router.push("/dashboard")
       } else {
         console.error("Onboarding failed:", data.error)
       }
@@ -88,10 +87,20 @@ export default function OnboardingFlow() {
   const progressPercentage = (currentStep / TOTAL_STEPS) * 100
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+    <div className="max-h-screen flex items-center justify-center  p-4 relative">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat  opacity-20"
+        style={{
+          backgroundImage: "url('/onboarding_Img.png')",
+        }}
+      ></div>
+      {/* Dark overlay to dim the background further */}
+      <div className="absolute inset-0 bg-gray-900/10 "></div>
+
+      <div className="w-full max-w-3xl relative z-10 overflow-hidden">
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-white/20">
           {/* Header */}
           <div className="p-8 pb-6">
             <div className="flex items-center justify-between mb-8">
@@ -107,13 +116,12 @@ export default function OnboardingFlow() {
             </div>
 
             {/* Step Content */}
-            <div className="min-h-[400px]">
+            <div className="min-h-[350px]">
               {currentStep === 1 && <UsageTypeStep data={onboardingData} updateData={updateData} />}
               {currentStep === 2 && <ManagementTypeStep data={onboardingData} updateData={updateData} />}
               {currentStep === 3 && <FeaturesStep data={onboardingData} updateData={updateData} />}
               {currentStep === 4 && <WorkspaceNameStep data={onboardingData} updateData={updateData} />}
               {currentStep === 5 && <InviteTeamStep data={onboardingData} updateData={updateData} />}
-              {currentStep === 6 && <ReferralSourceStep data={onboardingData} updateData={updateData} />}
             </div>
           </div>
 
@@ -128,12 +136,12 @@ export default function OnboardingFlow() {
           </div>
 
           {/* Footer */}
-          <div className="p-8 pt-6 bg-gray-50 flex items-center justify-between">
+          <div className="p-8 pt-6 bg-gray-50/90 backdrop-blur-sm flex items-center justify-between">
             <Button
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 1}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 border-gray-300 hover:bg-gray-100"
             >
               <ChevronLeft size={16} />
               <span className="text-medium">Back</span>
@@ -143,7 +151,7 @@ export default function OnboardingFlow() {
               <Button
                 onClick={handleFinish}
                 disabled={!canProceed() || isLoading}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg shadow-purple-500/20"
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
@@ -158,7 +166,7 @@ export default function OnboardingFlow() {
               <Button
                 onClick={nextStep}
                 disabled={!canProceed()}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white flex items-center space-x-2"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white flex items-center space-x-2 shadow-lg shadow-purple-500/20"
               >
                 <span className="text-medium">Next</span>
                 <ChevronRight size={16} />

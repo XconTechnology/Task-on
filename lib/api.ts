@@ -120,6 +120,40 @@ export const taskApi = {
       method: "DELETE",
     })
   },
+
+  
+  // Get tasks with time-based filtering
+  getTasksByTimeframe: async (timeframe: "today" | "week" | "month") => {
+    try {
+      const now = new Date()
+      let startDate: Date
+
+      switch (timeframe) {
+        case "today":
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          break
+        case "week":
+          // Start of week (Sunday)
+          const day = now.getDay()
+          startDate = new Date(now)
+          startDate.setDate(now.getDate() - day)
+          break
+        case "month":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+          break
+        default:
+          startDate = new Date(0) // Beginning of time
+      }
+
+      const response = await fetch(`/api/tasks?startDate=${startDate.toISOString()}&status=done`)
+      const data = await response.json()
+
+      return data
+    } catch (error) {
+      console.error(`Failed to fetch ${timeframe} tasks:`, error)
+      return { success: false, error: `Failed to fetch ${timeframe} tasks` }
+    }
+  },
 }
 
 // User API Functions

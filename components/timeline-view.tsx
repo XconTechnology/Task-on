@@ -107,7 +107,7 @@ export default function TimelineView({ projectId, setIsModalNewTaskOpen }: Timel
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value={Status.ToDo}>To Do</SelectItem>
-              <SelectItem value={Status.WorkInProgress}>Work In Progress</SelectItem>
+              <SelectItem value={Status.WorkInProgress}>In Progress</SelectItem>
               <SelectItem value={Status.UnderReview}>Under Review</SelectItem>
               <SelectItem value={Status.Completed}>Completed</SelectItem>
             </SelectContent>

@@ -1,75 +1,91 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useUser } from "@/lib/user-context"
-import { Plus, Search, Filter, Grid, List, Calendar, Users, Target, MoreHorizontal } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import CreateProjectModal from "@/components/modals/create-project-modal"
-import EditProjectModal from "@/components/modals/edit-project-modal"
-import type { Project } from "@/lib/types"
+import { useEffect, useState } from "react";
+import { useUser } from "@/lib/user-context";
+import {
+  Plus,
+  Search,
+  Filter,
+  Grid,
+  List,
+  Calendar,
+  Users,
+  Target,
+  MoreHorizontal,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import CreateProjectModal from "@/components/modals/create-project-modal";
+import EditProjectModal from "@/components/modals/edit-project-modal";
+import type { Project } from "@/lib/types";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function ProjectsContent() {
-  const { user } = useUser()
-  const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [editingProject, setEditingProject] = useState(null)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const { user } = useUser();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchProjects()
-  }, [])
+    fetchProjects();
+  }, []);
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch("/api/projects")
-      const data = await response.json()
+      const response = await fetch("/api/projects");
+      const data = await response.json();
 
       if (data.success) {
-        setProjects(data.data)
+        setProjects(data.data);
       }
     } catch (error) {
-      console.error("Failed to fetch projects:", error)
+      console.error("Failed to fetch projects:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleProjectCreated = (newProject: Project) => {
-    setProjects((prev) => [newProject, ...prev])
-  }
+    setProjects((prev) => [newProject, ...prev]);
+  };
 
   const handleEditProject = (project: any) => {
-    setEditingProject(project)
-    setIsEditModalOpen(true)
-  }
+    setEditingProject(project);
+    setIsEditModalOpen(true);
+  };
 
   const handleProjectUpdated = (updatedProject: Project) => {
-    setProjects((prev) => prev.map((project) => (project.id === updatedProject.id ? updatedProject : project)))
-  }
+    setProjects((prev) =>
+      prev.map((project) =>
+        project.id === updatedProject.id ? updatedProject : project
+      )
+    );
+  };
 
   const handleProjectDeleted = (projectId: string) => {
-    setProjects((prev) => prev.filter((project) => project.id !== projectId))
-  }
+    setProjects((prev) => prev.filter((project) => project.id !== projectId));
+  };
 
   const filteredProjects = projects.filter(
     (project) =>
       project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      project.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
-    )
+    );
   }
 
   return (
@@ -79,9 +95,14 @@ export default function ProjectsContent() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="header-large">Projects</h1>
-            <p className="text-description mt-1">Manage and organize all your projects in one place.</p>
+            <p className="text-description mt-1">
+              Manage and organize all your projects in one place.
+            </p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setIsCreateModalOpen(true)}>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
             <Plus size={16} className="mr-2" />
             <span className="text-medium">New Project</span>
           </Button>
@@ -91,7 +112,10 @@ export default function ProjectsContent() {
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-lg shadow-sm">
           <div className="flex items-center space-x-4 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={16}
+              />
               <Input
                 placeholder="Search projects..."
                 value={searchQuery}
@@ -106,10 +130,18 @@ export default function ProjectsContent() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Button variant={viewMode === "grid" ? "default" : "outline"} size="sm" onClick={() => setViewMode("grid")}>
+            <Button
+              variant={viewMode === "grid" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+            >
               <Grid size={16} />
             </Button>
-            <Button variant={viewMode === "list" ? "default" : "outline"} size="sm" onClick={() => setViewMode("list")}>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+            >
               <List size={16} />
             </Button>
           </div>
@@ -119,14 +151,28 @@ export default function ProjectsContent() {
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} onEdit={handleEditProject} />
+              <Link
+                  key={project.id}
+              href={(`/projects/${project.id}`)}
+              >
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  onEdit={handleEditProject}
+                />
+              </Link>
             ))}
             {filteredProjects.length === 0 && (
               <div className="col-span-full text-center py-12">
                 <Target size={48} className="mx-auto text-gray-300 mb-4" />
                 <h3 className="header-small mb-2">No projects found</h3>
-                <p className="text-description mb-4">Create your first project to get started.</p>
-                <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateModalOpen(true)}>
+                <p className="text-description mb-4">
+                  Create your first project to get started.
+                </p>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setIsCreateModalOpen(true)}
+                >
                   <Plus size={16} className="mr-2" />
                   <span className="text-medium text-white">Create Project</span>
                 </Button>
@@ -136,7 +182,11 @@ export default function ProjectsContent() {
         ) : (
           <div className="space-y-4">
             {filteredProjects.map((project) => (
-              <ProjectListItem key={project.id} project={project} onEdit={handleEditProject} />
+              <ProjectListItem
+                key={project.id}
+                project={project}
+                onEdit={handleEditProject}
+              />
             ))}
           </div>
         )}
@@ -155,40 +205,52 @@ export default function ProjectsContent() {
         onDelete={handleProjectDeleted}
       />
     </>
-  )
+  );
 }
 
-function ProjectCard({ project, onEdit }: { project: Project; onEdit: (project: Project) => void }) {
-  const [stats, setStats] = useState({ progress: 0, teamMembers: 0 })
+function ProjectCard({
+  project,
+  onEdit,
+}: {
+  project: Project;
+  onEdit: (project: Project) => void;
+}) {
+  const [stats, setStats] = useState({ progress: 0, teamMembers: 0 });
+  const router = useRouter();
 
   useEffect(() => {
-    fetchProjectStats()
-  }, [project.id])
+    fetchProjectStats();
+  }, [project.id]);
 
   const fetchProjectStats = async () => {
     try {
-      const response = await fetch(`/api/projects/${project.id}/stats`)
-      const data = await response.json()
+      const response = await fetch(`/api/projects/${project.id}/stats`);
+      const data = await response.json();
       if (data.success) {
         setStats({
           progress: data.data.progress,
           teamMembers: data.data.teamMembers,
-        })
+        });
       }
     } catch (error) {
-      console.error("Failed to fetch project stats:", error)
+      console.error("Failed to fetch project stats:", error);
     }
-  }
+  };
 
   return (
     <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
-      <CardHeader className="pb-3">
+      <CardHeader
+        onClick={() => router.push(`/projects/${project.id}`)}
+        className="pb-3"
+      >
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
               {project.name}
             </CardTitle>
-            <p className="text-description mt-1 line-clamp-2">{project.description}</p>
+            <p className="text-description mt-1 line-clamp-2">
+              {project.description}
+            </p>
           </div>
           <Button
             variant="ghost"
@@ -206,7 +268,9 @@ function ProjectCard({ project, onEdit }: { project: Project; onEdit: (project: 
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-small text-gray-600">Progress</span>
-              <span className="text-small font-medium text-gray-900">{stats.progress}%</span>
+              <span className="text-small font-medium text-gray-900">
+                {stats.progress}%
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -220,12 +284,16 @@ function ProjectCard({ project, onEdit }: { project: Project; onEdit: (project: 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Users size={14} className="text-gray-400" />
-              <span className="text-small text-gray-600">{stats.teamMembers} members</span>
+              <span className="text-small text-gray-600">
+                {stats.teamMembers} members
+              </span>
             </div>
             <div className="flex items-center space-x-2">
               <Calendar size={14} className="text-gray-400" />
               <span className="text-small text-gray-600">
-                {project.endDate ? new Date(project.endDate).toLocaleDateString() : "No deadline"}
+                {project.endDate
+                  ? new Date(project.endDate).toLocaleDateString()
+                  : "No deadline"}
               </span>
             </div>
           </div>
@@ -233,18 +301,30 @@ function ProjectCard({ project, onEdit }: { project: Project; onEdit: (project: 
           {/* Status Badge */}
           <div className="flex items-center justify-between">
             <Badge variant="secondary" className="bg-green-100 text-green-700">
-              {project.status === "active" ? "Active" : project.status === "completed" ? "Completed" : "Archived"}
+              {project.status === "active"
+                ? "Active"
+                : project.status === "completed"
+                ? "Completed"
+                : "Archived"}
             </Badge>
             <div className="flex -space-x-2">
-              {Array.from({ length: Math.min(stats.teamMembers, 4) }).map((_, i) => (
-                <Avatar key={i} className="h-6 w-6 border-2 border-white">
-                  <AvatarImage src={`/placeholder.svg?height=24&width=24&text=${i + 1}`} />
-                  <AvatarFallback className="text-extra-small">U{i + 1}</AvatarFallback>
-                </Avatar>
-              ))}
+              {Array.from({ length: Math.min(stats.teamMembers, 4) }).map(
+                (_, i) => (
+                  <Avatar key={i} className="h-6 w-6 border-2 border-white">
+                    <AvatarImage
+                      src={`/placeholder.svg?height=24&width=24&text=${i + 1}`}
+                    />
+                    <AvatarFallback className="text-extra-small">
+                      U{i + 1}
+                    </AvatarFallback>
+                  </Avatar>
+                )
+              )}
               {stats.teamMembers > 4 && (
                 <div className="h-6 w-6 bg-gray-100 border-2 border-white rounded-full flex items-center justify-center">
-                  <span className="text-extra-small text-gray-600">+{stats.teamMembers - 4}</span>
+                  <span className="text-extra-small text-gray-600">
+                    +{stats.teamMembers - 4}
+                  </span>
                 </div>
               )}
             </div>
@@ -252,30 +332,36 @@ function ProjectCard({ project, onEdit }: { project: Project; onEdit: (project: 
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
-function ProjectListItem({ project, onEdit }: { project: Project; onEdit: (project: Project) => void }) {
-  const [stats, setStats] = useState({ progress: 0, teamMembers: 0 })
+function ProjectListItem({
+  project,
+  onEdit,
+}: {
+  project: Project;
+  onEdit: (project: Project) => void;
+}) {
+  const [stats, setStats] = useState({ progress: 0, teamMembers: 0 });
 
   useEffect(() => {
-    fetchProjectStats()
-  }, [project.id])
+    fetchProjectStats();
+  }, [project.id]);
 
   const fetchProjectStats = async () => {
     try {
-      const response = await fetch(`/api/projects/${project.id}/stats`)
-      const data = await response.json()
+      const response = await fetch(`/api/projects/${project.id}/stats`);
+      const data = await response.json();
       if (data.success) {
         setStats({
           progress: data.data.progress,
           teamMembers: data.data.teamMembers,
-        })
+        });
       }
     } catch (error) {
-      console.error("Failed to fetch project stats:", error)
+      console.error("Failed to fetch project stats:", error);
     }
-  }
+  };
 
   return (
     <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
@@ -292,20 +378,33 @@ function ProjectListItem({ project, onEdit }: { project: Project; onEdit: (proje
               <div className="flex items-center space-x-8">
                 <div className="text-center">
                   <p className="text-small text-gray-600">Progress</p>
-                  <p className="text-medium font-semibold text-gray-900">{stats.progress}%</p>
+                  <p className="text-medium font-semibold text-gray-900">
+                    {stats.progress}%
+                  </p>
                 </div>
                 <div className="text-center">
                   <p className="text-small text-gray-600">Team</p>
-                  <p className="text-medium font-semibold text-gray-900">{stats.teamMembers} members</p>
+                  <p className="text-medium font-semibold text-gray-900">
+                    {stats.teamMembers} members
+                  </p>
                 </div>
                 <div className="text-center">
                   <p className="text-small text-gray-600">Due Date</p>
                   <p className="text-medium font-semibold text-gray-900">
-                    {project.endDate ? new Date(project.endDate).toLocaleDateString() : "No deadline"}
+                    {project.endDate
+                      ? new Date(project.endDate).toLocaleDateString()
+                      : "No deadline"}
                   </p>
                 </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-700">
-                  {project.status === "active" ? "Active" : project.status === "completed" ? "Completed" : "Archived"}
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-700"
+                >
+                  {project.status === "active"
+                    ? "Active"
+                    : project.status === "completed"
+                    ? "Completed"
+                    : "Archived"}
                 </Badge>
               </div>
             </div>
@@ -316,5 +415,5 @@ function ProjectListItem({ project, onEdit }: { project: Project; onEdit: (proje
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

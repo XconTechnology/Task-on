@@ -54,9 +54,7 @@ const  TaskColumn =({
               </span>
             </div>
             <div className="flex items-center space-x-1">
-              <Button variant="ghost" size="sm" className="p-1 h-8 w-8 text-gray-400">
-                <EllipsisVertical size={16} />
-              </Button>
+           
               <Button
                 variant="ghost"
                 size="sm"

@@ -1,29 +1,46 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Calendar, Users, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Calendar, Users, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Priority, Status } from "@/lib/types";
 
 type CreateTaskModalProps = {
-  isOpen: boolean
-  onClose: () => void
-  projectId: string
-  onTaskCreated?: (task: any) => void
-}
+  isOpen: boolean;
+  onClose: () => void;
+  projectId: string;
+  onTaskCreated?: (task: any) => void;
+};
 
-export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCreated }: CreateTaskModalProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingMembers, setIsLoadingMembers] = useState(false)
-  const [availableMembers, setAvailableMembers] = useState([])
-  const [selectedMember, setSelectedMember] = useState<string>("")
+export default function CreateTaskModal({
+  isOpen,
+  onClose,
+  projectId,
+  onTaskCreated,
+}: CreateTaskModalProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const [availableMembers, setAvailableMembers] = useState([]);
+  const [selectedMember, setSelectedMember] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -31,38 +48,38 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
     priority: "medium" as "low" | "medium" | "high",
     dueDate: "",
     createdBy: "", // Will be set from available members
-  })
+  });
 
   useEffect(() => {
     if (isOpen) {
-      fetchAvailableMembers()
+      fetchAvailableMembers();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const fetchAvailableMembers = async () => {
-    setIsLoadingMembers(true)
+    setIsLoadingMembers(true);
     try {
-      const response = await fetch("/api/workspace/members")
-      const data = await response.json()
+      const response = await fetch("/api/workspace/members");
+      const data = await response.json();
       if (data.success) {
-        setAvailableMembers(data.data || [])
+        setAvailableMembers(data.data || []);
         // Set first user as default creator
         if (data.data && data.data.length > 0) {
-          setFormData((prev) => ({ ...prev, createdBy: data.data[0].id }))
+          setFormData((prev) => ({ ...prev, createdBy: data.data[0].id }));
         }
       }
     } catch (error) {
-      console.error("Failed to fetch members:", error)
+      console.error("Failed to fetch members:", error);
     } finally {
-      setIsLoadingMembers(false)
+      setIsLoadingMembers(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.title.trim()) return
+    e.preventDefault();
+    if (!formData.title.trim()) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const response = await fetch("/api/tasks", {
         method: "POST",
@@ -74,22 +91,22 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
           projectId,
           assignedTo: selectedMember || undefined,
         }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        onTaskCreated?.(data.data)
-        handleClose()
+        onTaskCreated?.(data.data);
+        handleClose();
       } else {
-        console.error("Failed to create task:", data.error)
+        console.error("Failed to create task:", data.error);
       }
     } catch (error) {
-      console.error("Failed to create task:", error)
+      console.error("Failed to create task:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleClose = () => {
     setFormData({
@@ -98,27 +115,35 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
       status: "todo",
       priority: "medium",
       dueDate: "",
-      createdBy: availableMembers.length > 0 ? (availableMembers[0] as any).id : "",
-    })
-    setSelectedMember("")
-    onClose()
-  }
+      createdBy:
+        availableMembers.length > 0 ? (availableMembers[0] as any).id : "",
+    });
+    setSelectedMember("");
+    onClose();
+  };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const toggleMember = (memberId: string) => {
-    setSelectedMember(selectedMember === memberId ? "" : memberId)
-  }
+    setSelectedMember(selectedMember === memberId ? "" : memberId);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold text-gray-900">Create New Task</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={handleClose} className="p-1 h-8 w-8">
+            <DialogTitle className="text-xl font-semibold text-gray-900">
+              Create New Task
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="p-1 h-8 w-8"
+            >
               <X size={16} />
             </Button>
           </div>
@@ -127,7 +152,10 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
-            <label htmlFor="title" className="text-medium font-medium text-gray-900">
+            <label
+              htmlFor="title"
+              className="text-medium font-medium text-gray-900"
+            >
               Title
             </label>
             <Input
@@ -143,7 +171,10 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
 
           {/* Description */}
           <div className="space-y-2">
-            <label htmlFor="description" className="text-medium font-medium text-gray-900">
+            <label
+              htmlFor="description"
+              className="text-medium font-medium text-gray-900"
+            >
               Description (Optional)
             </label>
             <Textarea
@@ -160,29 +191,42 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
           {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-medium font-medium text-gray-900">Status</label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+              <label className="text-label">Status</label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleInputChange("status", value)}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value={Status.ToDo}>To Do</SelectItem>
+                  <SelectItem value={Status.WorkInProgress}>
+                    In Progress
+                  </SelectItem>
+                  <SelectItem value={Status.UnderReview}>
+                    Under Review
+                  </SelectItem>
+                  <SelectItem value={Status.Completed}>Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-medium font-medium text-gray-900">Priority</label>
-              <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
+              <label className="text-label">Priority</label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => handleInputChange("priority", value)}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value={Priority.Urgent}>Urgent</SelectItem>
+                  <SelectItem value={Priority.High}>High</SelectItem>
+                  <SelectItem value={Priority.Medium}>Medium</SelectItem>
+                  <SelectItem value={Priority.Low}>Low</SelectItem>
+                  <SelectItem value={Priority.Backlog}>Backlog</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -190,7 +234,10 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
 
           {/* Due Date */}
           <div className="space-y-2">
-            <label htmlFor="dueDate" className="text-medium font-medium text-gray-900">
+            <label
+              htmlFor="dueDate"
+              className="text-medium font-medium text-gray-900"
+            >
               Due Date (Optional)
             </label>
             <div className="relative">
@@ -211,8 +258,13 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
 
           {/* Created By */}
           <div className="space-y-2">
-            <label className="text-medium font-medium text-gray-900">Created By</label>
-            <Select value={formData.createdBy} onValueChange={(value) => handleInputChange("createdBy", value)}>
+            <label className="text-medium font-medium text-gray-900">
+              Created By
+            </label>
+            <Select
+              value={formData.createdBy}
+              onValueChange={(value) => handleInputChange("createdBy", value)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -229,7 +281,9 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
           {/* Assign To Member */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-medium font-medium text-gray-900">Assign To Member (Optional)</label>
+              <label className="text-medium font-medium text-gray-900">
+                Assign To Member (Optional)
+              </label>
               <Badge variant="secondary" className="text-small">
                 {selectedMember ? "1 selected" : "0 selected"}
               </Badge>
@@ -238,7 +292,10 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
             {isLoadingMembers ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                  <div
+                    key={i}
+                    className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg"
+                  >
                     <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
                     <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse" />
                     <div className="flex-1 space-y-2">
@@ -255,26 +312,36 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
                     <div
                       key={member.id}
                       className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                        selectedMember === member.id ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50"
+                        selectedMember === member.id
+                          ? "bg-blue-50 border-blue-200"
+                          : "hover:bg-gray-50"
                       }`}
                     >
                       <Checkbox
                         checked={selectedMember === member.id}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            toggleMember(member.id)
+                            toggleMember(member.id);
                           } else if (selectedMember === member.id) {
-                            toggleMember(member.id)
+                            toggleMember(member.id);
                           }
                         }}
                       />
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={member.profilePictureUrl || "/placeholder.svg"} />
-                        <AvatarFallback>{member.username.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarImage
+                          src={member.profilePictureUrl || "/placeholder.svg"}
+                        />
+                        <AvatarFallback>
+                          {member.username.charAt(0).toUpperCase()}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="text-medium font-medium text-gray-900">{member.username}</p>
-                        <p className="text-small text-gray-600">{member.email}</p>
+                        <p className="text-medium font-medium text-gray-900">
+                          {member.username}
+                        </p>
+                        <p className="text-small text-gray-600">
+                          {member.email}
+                        </p>
                       </div>
                       {member.role && (
                         <Badge
@@ -283,8 +350,8 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
                             member.role === "Owner"
                               ? "bg-yellow-100 text-yellow-700"
                               : member.role === "Admin"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-700"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-100 text-gray-700"
                           }
                         >
                           {member.role}
@@ -303,19 +370,29 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
 
             {selectedMember && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-small text-blue-700 mb-2">Selected member will be assigned to this task:</p>
+                <p className="text-small text-blue-700 mb-2">
+                  Selected member will be assigned to this task:
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {(() => {
-                    const member = availableMembers.find((m: any) => m.id === selectedMember)
+                    const member = availableMembers.find(
+                      (m: any) => m.id === selectedMember
+                    );
                     return (
                       <div className="flex items-center space-x-2 bg-white border border-blue-200 rounded-full px-3 py-1">
                         <Avatar className="h-5 w-5">
-                          <AvatarImage src={member?.profilePictureUrl || "/placeholder.svg"} />
+                          <AvatarImage
+                            src={
+                              member?.profilePictureUrl || "/placeholder.svg"
+                            }
+                          />
                           <AvatarFallback className="text-extra-small">
                             {member?.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-small text-gray-900">{member?.username}</span>
+                        <span className="text-small text-gray-900">
+                          {member?.username}
+                        </span>
                         <Button
                           type="button"
                           variant="ghost"
@@ -326,7 +403,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
                           <X size={12} />
                         </Button>
                       </div>
-                    )
+                    );
                   })()}
                 </div>
               </div>
@@ -335,7 +412,12 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
 
           {/* Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+            >
               <span className="text-medium">Cancel</span>
             </Button>
             <Button
@@ -356,5 +438,5 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

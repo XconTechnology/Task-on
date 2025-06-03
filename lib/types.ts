@@ -57,10 +57,31 @@ export enum Priority {
 
 export enum Status {
   ToDo = "To Do",
-  WorkInProgress = "Work In Progress",
+  WorkInProgress = "In Progress",
   UnderReview = "Under Review",
   Completed = "Completed",
 }
+export interface DashboardPageStats {
+  totalTasks: number
+  completedTasks: number
+  inProgressTasks: number
+  todoTasks: number
+  todayCompletedTasks: number
+  weekCompletedTasks: number
+  monthCompletedTasks: number
+  projectsCount: number
+  completionRate: number
+  weeklyActivity: Array<{ date: string; tasks: number; day: string }>
+  monthlyActivity: Array<{ date: string; tasks: number }>
+  priorityStats: {
+    urgent: number
+    high: number
+    medium: number
+    low: number
+    backlog: number
+  }
+}
+
 
 export interface Task {
   id: string

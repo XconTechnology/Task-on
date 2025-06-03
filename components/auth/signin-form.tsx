@@ -40,7 +40,7 @@ export default function SignInForm() {
         const userData = await userResponse.json()
 
         if (userData.success && userData.data.user.workspaceId) {
-          router.push("/projects/project_1")
+          router.push("/dashboard")
         } else {
           router.push("/onboarding")
         }
