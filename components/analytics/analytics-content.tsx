@@ -46,7 +46,6 @@ export default function AnalyticsContent() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [timeRange, setTimeRange] = useState("30d")
-  const [selectedMetric, setSelectedMetric] = useState("productivity")
 
   useEffect(() => {
     fetchAnalyticsData()

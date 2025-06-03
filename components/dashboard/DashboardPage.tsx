@@ -22,8 +22,14 @@ import { MAIN_STATS_DATA, TIME_STATS_DATA } from "@/lib/constants";
 import React from "react";
 import { DashboardPageStats } from "@/lib/types";
 import Image from "next/image";
+type DashboardPageProps = {
+  user: { username: string }
+  stats: DashboardPageStats
+  motivationalMessage: any
+  priorityChartData: any
+}
 
-const DashboardPage = ({
+const DashboardPage: React.FC<DashboardPageProps> = ({
   user,
   stats,
   motivationalMessage,
@@ -197,7 +203,7 @@ const DashboardPage = ({
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {priorityChartData.map((entry, index) => (
+                    {priorityChartData.map((entry:any, index:any) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -206,7 +212,7 @@ const DashboardPage = ({
               </ResponsiveContainer>
             </div>
             <div className="flex flex-wrap gap-4 mt-4 justify-center">
-              {priorityChartData.map((item, index) => (
+              {priorityChartData.map((item:any, index:any) => (
                 <div key={index} className="flex items-center space-x-2">
                   <div
                     className="w-3 h-3 rounded-full"

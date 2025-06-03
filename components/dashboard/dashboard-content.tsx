@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@/lib/user-context";
 import { Trophy, Star, Rocket, Diamond } from "lucide-react";
 
-import { DashboardPageStats, Priority, Status, Task } from "@/lib/types";
+import { DashboardPageStats, Priority, Status } from "@/lib/types";
 import DashboardSkeleton from "./DashboardSkeleton";
 import { generateMonthlyActivity, generateWeeklyActivity } from "@/lib/utils";
 import DashboardPage from "./DashboardPage";
@@ -12,7 +12,6 @@ export default function DashboardContent() {
   const { user } = useUser();
   const [stats, setStats] = useState<DashboardPageStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,7 +22,6 @@ export default function DashboardContent() {
 
         if (tasksData.success) {
           const allTasks = tasksData.data || [];
-          setTasks(allTasks);
 
           // Calculate time-based stats using correct Status enum
           const now = new Date();

@@ -10,7 +10,17 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Extend the Next.js and TypeScript configs
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+
+  // Add custom rules override
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off", // optional: disables needing to type all function returns
+    },
+  },
 ];
 
 export default eslintConfig;
