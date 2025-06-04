@@ -62,7 +62,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
         // If members were selected, add them to the team
         if (selectedMembers.length > 0) {
           try {
-            await fetch(`/api/teams/${response.data.id}/members`, {
+            await fetch(`/api/teams/${response.data?.id}/members`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ userIds: selectedMembers }),

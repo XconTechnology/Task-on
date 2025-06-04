@@ -41,7 +41,7 @@ export const generateMonthlyActivity = (tasks: Task[]) => {
 };
 
 // Generate weekly activity data
-export const generateWeeklyActivity = (tasks: Task[]) => {
+export const generateWeeklyActivity = (tasks: any[]) => {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const now = new Date();
   const weekData = days.map((day, index) => {

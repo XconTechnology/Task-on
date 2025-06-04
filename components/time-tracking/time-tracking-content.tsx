@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChartContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, COLORS } from "@/components/ui/chart"
+import { ChartContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, COLORS  } from "@/components/ui/chart"
 
 interface TimeEntry {
   id: string
@@ -261,7 +261,7 @@ export default function TimeTrackingContent() {
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ChartContainer>
+              <ChartContainer config={weeklyData}>
                 <BarChart data={weeklyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="day" tick={{ fontSize: 12 }} />
@@ -283,7 +283,7 @@ export default function TimeTrackingContent() {
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ChartContainer>
+              <ChartContainer config={''}>
                 <BarChart data={projectData} layout="horizontal">
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis type="number" tick={{ fontSize: 12 }} />
