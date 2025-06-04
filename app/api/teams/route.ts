@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
-import type { Team } from "@/lib/types"
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Create new team
     const teamId = `team_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const newTeam: Team = {
+    const newTeam: any = {
       id: teamId,
       teamName,
       description: description || "",

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
-import type { Workspace, OnboardingData } from "@/lib/types"
+import type {  OnboardingData } from "@/lib/types"
 
 export async function POST(request: NextRequest) {
   try {
