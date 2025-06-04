@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Plus,
   Search,
-  Filter,
   Grid,
   List,
   Calendar,
@@ -121,10 +120,6 @@ export default function ProjectsContent() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" size="sm">
-              <Filter size={16} className="mr-2" />
-              <span className="text-medium">Filter</span>
-            </Button>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -211,7 +206,6 @@ function ProjectCard({
   onEdit: (project: Project) => void;
 }) {
   const [stats, setStats] = useState({ progress: 0, teamMembers: 0 });
-  const router = useRouter();
 
   useEffect(() => {
     fetchProjectStats();
