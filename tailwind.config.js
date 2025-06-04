@@ -9,6 +9,12 @@ const config = {
     "./src/**/*.{ts,tsx}",
     "*.{js,ts,jsx,tsx,mdx}",
   ],
+   safelist: [
+    'from-green-500', 'to-green-600',
+    'from-blue-500', 'to-blue-600',
+    'from-purple-500', 'to-purple-600',
+    // Add other gradients you use
+   ],
   theme: {
     container: {
       center: true,
