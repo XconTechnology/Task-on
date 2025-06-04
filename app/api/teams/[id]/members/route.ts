@@ -1,4 +1,5 @@
-import { type NextRequest, NextResponse } from "next/server"
+{/*
+  import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
@@ -102,3 +103,5 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
+
+  */}
