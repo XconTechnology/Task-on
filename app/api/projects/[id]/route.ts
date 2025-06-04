@@ -3,10 +3,23 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const user = await getUserFromRequest(request)
+// ✅ Utility function to extract projectId from URL
+function getProjectIdFromRequest(request: NextRequest): string | null {
+  const url = new URL(request.url)
+  const pathParts = url.pathname.split("/")
+  const index = pathParts.indexOf("projects")
+  return index !== -1 && pathParts.length > index + 1 ? pathParts[index + 1] : null
+}
 
+// GET /api/projects/[id]
+export async function GET(request: NextRequest) {
+  try {
+    const projectId = getProjectIdFromRequest(request)
+    if (!projectId) {
+      return NextResponse.json({ success: false, error: "Invalid project ID" }, { status: 400 })
+    }
+
+    const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
@@ -21,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const project = await projectsCollection.findOne({
-      id: params.id,
+      id: projectId,
       workspaceId: userData.workspaceId,
     })
 
@@ -29,20 +42,22 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
     }
 
-    return NextResponse.json({
-      success: true,
-      data: project,
-    })
+    return NextResponse.json({ success: true, data: project })
   } catch (error) {
     console.error("Get project error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+// PUT /api/projects/[id]
+export async function PUT(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request)
+    const projectId = getProjectIdFromRequest(request)
+    if (!projectId) {
+      return NextResponse.json({ success: false, error: "Invalid project ID" }, { status: 400 })
+    }
 
+    const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
@@ -71,7 +86,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const updatedProject = await projectsCollection.findOneAndUpdate(
       {
-        id: params.id,
+        id: projectId,
         workspaceId: userData?.workspaceId,
       },
       {
@@ -102,10 +117,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+// DELETE /api/projects/[id]
+export async function DELETE(request: NextRequest) {
   try {
-    const user = await getUserFromRequest(request)
+    const projectId = getProjectIdFromRequest(request)
+    if (!projectId) {
+      return NextResponse.json({ success: false, error: "Invalid project ID" }, { status: 400 })
+    }
 
+    const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
@@ -123,7 +143,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     const project = await projectsCollection.findOne({
-      id: params.id,
+      id: projectId,
       workspaceId: userData?.workspaceId,
     })
 
@@ -131,8 +151,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
     }
 
-    await tasksCollection.deleteMany({ projectId: params.id })
-    await projectsCollection.deleteOne({ id: params.id })
+    await tasksCollection.deleteMany({ projectId })
+    await projectsCollection.deleteOne({ id: projectId })
 
     return NextResponse.json({
       success: true,

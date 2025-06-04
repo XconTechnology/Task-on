@@ -83,9 +83,9 @@ export interface DashboardPageStats {
 }
 
 export interface SearchResults {
-  tasks?: Task[]
-  projects?: Project[]
-  users?: User[]
+  tasks?: any[]
+  projects?: any[]
+  users?: any[]
 }
 
 export interface Task {

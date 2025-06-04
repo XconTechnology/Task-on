@@ -3,36 +3,34 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
 
-// GET /api/tasks/[id] - Get task by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const user = getUserFromRequest(request)
+function getIdFromRequest(request: NextRequest) {
+  const segments = request.nextUrl.pathname.split("/")
+  return segments[segments.length - 1]
+}
 
+// GET /api/tasks/[id]
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    const id = getIdFromRequest(request)
     const db = await getDatabase()
     const tasksCollection = db.collection("tasks")
     const usersCollection = db.collection("users")
 
-    // Get user's workspace
     const userData = await usersCollection.findOne({ id: user.userId })
     if (!userData?.workspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
-    // Get task
-    const task = await tasksCollection.findOne({
-      id: params.id,
-      workspaceId: userData.workspaceId,
-    })
-
+    const task = await tasksCollection.findOne({ id, workspaceId: userData.workspaceId })
     if (!task) {
       return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
     }
 
-    // Populate author and assignee data
     const author = task.createdBy ? await usersCollection.findOne({ id: task.createdBy }) : null
     const assignee = task.assignedTo ? await usersCollection.findOne({ id: task.assignedTo }) : null
 
@@ -42,26 +40,22 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       assignee: assignee ? { id: assignee.id, username: assignee.username, email: assignee.email } : null,
     }
 
-    return NextResponse.json({
-      success: true,
-      data: populatedTask,
-      message: "Task retrieved successfully",
-    })
+    return NextResponse.json({ success: true, data: populatedTask, message: "Task retrieved successfully" })
   } catch (error) {
     console.error("Get task error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
-// PUT /api/tasks/[id] - Update task
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+// PUT /api/tasks/[id]
+export async function PUT(request: NextRequest) {
   try {
-    const user = getUserFromRequest(request)
-
+    const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    const id = getIdFromRequest(request)
     const body = await request.json()
     const { title, description, status, priority, assignedTo, dueDate } = body
 
@@ -73,7 +67,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const tasksCollection = db.collection("tasks")
     const usersCollection = db.collection("users")
 
-    // Get user's workspace and role
     const userData = await usersCollection.findOne({ id: user.userId })
     if (!userData?.workspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
@@ -84,12 +77,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Update task
     const updatedTask = await tasksCollection.findOneAndUpdate(
-      {
-        id: params.id,
-        workspaceId: userData.workspaceId,
-      },
+      { id, workspaceId: userData.workspaceId },
       {
         $set: {
           title: title.trim(),
@@ -101,14 +90,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
           updatedAt: new Date().toISOString(),
         },
       },
-      { returnDocument: "after" },
+      { returnDocument: "after" }
     )
 
     if (!updatedTask?.value) {
       return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
     }
 
-    // Populate author and assignee data
     const author = updatedTask.value.createdBy
       ? await usersCollection.findOne({ id: updatedTask.value.createdBy })
       : null
@@ -122,31 +110,26 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       assignee: assignee ? { id: assignee.id, username: assignee.username, email: assignee.email } : null,
     }
 
-    return NextResponse.json({
-      success: true,
-      data: populatedTask,
-      message: "Task updated successfully",
-    })
+    return NextResponse.json({ success: true, data: populatedTask, message: "Task updated successfully" })
   } catch (error) {
     console.error("Update task error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
-// DELETE /api/tasks/[id] - Delete task
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+// DELETE /api/tasks/[id]
+export async function DELETE(request: NextRequest) {
   try {
-    const user = getUserFromRequest(request)
-
+    const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    const id = getIdFromRequest(request)
     const db = await getDatabase()
     const tasksCollection = db.collection("tasks")
     const usersCollection = db.collection("users")
 
-    // Get user's workspace and role
     const userData = await usersCollection.findOne({ id: user.userId })
     if (!userData?.workspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
@@ -157,23 +140,14 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Check if task exists
-    const task = await tasksCollection.findOne({
-      id: params.id,
-      workspaceId: userData.workspaceId,
-    })
-
+    const task = await tasksCollection.findOne({ id, workspaceId: userData.workspaceId })
     if (!task) {
       return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
     }
 
-    // Delete task
-    await tasksCollection.deleteOne({ id: params.id })
+    await tasksCollection.deleteOne({ id })
 
-    return NextResponse.json({
-      success: true,
-      message: "Task deleted successfully",
-    })
+    return NextResponse.json({ success: true, message: "Task deleted successfully" })
   } catch (error) {
     console.error("Delete task error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })

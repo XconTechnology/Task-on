@@ -6,6 +6,6 @@ type PageProps = {
   }
 }
 
-export default function ProjectPage({ params }: PageProps) {
+export default async function ProjectPage({ params }: PageProps) {
   return <ProjectLayout projectId={params.id} />
 }
