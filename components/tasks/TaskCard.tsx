@@ -13,7 +13,11 @@ type TaskCardProps = {
   onDeleteTask: (task: Task) => void
 }
 
-const TaskCard =({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps) => {
+import { useRef } from "react"
+
+const TaskCard = ({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps) => {
+  const ref = useRef<HTMLDivElement>(null)
+
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "task",
     item: { id: task.id },
@@ -21,6 +25,9 @@ const TaskCard =({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps)
       isDragging: !!monitor.isDragging(),
     }),
   }))
+
+  drag(ref) // Connect the drag source to the ref
+
 
   const numberOfComments =  0
 
@@ -32,9 +39,9 @@ const TaskCard =({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps)
     Backlog: "bg-gray-100 text-gray-700 border-gray-200",
   }
 
-  return (
+   return (
     <Card
-      ref={drag}
+      ref={ref} // Use the wrapped ref
       onClick={() => onTaskClick(task)}
       className={`task-card transition-all duration-200 hover:shadow-lg bg-white border border-gray-200 ${
         isDragging ? "dragging opacity-50 rotate-1 scale-105 shadow-xl" : "opacity-100"

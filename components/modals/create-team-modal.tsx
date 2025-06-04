@@ -25,7 +25,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
     description: "",
   })
   const [selectedMembers, setSelectedMembers] = useState<string[]>([])
-  const [availableMembers, setAvailableMembers] = useState([])
+  const [availableMembers, setAvailableMembers] = useState<any>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMembers, setIsLoadingMembers] = useState(false)
 

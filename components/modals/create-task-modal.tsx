@@ -39,7 +39,7 @@ export default function CreateTaskModal({
 }: CreateTaskModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
-  const [availableMembers, setAvailableMembers] = useState([]);
+  const [availableMembers, setAvailableMembers] = useState<any>([]);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",

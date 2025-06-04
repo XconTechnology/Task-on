@@ -1,22 +1,22 @@
-
-import {  useDrop } from "react-dnd"
-import { type Task, Status } from "@/lib/types"
-import {  Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { statusConfig } from "@/lib/constants"
-import TaskCard from "./TaskCard"
+import { useDrop } from "react-dnd";
+import { type Task, Status } from "@/lib/types";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { statusConfig } from "@/lib/constants";
+import TaskCard from "./TaskCard";
+import { useRef } from "react";
 
 type TaskColumnProps = {
-  status: Status
-  tasks: Task[]
-  moveTask: (taskId: string, toStatus: Status) => void
-  setIsModalNewTaskOpen: (isOpen: boolean) => void
-  onTaskClick: (task: Task) => void
-  onEditTask: (task: Task) => void
-  onDeleteTask: (task: Task) => void
-}
+  status: Status;
+  tasks: Task[];
+  moveTask: (taskId: string, toStatus: Status) => void;
+  setIsModalNewTaskOpen: (isOpen: boolean) => void;
+  onTaskClick: (task: Task) => void;
+  onEditTask: (task: Task) => void;
+  onDeleteTask: (task: Task) => void;
+};
 
-const  TaskColumn =({
+const TaskColumn = ({
   status,
   tasks,
   moveTask,
@@ -25,27 +25,35 @@ const  TaskColumn =({
   onEditTask,
   onDeleteTask,
 }: TaskColumnProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+
   const [{ isOver }, drop] = useDrop(() => ({
     accept: "task",
     drop: (item: { id: string }) => moveTask(item.id, status),
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
-  }))
+  }));
+  drop(ref); // Connect the drag source to the ref
 
-  const columnTasks = tasks.filter((task) => task.status === status)
-  const config = statusConfig[status]
+  const columnTasks = tasks.filter((task) => task.status === status);
+  const config = statusConfig[status];
   return (
     <div
-      ref={drop}
+      ref={ref}
       className={`rounded-lg transition-all duration-200 ${
-        isOver ? `${config.bgColor} ${config.borderColor} border-2 border-dashed` : "border-2 border-transparent"
+        isOver
+          ? `${config.bgColor} ${config.borderColor} border-2 border-dashed`
+          : "border-2 border-transparent"
       }`}
     >
       {/* Column Header */}
       <div className="mb-4">
         <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="w-1 h-12 rounded-l-lg" style={{ backgroundColor: config.color }} />
+          <div
+            className="w-1 h-12 rounded-l-lg"
+            style={{ backgroundColor: config.color }}
+          />
           <div className="flex-1 flex items-center justify-between px-4 py-3">
             <div className="flex items-center space-x-3">
               <h3 className="header-extra-small">{config.label}</h3>
@@ -54,7 +62,6 @@ const  TaskColumn =({
               </span>
             </div>
             <div className="flex items-center space-x-1">
-           
               <Button
                 variant="ghost"
                 size="sm"
@@ -87,7 +94,7 @@ const  TaskColumn =({
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TaskColumn
+export default TaskColumn;
