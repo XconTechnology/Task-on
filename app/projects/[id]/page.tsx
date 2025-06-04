@@ -1,11 +1,14 @@
-import ProjectLayout from "@/components/project-layout"
+import ProjectLayout from "@/components/project-layout";
+
+export const dynamicParams = true;
 
 type PageProps = {
-  params: {
-    id: string
-  }
-}
+  params: Promise<{
+    id: string;
+  }>;
+};
 
 export default async function ProjectPage({ params }: PageProps) {
-  return <ProjectLayout projectId={params.id} />
+  const { id } = await params; // ✅ Wait for params
+  return <ProjectLayout projectId={id} />;
 }
