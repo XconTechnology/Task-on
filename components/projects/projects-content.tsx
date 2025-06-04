@@ -149,16 +149,13 @@ export default function ProjectsContent() {
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => (
-              <Link
-                  key={project.id}
-              href={(`/projects/${project.id}`)}
-              >
+              <div key={project.id}>
                 <ProjectCard
                   key={project.id}
                   project={project}
                   onEdit={handleEditProject}
                 />
-              </Link>
+              </div>
             ))}
             {filteredProjects.length === 0 && (
               <div className="col-span-full text-center py-12">
@@ -237,10 +234,7 @@ function ProjectCard({
 
   return (
     <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
-      <CardHeader
-        onClick={() => router.push(`/projects/${project.id}`)}
-        className="pb-3"
-      >
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
@@ -260,75 +254,84 @@ function ProjectCard({
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-4">
-          {/* Progress */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-small text-gray-600">Progress</span>
-              <span className="text-small font-medium text-gray-900">
-                {stats.progress}%
-              </span>
+      <Link href={`/projects/${project.id}`}>
+        <CardContent
+          className="pt-0"
+        >
+          <div className="space-y-4">
+            {/* Progress */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-small text-gray-600">Progress</span>
+                <span className="text-small font-medium text-gray-900">
+                  {stats.progress}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${stats.progress}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${stats.progress}%` }}
-              />
-            </div>
-          </div>
 
-          {/* Team and Dates */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Users size={14} className="text-gray-400" />
-              <span className="text-small text-gray-600">
-                {stats.teamMembers} members
-              </span>
+            {/* Team and Dates */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Users size={14} className="text-gray-400" />
+                <span className="text-small text-gray-600">
+                  {stats.teamMembers} members
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Calendar size={14} className="text-gray-400" />
+                <span className="text-small text-gray-600">
+                  {project.endDate
+                    ? new Date(project.endDate).toLocaleDateString()
+                    : "No deadline"}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Calendar size={14} className="text-gray-400" />
-              <span className="text-small text-gray-600">
-                {project.endDate
-                  ? new Date(project.endDate).toLocaleDateString()
-                  : "No deadline"}
-              </span>
-            </div>
-          </div>
 
-          {/* Status Badge */}
-          <div className="flex items-center justify-between">
-            <Badge variant="secondary" className="bg-green-100 text-green-700">
-              {project.status === "active"
-                ? "Active"
-                : project.status === "completed"
-                ? "Completed"
-                : "Archived"}
-            </Badge>
-            <div className="flex -space-x-2">
-              {Array.from({ length: Math.min(stats.teamMembers, 4) }).map(
-                (_, i) => (
-                  <Avatar key={i} className="h-6 w-6 border-2 border-white">
-                    <AvatarImage
-                      src={`/placeholder.svg?height=24&width=24&text=${i + 1}`}
-                    />
-                    <AvatarFallback className="text-extra-small">
-                      U{i + 1}
-                    </AvatarFallback>
-                  </Avatar>
-                )
-              )}
-              {stats.teamMembers > 4 && (
-                <div className="h-6 w-6 bg-gray-100 border-2 border-white rounded-full flex items-center justify-center">
-                  <span className="text-extra-small text-gray-600">
-                    +{stats.teamMembers - 4}
-                  </span>
-                </div>
-              )}
+            {/* Status Badge */}
+            <div className="flex items-center justify-between">
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-700"
+              >
+                {project.status === "active"
+                  ? "Active"
+                  : project.status === "completed"
+                  ? "Completed"
+                  : "Archived"}
+              </Badge>
+              <div className="flex -space-x-2">
+                {Array.from({ length: Math.min(stats.teamMembers, 4) }).map(
+                  (_, i) => (
+                    <Avatar key={i} className="h-6 w-6 border-2 border-white">
+                      <AvatarImage
+                        src={`/placeholder.svg?height=24&width=24&text=${
+                          i + 1
+                        }`}
+                      />
+                      <AvatarFallback className="text-extra-small">
+                        U{i + 1}
+                      </AvatarFallback>
+                    </Avatar>
+                  )
+                )}
+                {stats.teamMembers > 4 && (
+                  <div className="h-6 w-6 bg-gray-100 border-2 border-white rounded-full flex items-center justify-center">
+                    <span className="text-extra-small text-gray-600">
+                      +{stats.teamMembers - 4}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
+        </CardContent>
+      </Link>
     </Card>
   );
 }
