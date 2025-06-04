@@ -3,10 +3,14 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 
 // GET /api/projects/[id]/stats - Get project statistics
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest) {
   try {
-    const user = getUserFromRequest(request)
+    // ✅ Manually extract the project ID from the URL
+    const url = new URL(request.url)
+    const pathParts = url.pathname.split("/")
+    const projectId = pathParts[pathParts.indexOf("projects") + 1]
 
+    const user = await getUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
@@ -24,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     // Get project
     const project = await projectsCollection.findOne({
-      id: params.id,
+      id: projectId,
       workspaceId: userData.workspaceId,
     })
 
@@ -33,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Get all tasks for this project
-    const tasks = await tasksCollection.find({ projectId: params.id }).toArray()
+    const tasks = await tasksCollection.find({ projectId }).toArray()
 
     // Calculate statistics
     const totalTasks = tasks.length

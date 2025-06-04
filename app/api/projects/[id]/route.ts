@@ -5,7 +5,7 @@ import { canUserPerformAction, getUserRole } from "@/lib/permissions"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = getUserFromRequest(request)
+    const user = await getUserFromRequest(request)
 
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
@@ -15,13 +15,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const projectsCollection = db.collection("projects")
     const usersCollection = db.collection("users")
 
-    // Get user's workspace
     const userData = await usersCollection.findOne({ id: user.userId })
     if (!userData?.workspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
-    // Get project
     const project = await projectsCollection.findOne({
       id: params.id,
       workspaceId: userData.workspaceId,
@@ -43,7 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = getUserFromRequest(request)
+    const user = await getUserFromRequest(request)
 
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
@@ -64,7 +62,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const projectsCollection = db.collection("projects")
     const usersCollection = db.collection("users")
 
-    // Get user's role
     const userData = await usersCollection.findOne({ id: user.userId })
     const userRole = getUserRole(userData?.role)
 
@@ -72,7 +69,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Update project
     const updatedProject = await projectsCollection.findOneAndUpdate(
       {
         id: params.id,
@@ -97,7 +93,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     return NextResponse.json({
       success: true,
-      data: updatedProject?.value,
+      data: updatedProject.value,
       message: "Project updated successfully",
     })
   } catch (error) {
@@ -108,7 +104,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = getUserFromRequest(request)
+    const user = await getUserFromRequest(request)
 
     if (!user) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
@@ -119,7 +115,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const tasksCollection = db.collection("tasks")
     const usersCollection = db.collection("users")
 
-    // Get user's role
     const userData = await usersCollection.findOne({ id: user.userId })
     const userRole = getUserRole(userData?.role)
 
@@ -127,7 +122,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Check if project exists
     const project = await projectsCollection.findOne({
       id: params.id,
       workspaceId: userData?.workspaceId,
@@ -137,10 +131,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
     }
 
-    // Delete all tasks in the project
     await tasksCollection.deleteMany({ projectId: params.id })
-
-    // Delete the project
     await projectsCollection.deleteOne({ id: params.id })
 
     return NextResponse.json({
