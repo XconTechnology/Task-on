@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: OnboardingData = await request.json()
-    const { usageType, managementType, features, workspaceName, invitedEmails, referralSource } = body
+    const { usageType, managementType, features, workspaceName, teamInvites, referralSource } = body
 
     // Validation
     if (!usageType || !workspaceName) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     // Create workspace
     const workspaceId = `workspace_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const newWorkspace: Workspace = {
+    const newWorkspace: any = {
       id: workspaceId,
       name: workspaceName,
       ownerId: user.userId,
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       managementType: managementType || [],
       features: features || [],
       referralSource,
-      invitedEmails: invitedEmails || [],
+      teamInvites: teamInvites || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
