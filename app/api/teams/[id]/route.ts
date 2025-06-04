@@ -61,13 +61,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const { id } = await params
 
-  const { id } = context.params
     const user = getUserFromRequest(request)
 
     if (!user) {
@@ -75,33 +72,26 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { teamName, description } = body
-
-    if (!teamName?.trim()) {
-      return NextResponse.json({ success: false, error: "Team name is required" }, { status: 400 })
-    }
 
     const db = await getDatabase()
-    const teamsCollection = db.collection("teams")
     const usersCollection = db.collection("users")
+    const teamsCollection = db.collection("teams")
 
+    // Get user's role
     const userData = await usersCollection.findOne({ id: user.userId })
-    const userRole = getUserRole(userData?.role)
-
-    if (!canUserPerformAction(userRole, "team", "update")) {
+    if (!canUserPerformAction(userData?.role || "Member", "team", "update")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
     const updatedTeam = await teamsCollection.findOneAndUpdate(
-      { id },
+      { id: id },
       {
         $set: {
-          teamName: teamName.trim(),
-          description: description?.trim() || "",
+          ...body,
           updatedAt: new Date().toISOString(),
         },
       },
-      { returnDocument: "after" }
+      { returnDocument: "after" },
     )
 
     if (!updatedTeam?.value) {
@@ -119,10 +109,10 @@ export async function PUT(
   }
 }
 
-
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = await params
+        const { id } = await params
+
     const user = getUserFromRequest(request)
 
     if (!user) {
@@ -130,32 +120,20 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const db = await getDatabase()
-    const teamsCollection = db.collection("teams")
     const usersCollection = db.collection("users")
-    const projectsCollection = db.collection("projects")
+    const teamsCollection = db.collection("teams")
 
     // Get user's role
     const userData = await usersCollection.findOne({ id: user.userId })
-    const userRole = getUserRole(userData?.role)
-
-    if (!canUserPerformAction(userRole, "team", "delete")) {
+    if (!canUserPerformAction(userData?.role || "Member", "team", "delete")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Check if team exists
-    const team = await teamsCollection.findOne({ id })
-    if (!team) {
-      return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
-    }
-
     // Remove team from all users
-    await usersCollection.updateMany({ teamIds: { $in: [id] } }, { $pull: { teamIds: id as any } })
+    await usersCollection.updateMany({ teamId: id }, { $unset: { teamId: "" } })
 
-    // Update projects to remove team assignment
-    await projectsCollection.updateMany({ teamId: id }, { $unset: { teamId: "" } })
-
-    // Delete the team
-    await teamsCollection.deleteOne({ id })
+    // Delete team
+    await teamsCollection.deleteOne({ id: id })
 
     return NextResponse.json({
       success: true,
