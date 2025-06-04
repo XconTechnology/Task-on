@@ -1,102 +1,71 @@
-import type { Team, User, ApiResponse } from "@/lib/types"
-import { API_CONFIG } from "@/lib/constants"
-
-// Base API function with error handling
-async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  const url = `${API_CONFIG.BASE_URL}${endpoint}`
-
-  const defaultOptions: RequestInit = {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  }
-
-  try {
-    const response = await fetch(url, defaultOptions)
-    const data = await response.json()
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.error || `HTTP error! status: ${response.status}`,
-      }
-    }
-
-    return {
-      success: true,
-      data: data.data || data,
-      message: data.message,
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Network error occurred",
-    }
-  }
-}
-
-// Team API Functions
 export const teamApi = {
-  // Get all teams for user's workspace
-  getTeams: async (): Promise<ApiResponse<Team[]>> => {
-    return apiCall<Team[]>("/teams")
+  // Get all teams
+  getTeams: async () => {
+    try {
+      const response = await fetch("/api/teams")
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Failed to fetch teams:", error)
+      return { success: false, error: "Failed to fetch teams" }
+    }
   },
 
-  // Get team by ID
-  getTeam: async (id: string): Promise<ApiResponse<Team>> => {
-    return apiCall<Team>(`/teams/${id}`)
+  // Get single team
+  getTeam: async (teamId: string) => {
+    try {
+      const response = await fetch(`/api/teams/${teamId}`)
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Failed to fetch team:", error)
+      return { success: false, error: "Failed to fetch team" }
+    }
   },
 
-  // Create new team
-  createTeam: async (team: Partial<Team>): Promise<ApiResponse<Team>> => {
-    return apiCall<Team>("/teams", {
-      method: "POST",
-      body: JSON.stringify(team),
-    })
+  // Create team
+  createTeam: async (teamData: { teamName: string; description?: string }) => {
+    try {
+      const response = await fetch("/api/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(teamData),
+      })
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Failed to create team:", error)
+      return { success: false, error: "Failed to create team" }
+    }
   },
 
   // Update team
-  updateTeam: async (id: string, team: Partial<Team>): Promise<ApiResponse<Team>> => {
-    return apiCall<Team>(`/teams/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(team),
-    })
+  updateTeam: async (teamId: string, teamData: { teamName: string; description?: string }) => {
+    try {
+      const response = await fetch(`/api/teams/${teamId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(teamData),
+      })
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Failed to update team:", error)
+      return { success: false, error: "Failed to update team" }
+    }
   },
 
   // Delete team
-  deleteTeam: async (id: string): Promise<ApiResponse<void>> => {
-    return apiCall<void>(`/teams/${id}`, {
-      method: "DELETE",
-    })
-  },
-
-  // Get team members
-  getTeamMembers: async (teamId: string): Promise<ApiResponse<User[]>> => {
-    return apiCall<User[]>(`/teams/${teamId}/members`)
-  },
-
-  // Add member to team
-  addTeamMember: async (teamId: string, userId: string): Promise<ApiResponse<void>> => {
-    return apiCall<void>(`/teams/${teamId}/members`, {
-      method: "POST",
-      body: JSON.stringify({ userId }),
-    })
-  },
-
-  // Remove member from team
-  removeTeamMember: async (teamId: string, userId: string): Promise<ApiResponse<void>> => {
-    return apiCall<void>(`/teams/${teamId}/members/${userId}`, {
-      method: "DELETE",
-    })
-  },
-
-  // Invite users to workspace
-  inviteUsers: async (emails: string[], role = "Member"): Promise<ApiResponse<void>> => {
-    return apiCall<void>("/teams/invite", {
-      method: "POST",
-      body: JSON.stringify({ emails, role }),
-    })
+  deleteTeam: async (teamId: string) => {
+    try {
+      const response = await fetch(`/api/teams/${teamId}`, {
+        method: "DELETE",
+      })
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Failed to delete team:", error)
+      return { success: false, error: "Failed to delete team" }
+    }
   },
 }

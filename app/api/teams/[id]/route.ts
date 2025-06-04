@@ -3,8 +3,9 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const user = getUserFromRequest(request)
 
     if (!user) {
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Get team details
-    const team = await teamsCollection.findOne({ id: params.id })
+    const team = await teamsCollection.findOne({ id })
 
     if (!team) {
       return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const teamMembers = await usersCollection
       .find({
         workspaceId: userData?.workspaceId,
-        teamIds: { $in: [params.id] },
+        teamIds: { $in: [id] },
       })
       .toArray()
 
@@ -60,8 +61,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const user = getUserFromRequest(request)
 
     if (!user) {
@@ -89,7 +91,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // Update team
     const updatedTeam = await teamsCollection.findOneAndUpdate(
-      { id: params.id },
+      { id },
       {
         $set: {
           teamName: teamName.trim(),
@@ -115,8 +117,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const user = getUserFromRequest(request)
 
     if (!user) {
@@ -137,19 +140,19 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Check if team exists
-    const team = await teamsCollection.findOne({ id: params.id })
+    const team = await teamsCollection.findOne({ id })
     if (!team) {
       return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
     }
 
     // Remove team from all users
-    await usersCollection.updateMany({ teamIds: { $in: [params.id] } }, { $pull: { teamIds: params.id as any} })
+    await usersCollection.updateMany({ teamIds: { $in: [id] } }, { $pull: { teamIds: id as any } })
 
     // Update projects to remove team assignment
-    await projectsCollection.updateMany({ teamId: params.id }, { $unset: { teamId: "" } })
+    await projectsCollection.updateMany({ teamId: id }, { $unset: { teamId: "" } })
 
     // Delete the team
-    await teamsCollection.deleteOne({ id: params.id })
+    await teamsCollection.deleteOne({ id })
 
     return NextResponse.json({
       success: true,
