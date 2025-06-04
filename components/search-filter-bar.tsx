@@ -11,11 +11,8 @@ import { useSearchFilterStore } from "@/lib/search-filter-store"
 import { useAppStore } from "@/lib/store"
 import { Status, Priority } from "@/lib/types"
 
-interface SearchFilterBarProps {
-  onAddTask: () => void
-}
 
-export default function SearchFilterBar({ onAddTask }: SearchFilterBarProps) {
+export default function SearchFilterBar() {
   const {
     searchQuery,
     setSearchQuery,

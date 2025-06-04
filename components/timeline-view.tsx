@@ -30,7 +30,7 @@ export default function TimelineView({ projectId, setIsModalNewTaskOpen }: Timel
           setError(response.error || "Failed to fetch tasks")
         }
       } catch (error) {
-        setError("Network error occurred")
+        setError(`Network error occurred ${error}`)
       } finally {
         setLoading(false)
       }
@@ -56,7 +56,7 @@ export default function TimelineView({ projectId, setIsModalNewTaskOpen }: Timel
 
   const filteredTasks = tasks.filter((task) => {
     const matchesStatus = statusFilter === "all" || task.status === statusFilter
-    const hasDate = task.dueDate || task.startDate
+    const hasDate = task.dueDate 
     return matchesStatus && hasDate
   })
 
@@ -139,7 +139,7 @@ export default function TimelineView({ projectId, setIsModalNewTaskOpen }: Timel
               <div className="col-span-2 px-4">To</div>
               <div className="col-span-5 px-4 relative">
                 <div className="grid grid-cols-12 h-full">
-                  {months.map((month, index) => (
+                  {months.map((index) => (
                     <div key={index} className="border-r border-gray-200 last:border-r-0 h-full"></div>
                   ))}
                 </div>
@@ -156,6 +156,7 @@ export default function TimelineView({ projectId, setIsModalNewTaskOpen }: Timel
                   <div className="col-span-3 px-4">
                     <div className="font-medium text-gray-900">Task {taskId}</div>
                   </div>
+                {/*
                   <div className="col-span-2 px-4 text-sm text-gray-600">
                     {task.startDate
                       ? new Date(task.startDate).toLocaleDateString("en-US", {
@@ -165,6 +166,7 @@ export default function TimelineView({ projectId, setIsModalNewTaskOpen }: Timel
                         })
                       : "-"}
                   </div>
+                */}
                   <div className="col-span-2 px-4 text-sm text-gray-600">
                     {task.dueDate
                       ? new Date(task.dueDate).toLocaleDateString("en-US", {
@@ -176,7 +178,7 @@ export default function TimelineView({ projectId, setIsModalNewTaskOpen }: Timel
                   </div>
                   <div className="col-span-5 px-4 relative">
                     <div className="grid grid-cols-12 h-8 relative">
-                      {months.map((month, index) => (
+                      {months.map(( index) => (
                         <div key={index} className="border-r border-gray-200 last:border-r-0 h-full"></div>
                       ))}
 

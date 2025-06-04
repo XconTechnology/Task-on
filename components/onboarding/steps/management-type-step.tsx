@@ -117,7 +117,7 @@ export default function ManagementTypeStep({ data, updateData }: ManagementTypeS
       </div>
 
       <p className="text-description-small text-gray-500 max-w-md mx-auto">
-        Don't worry, you can always add more in the future.
+        Don&apos;t worry, you can always add more in the future.
       </p>
     </div>
   )

@@ -41,7 +41,7 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
           setError(response.error || "Failed to fetch tasks")
         }
       } catch (error) {
-        setError("Network error occurred")
+        setError(`Network error occurred ${error}`)
       } finally {
         setLoading(false)
       }

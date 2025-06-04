@@ -59,7 +59,7 @@ export default function FeaturesStep({ data, updateData }: FeaturesStepProps) {
       </div>
 
       <p className="text-description-small text-gray-500 max-w-md mx-auto">
-        Don't worry, you'll have access to all of these in your Workspace.
+        Don&apos;t worry, you&apos;ll have access to all of these in your Workspace.
       </p>
     </div>
   );

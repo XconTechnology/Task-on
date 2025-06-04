@@ -106,7 +106,7 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
 
                 {/* Search and Filter Bar */}
                 <div className="max-w-2xl ml-8">
-                  <SearchFilterBar onAddTask={() => setIsModalNewTaskOpen(true)} />
+                  <SearchFilterBar />
                 </div>
               </div>
             </div>

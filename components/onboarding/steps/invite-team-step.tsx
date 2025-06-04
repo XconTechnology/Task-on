@@ -18,17 +18,17 @@ export default function InviteTeamStep({ data, updateData }: InviteTeamStepProps
 
   const handleAddEmail = () => {
     if (emailInput.trim() && isValidEmail(emailInput)) {
-      const currentEmails = data.invitedEmails || []
+      const currentEmails = data.teamInvites || []
       if (!currentEmails.includes(emailInput.trim())) {
-        updateData({ invitedEmails: [...currentEmails, emailInput.trim()] })
+        updateData({ teamInvites: [...currentEmails, emailInput.trim()] })
       }
       setEmailInput("")
     }
   }
 
   const handleRemoveEmail = (emailToRemove: string) => {
-    const currentEmails = data.invitedEmails || []
-    updateData({ invitedEmails: currentEmails.filter((email) => email !== emailToRemove) })
+    const currentEmails = data.teamInvites || []
+    updateData({ teamInvites: currentEmails.filter((email) => email !== emailToRemove) })
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -69,11 +69,11 @@ export default function InviteTeamStep({ data, updateData }: InviteTeamStepProps
           </Button>
         </div>
 
-        {data.invitedEmails && data.invitedEmails.length > 0 && (
+        {data.teamInvites && data.teamInvites.length > 0 && (
           <div className="space-y-2">
             <p className="text-label">Invited emails:</p>
             <div className="space-y-2">
-              {data.invitedEmails.map((email, index) => (
+              {data.teamInvites.map((email, index) => (
                 <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
                   <span className="text-medium">{email}</span>
                   <button

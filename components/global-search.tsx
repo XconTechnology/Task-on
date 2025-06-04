@@ -156,7 +156,7 @@ export default function GlobalSearch({ onTaskClick }: GlobalSearchProps) {
                     </h3>
                     {!isSuggestions && query && (
                       <Badge variant="outline" className="text-small">
-                        "{query}"
+                        &quot;{query}&quot;
                       </Badge>
                     )}
                   </div>

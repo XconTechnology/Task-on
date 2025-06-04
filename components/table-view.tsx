@@ -35,7 +35,7 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
           setError(response.error || "Failed to fetch tasks")
         }
       } catch (error) {
-        setError("Network error occurred")
+        setError(`Network error occurred ${error}`)
       } finally {
         setLoading(false)
       }

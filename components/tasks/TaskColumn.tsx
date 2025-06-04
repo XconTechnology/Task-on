@@ -1,7 +1,7 @@
 
 import {  useDrop } from "react-dnd"
 import { type Task, Status } from "@/lib/types"
-import { EllipsisVertical, Plus } from "lucide-react"
+import {  Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { statusConfig } from "@/lib/constants"
 import TaskCard from "./TaskCard"
