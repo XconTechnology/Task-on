@@ -50,7 +50,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       { returnDocument: "after" },
     )
 
-    if (!updatedTask.value) {
+    if (!updatedTask?.value) {
       return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
     }
 

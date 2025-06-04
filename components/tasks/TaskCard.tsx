@@ -22,7 +22,7 @@ const TaskCard =({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps)
     }),
   }))
 
-  const numberOfComments = task.comments?.length || 0
+  const numberOfComments =  0
 
   const priorityConfig = {
     Urgent: "bg-red-100 text-red-700 border-red-200",
@@ -68,7 +68,7 @@ const TaskCard =({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps)
               <div className="flex -space-x-1">
                 {task.assignee && (
                   <Avatar className="h-6 w-6 border-2 border-white">
-                    <AvatarImage src={task.assignee.profilePictureUrl || "/placeholder.svg"} />
+                    <AvatarImage src={ "/placeholder.svg"} />
                     <AvatarFallback className="text-small bg-blue-100 text-blue-700">
                       {task.assignee.username.charAt(0).toUpperCase()}
                     </AvatarFallback>
@@ -76,7 +76,7 @@ const TaskCard =({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps)
                 )}
                 {task.author && task.author.id !== task.assignee?.id && (
                   <Avatar className="h-6 w-6 border-2 border-white">
-                    <AvatarImage src={task.author.profilePictureUrl || "/placeholder.svg"} />
+                    <AvatarImage src={"/placeholder.svg"} />
                     <AvatarFallback className="text-small bg-gray-100 text-gray-700">
                       {task.author.username.charAt(0).toUpperCase()}
                     </AvatarFallback>

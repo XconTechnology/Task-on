@@ -243,7 +243,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
                         className="flex items-center space-x-2 bg-white border border-blue-200 rounded-full px-3 py-1"
                       >
                         <Avatar className="h-5 w-5">
-                          <AvatarImage src={member?.profilePictureUrl || "/placeholder.svg"} />
+                          <AvatarImage src={"/placeholder.svg"} />
                           <AvatarFallback className="text-extra-small">
                             {member?.username.charAt(0).toUpperCase()}
                           </AvatarFallback>

@@ -244,7 +244,7 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
               <Trash2 size={48} className="mx-auto text-red-500 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Team</h3>
               <p className="text-gray-600 mb-4">
-                Are you sure you want to delete "{team.teamName}"? This action cannot be undone.
+                Are you sure you want to delete &quot;{team.teamName}&quot;? This action cannot be undone.
               </p>
               <div className="flex justify-center space-x-3">
                 <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isLoading}>

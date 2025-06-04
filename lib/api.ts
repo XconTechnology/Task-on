@@ -1,4 +1,4 @@
-import type { Project, Task, User, Team, SearchResults, ApiResponse, Status } from "./types"
+import type { Project, Task, User, Team, ApiResponse, Status } from "./types"
 import { API_CONFIG } from "./constants"
 
 // Base API function with error handling and retries
@@ -229,27 +229,31 @@ export const teamApi = {
 }
 
 // Search API Functions
+
 export const searchApi = {
-  // Global search
-  search: async (query: string): Promise<ApiResponse<SearchResults>> => {
-    return apiCall<SearchResults>(`/search?query=${encodeURIComponent(query)}`)
+  search: async (query: string) => {
+    try {
+      const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`)
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Search API error:", error)
+      return { success: false, error: "Search request failed" }
+    }
   },
 
-  // Search projects
-  searchProjects: async (query: string): Promise<ApiResponse<Project[]>> => {
-    return apiCall<Project[]>(`/search/projects?query=${encodeURIComponent(query)}`)
-  },
-
-  // Search tasks
-  searchTasks: async (query: string): Promise<ApiResponse<Task[]>> => {
-    return apiCall<Task[]>(`/search/tasks?query=${encodeURIComponent(query)}`)
-  },
-
-  // Search users
-  searchUsers: async (query: string): Promise<ApiResponse<User[]>> => {
-    return apiCall<User[]>(`/search/users?query=${encodeURIComponent(query)}`)
+  getSuggestions: async () => {
+    try {
+      const response = await fetch("/api/search")
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Suggestions API error:", error)
+      return { success: false, error: "Suggestions request failed" }
+    }
   },
 }
+
 
 // Export all APIs as a single object for easy importing
 export const api = {
@@ -261,3 +265,41 @@ export const api = {
 }
 
 export default api
+
+
+// Add this to your existing API file
+
+export const analyticsApi = {
+  getAnalytics: async (timeRange = "30d") => {
+    try {
+      const response = await fetch(`/api/analytics?timeRange=${timeRange}`)
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error("Analytics API error:", error)
+      return { success: false, error: "Analytics request failed" }
+    }
+  },
+
+  exportAnalytics: async (timeRange = "30d") => {
+    try {
+      const response = await fetch(`/api/analytics/export?timeRange=${timeRange}`)
+      const blob = await response.blob()
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `analytics-${timeRange}-${new Date().toISOString().split("T")[0]}.csv`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      return { success: true }
+    } catch (error) {
+      console.error("Export error:", error)
+      return { success: false, error: "Export failed" }
+    }
+  },
+}

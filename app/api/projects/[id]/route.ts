@@ -91,13 +91,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       { returnDocument: "after" },
     )
 
-    if (!updatedProject.value) {
+    if (!updatedProject?.value) {
       return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
     }
 
     return NextResponse.json({
       success: true,
-      data: updatedProject.value,
+      data: updatedProject?.value,
       message: "Project updated successfully",
     })
   } catch (error) {

@@ -22,7 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Priority, Status, type Task } from "@/lib/types";
+import { Priority, Status, WorkspaceMember, type Task } from "@/lib/types";
 
 type UpdateTaskModalProps = {
   task: Task | null;
@@ -39,13 +39,13 @@ export default function UpdateTaskModal({
 }: UpdateTaskModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
-  const [availableMembers, setAvailableMembers] = useState([]);
+  const [availableMembers, setAvailableMembers] = useState<WorkspaceMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    status: "todo" as "todo" | "in-progress" | "done",
-    priority: "medium" as "low" | "medium" | "high",
+    status: "todo" as Status,
+    priority: "medium" as Priority,
     dueDate: "",
   });
 
@@ -144,8 +144,8 @@ export default function UpdateTaskModal({
     setFormData({
       title: "",
       description: "",
-      status: "todo",
-      priority: "medium",
+      status:  Status.ToDo,
+      priority: Priority.Medium,
       dueDate: "",
     });
     setSelectedMember("");
@@ -393,7 +393,7 @@ export default function UpdateTaskModal({
                         <Avatar className="h-5 w-5">
                           <AvatarImage
                             src={
-                              member?.profilePictureUrl || "/placeholder.svg"
+                               "/placeholder.svg"
                             }
                           />
                           <AvatarFallback className="text-extra-small">

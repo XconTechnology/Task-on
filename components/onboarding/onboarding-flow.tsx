@@ -22,7 +22,6 @@ export default function OnboardingFlow() {
     managementType: [],
     features: [],
     workspaceName: "",
-    invitedEmails: [],
     referralSource: "",
   })
 

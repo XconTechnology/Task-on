@@ -1,136 +1,156 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Plus, Search, Users, Crown, Shield, User, Mail, MoreHorizontal, Settings } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Skeleton } from "@/components/ui/skeleton"
-import InviteModal from "@/components/modals/invite-modal"
-import CreateTeamModal from "@/components/modals/create-team-modal"
-import EditTeamModal from "@/components/modals/edit-team-modal"
-import { teamApi } from "@/lib/api/teams"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  Search,
+  Users,
+  Crown,
+  Shield,
+  User,
+  Mail,
+  MoreHorizontal,
+  Settings,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import InviteModal from "@/components/modals/invite-modal";
+import CreateTeamModal from "@/components/modals/create-team-modal";
+import EditTeamModal from "@/components/modals/edit-team-modal";
+import { teamApi } from "@/lib/api/teams";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function TeamsContent() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [teams, setTeams] = useState([])
-  const [members, setMembers] = useState([])
-  const [isLoadingTeams, setIsLoadingTeams] = useState(true)
-  const [isLoadingMembers, setIsLoadingMembers] = useState(true)
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)
-  const [editingTeam, setEditingTeam] = useState(null)
-  const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [teams, setTeams] = useState<any[]>([]);
+  const [members, setMembers] = useState([]);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(true);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
+  const [editingTeam, setEditingTeam] = useState(null);
+  const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
   const [workspaceSettings, setWorkspaceSettings] = useState({
     workspaceName: "",
     defaultRole: "Member",
     allowMemberInvites: true,
-  })
-  const [isLoadingSettings, setIsLoadingSettings] = useState(false)
+  });
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
 
   useEffect(() => {
-    fetchTeams()
-    fetchMembers()
-    fetchWorkspaceSettings()
-  }, [])
+    fetchTeams();
+    fetchMembers();
+    fetchWorkspaceSettings();
+  }, []);
 
   const fetchTeams = async () => {
     try {
-      const response = await teamApi.getTeams()
+      const response = await teamApi.getTeams();
       if (response.success) {
-        setTeams(response.data || [])
+        setTeams(response.data || []);
       }
     } catch (error) {
-      console.error("Failed to fetch teams:", error)
+      console.error("Failed to fetch teams:", error);
     } finally {
-      setIsLoadingTeams(false)
+      setIsLoadingTeams(false);
     }
-  }
+  };
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch("/api/workspace/members")
-      const data = await response.json()
+      const response = await fetch("/api/workspace/members");
+      const data = await response.json();
       if (data.success) {
-        setMembers(data.data || [])
+        setMembers(data.data || []);
       }
     } catch (error) {
-      console.error("Failed to fetch members:", error)
+      console.error("Failed to fetch members:", error);
     } finally {
-      setIsLoadingMembers(false)
+      setIsLoadingMembers(false);
     }
-  }
+  };
 
   const fetchWorkspaceSettings = async () => {
-    setIsLoadingSettings(true)
+    setIsLoadingSettings(true);
     try {
-      const response = await fetch("/api/workspace/settings")
-      const data = await response.json()
+      const response = await fetch("/api/workspace/settings");
+      const data = await response.json();
       if (data.success) {
-        setWorkspaceSettings(data.data)
+        setWorkspaceSettings(data.data);
       }
     } catch (error) {
-      console.error("Failed to fetch workspace settings:", error)
+      console.error("Failed to fetch workspace settings:", error);
     } finally {
-      setIsLoadingSettings(false)
+      setIsLoadingSettings(false);
     }
-  }
+  };
 
   const handleSaveSettings = async () => {
-    setIsLoadingSettings(true)
+    setIsLoadingSettings(true);
     try {
       const response = await fetch("/api/workspace/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(workspaceSettings),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
       if (data.success) {
-        alert("Settings saved successfully!")
+        alert("Settings saved successfully!");
       } else {
-        alert(data.error || "Failed to save settings")
+        alert(data.error || "Failed to save settings");
       }
     } catch (error) {
-      console.error("Failed to save settings:", error)
-      alert("Failed to save settings")
+      console.error("Failed to save settings:", error);
+      alert("Failed to save settings");
     } finally {
-      setIsLoadingSettings(false)
+      setIsLoadingSettings(false);
     }
-  }
+  };
 
   const handleEditTeam = (team: any) => {
-    setEditingTeam(team)
-    setIsEditTeamModalOpen(true)
-  }
+    setEditingTeam(team);
+    setIsEditTeamModalOpen(true);
+  };
 
   const handleTeamCreated = (newTeam: any) => {
-    setTeams((prev) => [newTeam, ...prev])
-  }
+    setTeams((prev) => [newTeam, ...prev]);
+  };
 
   const handleTeamUpdated = (updatedTeam: any) => {
-    setTeams((prev) => prev.map((team: any) => (team.id === updatedTeam.id ? updatedTeam : team)))
-  }
+    setTeams((prev) =>
+      prev.map((team: any) => (team.id === updatedTeam.id ? updatedTeam : team))
+    );
+  };
 
   const handleTeamDeleted = (teamId: string) => {
-    setTeams((prev) => prev.filter((team: any) => team.id !== teamId))
-  }
+    setTeams((prev) => prev.filter((team: any) => team.id !== teamId));
+  };
 
   const handleInviteSuccess = () => {
-    fetchMembers() // Refresh members list
-  }
+    fetchMembers(); // Refresh members list
+  };
 
-  const filteredTeams = teams.filter((team: any) => team.teamName.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredTeams = teams.filter((team: any) =>
+    team.teamName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const filteredMembers = members.filter(
     (member: any) =>
       member.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      member.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -139,14 +159,22 @@ export default function TeamsContent() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="header-large">Teams</h1>
-            <p className="text-description mt-1">Manage your teams and collaborate with members.</p>
+            <p className="text-description mt-1">
+              Manage your teams and collaborate with members.
+            </p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button variant="outline" onClick={() => setIsInviteModalOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsInviteModalOpen(true)}
+            >
               <Mail size={16} className="mr-2" />
               <span className="text-medium">Invite Members</span>
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setIsCreateTeamModalOpen(true)}>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setIsCreateTeamModalOpen(true)}
+            >
               <Plus size={16} className="mr-2" />
               <span className="text-medium">Create Team</span>
             </Button>
@@ -156,7 +184,10 @@ export default function TeamsContent() {
         {/* Search */}
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={16}
+            />
             <Input
               placeholder="Search teams or members..."
               value={searchQuery}
@@ -212,13 +243,17 @@ export default function TeamsContent() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="h-12 w-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold">{team.teamName.charAt(0)}</span>
+                            <span className="text-white font-semibold">
+                              {team.teamName.charAt(0)}
+                            </span>
                           </div>
                           <div>
                             <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                               {team.teamName}
                             </CardTitle>
-                            <p className="text-description">{team.description || "No description"}</p>
+                            <p className="text-description">
+                              {team.description || "No description"}
+                            </p>
                           </div>
                         </div>
                         <Button
@@ -236,14 +271,21 @@ export default function TeamsContent() {
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center space-x-1">
                             <Users size={14} className="text-gray-400" />
-                            <span className="text-small text-gray-600">{team.memberCount || 0} members</span>
+                            <span className="text-small text-gray-600">
+                              {team.memberCount || 0} members
+                            </span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Settings size={14} className="text-gray-400" />
-                            <span className="text-small text-gray-600">0 projects</span>
+                            <span className="text-small text-gray-600">
+                              0 projects
+                            </span>
                           </div>
                         </div>
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        <Badge
+                          variant="secondary"
+                          className="bg-green-100 text-green-700"
+                        >
                           Active
                         </Badge>
                       </div>
@@ -254,8 +296,13 @@ export default function TeamsContent() {
                 <div className="col-span-full text-center py-12">
                   <Users size={48} className="mx-auto text-gray-300 mb-4" />
                   <h3 className="header-small mb-2">No teams found</h3>
-                  <p className="text-description mb-4">Create your first team to get started.</p>
-                  <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateTeamModalOpen(true)}>
+                  <p className="text-description mb-4">
+                    Create your first team to get started.
+                  </p>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => setIsCreateTeamModalOpen(true)}
+                  >
                     <Plus size={16} className="mr-2" />
                     <span className="text-medium text-white">Create Team</span>
                   </Button>
@@ -267,8 +314,12 @@ export default function TeamsContent() {
           <TabsContent value="members" className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Team Members</h3>
-                <p className="text-description">Manage your workspace members and their permissions.</p>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Team Members
+                </h3>
+                <p className="text-description">
+                  Manage your workspace members and their permissions.
+                </p>
               </div>
               <div className="divide-y divide-gray-200">
                 {isLoadingMembers ? (
@@ -295,44 +346,66 @@ export default function TeamsContent() {
                   ))
                 ) : filteredMembers.length > 0 ? (
                   filteredMembers.map((member: any) => (
-                    <div key={member.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                    <div
+                      key={member.id}
+                      className="px-6 py-4 hover:bg-gray-50 transition-colors"
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="relative">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={member.profilePictureUrl || "/placeholder.svg"} />
-                              <AvatarFallback>{member.username.charAt(0).toUpperCase()}</AvatarFallback>
+                              <AvatarImage
+                                src={
+                                  member.profilePictureUrl || "/placeholder.svg"
+                                }
+                              />
+                              <AvatarFallback>
+                                {member.username.charAt(0).toUpperCase()}
+                              </AvatarFallback>
                             </Avatar>
                             <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-green-500" />
                           </div>
                           <div>
-                            <h4 className="text-medium font-semibold text-gray-900">{member.username}</h4>
-                            <p className="text-small text-gray-600">{member.email}</p>
+                            <h4 className="text-medium font-semibold text-gray-900">
+                              {member.username}
+                            </h4>
+                            <p className="text-small text-gray-600">
+                              {member.email}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
                             <div className="flex items-center space-x-2">
-                              {member.role === "Owner" && <Crown size={14} className="text-yellow-500" />}
-                              {member.role === "Admin" && <Shield size={14} className="text-blue-500" />}
+                              {member.role === "Owner" && (
+                                <Crown size={14} className="text-yellow-500" />
+                              )}
+                              {member.role === "Admin" && (
+                                <Shield size={14} className="text-blue-500" />
+                              )}
                               {(!member.role || member.role === "Member") && (
                                 <User size={14} className="text-gray-400" />
                               )}
                               <Badge
-                                variant={member.role === "Owner" ? "default" : "secondary"}
+                                variant={
+                                  member.role === "Owner"
+                                    ? "default"
+                                    : "secondary"
+                                }
                                 className={
                                   member.role === "Owner"
                                     ? "bg-yellow-100 text-yellow-700"
                                     : member.role === "Admin"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-gray-100 text-gray-700"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-gray-100 text-gray-700"
                                 }
                               >
                                 {member.role || "Member"}
                               </Badge>
                             </div>
                             <p className="text-small text-gray-500 mt-1">
-                              Joined {new Date(member.createdAt).toLocaleDateString()}
+                              Joined{" "}
+                              {new Date(member.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                           <Button variant="ghost" size="sm">
@@ -346,10 +419,17 @@ export default function TeamsContent() {
                   <div className="px-6 py-12 text-center">
                     <Users size={48} className="mx-auto text-gray-300 mb-4" />
                     <h3 className="header-small mb-2">No members found</h3>
-                    <p className="text-description mb-4">Invite people to join your workspace.</p>
-                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsInviteModalOpen(true)}>
+                    <p className="text-description mb-4">
+                      Invite people to join your workspace.
+                    </p>
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => setIsInviteModalOpen(true)}
+                    >
                       <Mail size={16} className="mr-2" />
-                      <span className="text-medium text-white">Invite Members</span>
+                      <span className="text-medium text-white">
+                        Invite Members
+                      </span>
                     </Button>
                   </div>
                 )}
@@ -367,15 +447,27 @@ export default function TeamsContent() {
                   <h4 className="text-label mb-2">Workspace Name</h4>
                   <Input
                     value={workspaceSettings.workspaceName}
-                    onChange={(e) => setWorkspaceSettings((prev) => ({ ...prev, workspaceName: e.target.value }))}
+                    onChange={(e) =>
+                      setWorkspaceSettings((prev) => ({
+                        ...prev,
+                        workspaceName: e.target.value,
+                      }))
+                    }
                     disabled={isLoadingSettings}
                   />
                 </div>
                 <div>
-                  <h4 className="text-label mb-2">Default Role for New Members</h4>
+                  <h4 className="text-label mb-2">
+                    Default Role for New Members
+                  </h4>
                   <Select
                     value={workspaceSettings.defaultRole}
-                    onValueChange={(value) => setWorkspaceSettings((prev) => ({ ...prev, defaultRole: value }))}
+                    onValueChange={(value) =>
+                      setWorkspaceSettings((prev) => ({
+                        ...prev,
+                        defaultRole: value,
+                      }))
+                    }
                     disabled={isLoadingSettings}
                   >
                     <SelectTrigger className="w-full">
@@ -389,15 +481,22 @@ export default function TeamsContent() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="text-label">Allow members to invite others</h4>
-                    <p className="text-description-small">Members can send invitations to join the workspace</p>
+                    <h4 className="text-label">
+                      Allow members to invite others
+                    </h4>
+                    <p className="text-description-small">
+                      Members can send invitations to join the workspace
+                    </p>
                   </div>
                   <input
                     type="checkbox"
                     className="rounded"
                     checked={workspaceSettings.allowMemberInvites}
                     onChange={(e) =>
-                      setWorkspaceSettings((prev) => ({ ...prev, allowMemberInvites: e.target.checked }))
+                      setWorkspaceSettings((prev) => ({
+                        ...prev,
+                        allowMemberInvites: e.target.checked,
+                      }))
                     }
                     disabled={isLoadingSettings}
                   />
@@ -433,5 +532,5 @@ export default function TeamsContent() {
         onDelete={handleTeamDeleted}
       />
     </>
-  )
+  );
 }

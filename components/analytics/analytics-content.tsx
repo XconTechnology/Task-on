@@ -1,13 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TrendingUp, BarChart3, PieChart, Activity, Download, Filter, Calendar } from "lucide-react"
+import { TrendingUp, BarChart3, PieChart, Activity, Download,  Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
   BarChart,
   Bar,
   XAxis,
@@ -18,29 +20,12 @@ import {
   PieChart as RechartsPieChart,
   Pie,
   Cell,
-  COLORS,
 } from "@/components/ui/chart"
+import MetricCard from "./MetricCard"
+import { AnalyticsData } from "@/lib/types"
+import { monthlyOverviewConfig, productivityChartConfig, taskDistributionConfig } from "@/lib/constants"
 
-interface AnalyticsData {
-  productivity: {
-    daily: Array<{ date: string; completed: number; created: number }>
-    weekly: Array<{ week: string; productivity: number }>
-    monthly: Array<{ month: string; tasks: number; hours: number }>
-  }
-  projects: {
-    completion: Array<{ name: string; completed: number; total: number }>
-    timeline: Array<{ project: string; planned: number; actual: number }>
-  }
-  team: {
-    performance: Array<{ member: string; tasks: number; efficiency: number }>
-    workload: Array<{ member: string; assigned: number; completed: number }>
-  }
-  trends: {
-    taskTypes: Array<{ type: string; count: number; color: string }>
-    priorities: Array<{ priority: string; count: number; color: string }>
-    statuses: Array<{ status: string; count: number; color: string }>
-  }
-}
+
 
 export default function AnalyticsContent() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
@@ -54,84 +39,34 @@ export default function AnalyticsContent() {
   const fetchAnalyticsData = async () => {
     setIsLoading(true)
     try {
-      // Simulate API call - in real app, this would fetch from your analytics endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const response = await fetch(`/api/analytics?timeRange=${timeRange}`)
+      const data = await response.json()
 
-      // Mock analytics data
-      const mockData: AnalyticsData = {
-        productivity: {
-          daily: Array.from({ length: 30 }, (_, i) => ({
-            date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-            completed: Math.floor(Math.random() * 10) + 1,
-            created: Math.floor(Math.random() * 8) + 2,
-          })),
-          weekly: Array.from({ length: 12 }, (_, i) => ({
-            week: `Week ${i + 1}`,
-            productivity: Math.floor(Math.random() * 40) + 60,
-          })),
-          monthly: Array.from({ length: 6 }, (_, i) => ({
-            month: new Date(Date.now() - (5 - i) * 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
-              month: "short",
-            }),
-            tasks: Math.floor(Math.random() * 50) + 20,
-            hours: Math.floor(Math.random() * 100) + 50,
-          })),
-        },
-        projects: {
-          completion: [
-            { name: "E-commerce Platform", completed: 45, total: 60 },
-            { name: "Mobile App", completed: 28, total: 40 },
-            { name: "Analytics Dashboard", completed: 35, total: 35 },
-            { name: "Marketing Website", completed: 12, total: 20 },
-          ],
-          timeline: [
-            { project: "E-commerce", planned: 90, actual: 95 },
-            { project: "Mobile App", planned: 60, actual: 75 },
-            { project: "Dashboard", planned: 45, actual: 40 },
-            { project: "Website", planned: 30, actual: 35 },
-          ],
-        },
-        team: {
-          performance: [
-            { member: "John Doe", tasks: 24, efficiency: 92 },
-            { member: "Jane Smith", tasks: 18, efficiency: 88 },
-            { member: "Mike Wilson", tasks: 21, efficiency: 95 },
-            { member: "Sarah Johnson", tasks: 16, efficiency: 85 },
-          ],
-          workload: [
-            { member: "John Doe", assigned: 28, completed: 24 },
-            { member: "Jane Smith", assigned: 22, completed: 18 },
-            { member: "Mike Wilson", assigned: 25, completed: 21 },
-            { member: "Sarah Johnson", assigned: 20, completed: 16 },
-          ],
-        },
-        trends: {
-          taskTypes: [
-            { type: "Feature", count: 45, color: COLORS.primary },
-            { type: "Bug Fix", count: 28, color: COLORS.danger },
-            { type: "Enhancement", count: 32, color: COLORS.secondary },
-            { type: "Documentation", count: 15, color: COLORS.accent },
-          ],
-          priorities: [
-            { type: "Urgent", count: 12, color: COLORS.danger },
-            { type: "High", count: 28, color: COLORS.accent },
-            { type: "Medium", count: 45, color: COLORS.primary },
-            { type: "Low", count: 35, color: COLORS.secondary },
-          ],
-          statuses: [
-            { type: "Completed", count: 65, color: COLORS.secondary },
-            { type: "In Progress", count: 32, color: COLORS.primary },
-            { type: "To Do", count: 23, color: COLORS.accent },
-          ],
-        },
+      if (data.success) {
+        // Ensure we have data for task types
+        if (!data.data.trends.taskTypes || data.data.trends.taskTypes.length === 0) {
+          data.data.trends.taskTypes = [
+            { type: "Feature", count: 45, color: "#4f46e5" },
+            { type: "Bug Fix", count: 28, color: "#ef4444" },
+            { type: "Enhancement", count: 32, color: "#0ea5e9" },
+            { type: "Documentation", count: 15, color: "#f97316" },
+          ]
+        }
+
+        setAnalyticsData(data.data)
+      } else {
+        console.error("Failed to fetch analytics:", data.error)
       }
-
-      setAnalyticsData(mockData)
     } catch (error) {
       console.error("Failed to fetch analytics data:", error)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleExport = () => {
+    // Implement export functionality
+    console.log("Exporting analytics data...")
   }
 
   return (
@@ -154,11 +89,7 @@ export default function AnalyticsContent() {
               <SelectItem value="1y">Last year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
-            <Filter size={16} className="mr-2" />
-            <span className="text-medium">Filter</span>
-          </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExport}>
             <Download size={16} className="mr-2" />
             <span className="text-medium">Export</span>
           </Button>
@@ -167,17 +98,38 @@ export default function AnalyticsContent() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <MetricCard title="Total Tasks" value="247" change="+12%" trend="up" icon={BarChart3} isLoading={isLoading} />
+        <MetricCard
+          title="Total Tasks"
+          value={analyticsData?.keyMetrics.totalTasks.toString() || "0"}
+          change={analyticsData?.keyMetrics.tasksChange || "+0%"}
+          trend="up"
+          icon={BarChart3}
+          isLoading={isLoading}
+        />
         <MetricCard
           title="Completion Rate"
-          value="87%"
-          change="+5%"
+          value={`${analyticsData?.keyMetrics.completionRate || 0}%`}
+          change={analyticsData?.keyMetrics.completionChange || "+0%"}
           trend="up"
           icon={TrendingUp}
           isLoading={isLoading}
         />
-        <MetricCard title="Team Efficiency" value="92%" change="+3%" trend="up" icon={Activity} isLoading={isLoading} />
-        <MetricCard title="Projects Active" value="8" change="+2" trend="up" icon={PieChart} isLoading={isLoading} />
+        <MetricCard
+          title="Team Efficiency"
+          value={`${analyticsData?.keyMetrics.teamEfficiency || 0}%`}
+          change={analyticsData?.keyMetrics.efficiencyChange || "+0%"}
+          trend="up"
+          icon={Activity}
+          isLoading={isLoading}
+        />
+        <MetricCard
+          title="Projects Active"
+          value={analyticsData?.keyMetrics.activeProjects.toString() || "0"}
+          change={analyticsData?.keyMetrics.projectsChange || "+0"}
+          trend="up"
+          icon={PieChart}
+          isLoading={isLoading}
+        />
       </div>
 
       {/* Main Charts */}
@@ -202,25 +154,26 @@ export default function AnalyticsContent() {
               </div>
             ) : (
               <div className="h-64">
-                <ChartContainer>
+                <ChartContainer config={productivityChartConfig}>
                   <LineChart data={analyticsData?.productivity.daily || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
                     <Line
                       type="monotone"
                       dataKey="completed"
-                      stroke={COLORS.primary}
+                      stroke="var(--color-completed)"
                       strokeWidth={3}
-                      dot={{ fill: COLORS.primary, strokeWidth: 2, r: 4 }}
+                      dot={{ fill: "var(--color-completed)", strokeWidth: 2, r: 4 }}
                       name="Completed"
                     />
                     <Line
                       type="monotone"
                       dataKey="created"
-                      stroke={COLORS.secondary}
+                      stroke="var(--color-created)"
                       strokeWidth={3}
-                      dot={{ fill: COLORS.secondary, strokeWidth: 2, r: 4 }}
+                      dot={{ fill: "var(--color-created)", strokeWidth: 2, r: 4 }}
                       name="Created"
                     />
                   </LineChart>
@@ -231,8 +184,8 @@ export default function AnalyticsContent() {
         </Card>
 
         {/* Task Distribution */}
-        <Card className="bg-white shadow-sm">
-          <CardHeader>
+        <Card className="bg-white shadow-sm space-y-0">
+          <CardHeader className=" pb-0 ">
             <CardTitle className="flex items-center space-x-2">
               <PieChart className="w-5 h-5 text-purple-600" />
               <span>Task Distribution</span>
@@ -245,8 +198,8 @@ export default function AnalyticsContent() {
               </div>
             ) : (
               <div className="h-64">
-                <ChartContainer>
-                  <RechartsPieChart>
+                <ChartContainer  config={taskDistributionConfig}>
+                  <RechartsPieChart >
                     <Pie
                       data={analyticsData?.trends.taskTypes || []}
                       cx="50%"
@@ -255,15 +208,17 @@ export default function AnalyticsContent() {
                       outerRadius={100}
                       paddingAngle={5}
                       dataKey="count"
+                      nameKey="type"
                     >
-                      {analyticsData?.trends.taskTypes.map((entry, index) => (
+                      {analyticsData?.trends.taskTypes.map((entry:any, index:any) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="type" />} />
                   </RechartsPieChart>
                 </ChartContainer>
-                <div className="flex flex-wrap gap-4 mt-4 justify-center">
-                  {analyticsData?.trends.taskTypes.map((item, index) => (
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {analyticsData?.trends.taskTypes.map((item:any, index:any) => (
                     <div key={index} className="flex items-center space-x-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                       <span className="text-small text-gray-600">
@@ -277,40 +232,6 @@ export default function AnalyticsContent() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Project Performance */}
-      <Card className="bg-white shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <BarChart3 className="w-5 h-5 text-green-600" />
-            <span>Project Completion Status</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="h-64 flex items-center justify-center">
-              <div className="space-y-3 w-full">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-5/6" />
-                <Skeleton className="h-8 w-4/6" />
-                <Skeleton className="h-8 w-3/6" />
-              </div>
-            </div>
-          ) : (
-            <div className="h-64">
-              <ChartContainer>
-                <BarChart data={analyticsData?.projects.completion || []} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis type="number" tick={{ fontSize: 12 }} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={120} />
-                  <Bar dataKey="completed" fill={COLORS.secondary} radius={[0, 4, 4, 0]} name="Completed" />
-                  <Bar dataKey="total" fill="#E5E7EB" radius={[0, 4, 4, 0]} name="Total" />
-                </BarChart>
-              </ChartContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Team Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -336,7 +257,7 @@ export default function AnalyticsContent() {
               </div>
             ) : (
               <div className="space-y-4">
-                {analyticsData?.team.performance.map((member, index) => (
+                {analyticsData?.team.performance.map((member:any, index:any) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
@@ -358,7 +279,7 @@ export default function AnalyticsContent() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-sm">
+        <Card className="bg-white shadow-sm flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-indigo-600" />
@@ -376,13 +297,14 @@ export default function AnalyticsContent() {
               </div>
             ) : (
               <div className="h-64">
-                <ChartContainer>
+                <ChartContainer config={monthlyOverviewConfig}>
                   <BarChart data={analyticsData?.productivity.monthly || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Bar dataKey="tasks" fill={COLORS.primary} radius={[4, 4, 0, 0]} name="Tasks" />
-                    <Bar dataKey="hours" fill={COLORS.accent} radius={[4, 4, 0, 0]} name="Hours" />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="tasks" fill="var(--color-tasks)" radius={[4, 4, 0, 0]} name="Tasks" />
+                    <Bar dataKey="hours" fill="var(--color-hours)" radius={[4, 4, 0, 0]} name="Hours" />
                   </BarChart>
                 </ChartContainer>
               </div>
@@ -391,58 +313,5 @@ export default function AnalyticsContent() {
         </Card>
       </div>
     </div>
-  )
-}
-
-function MetricCard({
-  title,
-  value,
-  change,
-  trend,
-  icon: Icon,
-  isLoading,
-}: {
-  title: string
-  value: string
-  change: string
-  trend: "up" | "down"
-  icon: any
-  isLoading: boolean
-}) {
-  if (isLoading) {
-    return (
-      <Card className="bg-white shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-16" />
-              <Skeleton className="h-3 w-12" />
-            </div>
-            <Skeleton className="h-12 w-12 rounded-lg" />
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-small uppercase tracking-wide">{title}</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
-            <div className="flex items-center mt-2">
-              <TrendingUp className={`w-4 h-4 mr-1 ${trend === "up" ? "text-green-500" : "text-red-500"}`} />
-              <span className={`text-small ${trend === "up" ? "text-green-600" : "text-red-600"}`}>{change}</span>
-            </div>
-          </div>
-          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-            <Icon className="w-6 h-6 text-blue-600" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }

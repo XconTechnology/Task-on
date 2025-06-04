@@ -150,6 +150,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                     <Calendar size={16} className="text-gray-400" />
                     <span className="text-label">Dates</span>
                   </div>
+                 {/*
                   <div className="flex items-center space-x-2">
                     {task.startDate && (
                       <span className="text-medium">Start: {format(new Date(task.startDate), "MMM dd, yyyy")}</span>
@@ -159,6 +160,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                     )}
                     {!task.startDate && !task.dueDate && <span className="text-muted">Empty</span>}
                   </div>
+                 */}
                 </div>
 
                 {/* Priority */}
@@ -246,6 +248,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                   </div>
 
                   {/* Existing Comments */}
+                {/*
                   {task.comments?.map((comment) => (
                     <div key={comment.id} className="flex space-x-3">
                       <Avatar className="h-8 w-8">
@@ -265,6 +268,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                       </div>
                     </div>
                   ))}
+                */}
                 </div>
               </div>
             </div>

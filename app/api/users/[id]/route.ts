@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       { returnDocument: "after" },
     )
 
-    if (!updatedUser.value) {
+    if (!updatedUser?.value) {
       return NextResponse.json({ success: false, error: "Failed to update user" }, { status: 500 })
     }
 

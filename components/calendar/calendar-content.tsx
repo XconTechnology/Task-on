@@ -66,7 +66,6 @@ export default function CalendarContent() {
     const month = currentDate.getMonth()
 
     const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
     const startDate = new Date(firstDay)
     startDate.setDate(startDate.getDate() - firstDay.getDay())
 
@@ -243,7 +242,7 @@ export default function CalendarContent() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <CalendarIcon className="w-5 h-5 text-blue-600" />
-              <span>Today's Tasks</span>
+              <span>Today&apos;s Tasks</span>
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -47,7 +47,7 @@ export default function SignUpForm() {
         setError(data.error || "Sign up failed")
       }
     } catch (error) {
-      setError("Network error. Please try again.")
+      setError(`Network error. Please try again. ${error}`)
     } finally {
       setIsLoading(false)
     }

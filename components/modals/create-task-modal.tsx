@@ -383,7 +383,7 @@ export default function CreateTaskModal({
                         <Avatar className="h-5 w-5">
                           <AvatarImage
                             src={
-                              member?.profilePictureUrl || "/placeholder.svg"
+                               "/placeholder.svg"
                             }
                           />
                           <AvatarFallback className="text-extra-small">

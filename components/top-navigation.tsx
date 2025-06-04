@@ -13,12 +13,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import GlobalSearch from "./global-search"
 import InviteModal from "./modals/invite-modal"
+import TaskDetailModal from "./task-detail-modal"
+import type { Task } from "@/lib/types"
 
-// Modern Purple Design
 export default function TopNavigation() {
   const { user, signOut } = useUser()
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false)
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task)
+    setIsTaskDetailOpen(true)
+  }
+
 
   return (
     <>
@@ -35,31 +45,9 @@ export default function TopNavigation() {
             </div>
           </div>
 
-          {/* Center Section - Search */}
+     {/* Center Section - Search */}
           <div className="flex-1 max-w-md mx-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full bg-gray-100 border border-gray-200 rounded-lg py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-4 w-4 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-            </div>
+            <GlobalSearch onTaskClick={handleTaskClick} />
           </div>
 
           {/* Right Section */}
@@ -139,6 +127,20 @@ export default function TopNavigation() {
         onClose={() => setIsInviteModalOpen(false)}
         onSuccess={() => {
           // Refresh teams or members data if needed
+        }}
+      />
+
+        <TaskDetailModal
+        task={selectedTask}
+        isOpen={isTaskDetailOpen}
+        onClose={() => {
+          setIsTaskDetailOpen(false)
+          setSelectedTask(null)
+        }}
+        onUpdateTask={() => {
+          // Just close the modal - no update handling needed
+          setIsTaskDetailOpen(false)
+          setSelectedTask(null)
         }}
       />
     </>

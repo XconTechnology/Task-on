@@ -61,8 +61,7 @@ export const useSearchFilterStore = create<SearchFilterState>((set, get) => ({
       const matchesSearch =
         !state.searchQuery ||
         task.title.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-        task.description?.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-        task.tags?.toLowerCase().includes(state.searchQuery.toLowerCase())
+        task.description?.toLowerCase().includes(state.searchQuery.toLowerCase())
 
       // Status filter
       const matchesStatus = state.statusFilter === "all" || task.status === state.statusFilter

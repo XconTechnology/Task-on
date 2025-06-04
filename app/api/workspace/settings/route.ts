@@ -87,7 +87,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: updatedWorkspace.value,
+      data: updatedWorkspace?.value,
       message: "Workspace settings updated successfully",
     })
   } catch (error) {

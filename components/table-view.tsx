@@ -64,9 +64,6 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
       case "status":
         comparison = a.status.localeCompare(b.status)
         break
-      case "points":
-        comparison = (a.points || 0) - (b.points || 0)
-        break
       default:
         return 0
     }
@@ -167,18 +164,6 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
                     <div>
                       <div className="font-medium text-gray-900 mb-1">{task.title}</div>
                       {task.description && <div className="text-sm text-gray-600 line-clamp-2">{task.description}</div>}
-                      {task.tags && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {task.tags
-                            .split(",")
-                            .slice(0, 2)
-                            .map((tag, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {tag.trim()}
-                              </Badge>
-                            ))}
-                        </div>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -195,7 +180,7 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
                     {task.assignee ? (
                       <div className="flex items-center space-x-2">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={task.assignee.profilePictureUrl || "/placeholder.svg"} />
+                          <AvatarImage src={ "/placeholder.svg"} />
                           <AvatarFallback className="text-xs">
                             {task.assignee.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
@@ -217,11 +202,7 @@ export default function TableView({ projectId, setIsModalNewTaskOpen }: TableVie
                     )}
                   </TableCell>
                   <TableCell>
-                    {task.points ? (
-                      <Badge variant="outline">{task.points} pts</Badge>
-                    ) : (
                       <span className="text-gray-400 text-sm">-</span>
-                    )}
                   </TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" className="p-1 h-8 w-8">

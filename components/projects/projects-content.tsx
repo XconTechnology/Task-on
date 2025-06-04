@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser } from "@/lib/user-context";
 import {
   Plus,
   Search,
@@ -25,7 +24,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function ProjectsContent() {
-  const { user } = useUser();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

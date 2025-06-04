@@ -205,7 +205,7 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
                           {task.assignee ? (
                             <div className="flex items-center space-x-2">
                               <Avatar className="h-6 w-6">
-                                <AvatarImage src={task.assignee.profilePictureUrl || "/placeholder.svg"} />
+                                <AvatarImage src={"/placeholder.svg"} />
                                 <AvatarFallback className="text-small">
                                   {task.assignee.username.charAt(0).toUpperCase()}
                                 </AvatarFallback>
@@ -267,7 +267,7 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
                           <div className="flex items-center space-x-2">
                             <div className="flex items-center space-x-1 text-gray-500">
                               <MessageSquare size={14} />
-                              <span className="text-medium">{task?.comments?.length || 0}</span>
+                              <span className="text-medium">{ 0}</span>
                             </div>
                             <TaskActionsDropdown
                               task={task}

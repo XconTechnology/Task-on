@@ -157,7 +157,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
               <Trash2 size={48} className="mx-auto text-red-500 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Project</h3>
               <p className="text-gray-600 mb-4">
-                Are you sure you want to delete "{project.name}"? This will also delete all associated tasks. This
+                Are you sure you want to delete &quot;{project.name}&quot;? This will also delete all associated tasks. This
                 action cannot be undone.
               </p>
               <div className="flex justify-center space-x-3">

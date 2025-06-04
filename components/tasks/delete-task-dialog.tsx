@@ -81,7 +81,7 @@ export default function DeleteTaskDialog({ task, isOpen, onClose, onTaskDeleted 
             <DialogTitle>Delete Task</DialogTitle>
           </div>
           <DialogDescription className="pt-2">
-            Are you sure you want to delete "{task.title}"? This action cannot be undone.
+            Are you sure you want to delete &quot;{task.title}&quot;? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex space-x-2">

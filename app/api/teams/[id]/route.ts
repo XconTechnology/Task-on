@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       { returnDocument: "after" },
     )
 
-    if (!updatedTeam.value) {
+    if (!updatedTeam?.value) {
       return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
     }
 
@@ -143,7 +143,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Remove team from all users
-    await usersCollection.updateMany({ teamIds: { $in: [params.id] } }, { $pull: { teamIds: params.id } })
+    await usersCollection.updateMany({ teamIds: { $in: [params.id] } }, { $pull: { teamIds: params.id as any} })
 
     // Update projects to remove team assignment
     await projectsCollection.updateMany({ teamId: params.id }, { $unset: { teamId: "" } })

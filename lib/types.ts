@@ -82,6 +82,11 @@ export interface DashboardPageStats {
   }
 }
 
+export interface SearchResults {
+  tasks?: Task[]
+  projects?: Project[]
+  users?: User[]
+}
 
 export interface Task {
   id: string
@@ -107,6 +112,7 @@ export interface Task {
     id: string
     username: string
     email: string
+    profilePictureUrl: string
   }
 }
 
@@ -138,4 +144,58 @@ export interface DashboardStats {
   completedProjects: number
   teamMembers: number
   recentActivity: any[]
+}
+
+export type WorkspaceMember = {
+  id: string;
+  username: string;
+  email: string;
+  role?: string;
+};
+export interface AnalyticsData {
+  keyMetrics: {
+    totalTasks: number
+    completionRate: number
+    teamEfficiency: number
+    activeProjects: number
+    tasksChange: string
+    completionChange: string
+    efficiencyChange: string
+    projectsChange: string
+  }
+  productivity: {
+    daily: Array<{ date: string; completed: number; created: number }>
+    weekly: Array<{ week: string; productivity: number }>
+    monthly: Array<{ month: string; tasks: number; hours: number }>
+  }
+  projects: {
+    timeline: Array<{ project: string; planned: number; actual: number }>
+  }
+  team: {
+    performance: Array<{ member: string; tasks: number; efficiency: number }>
+    workload: Array<{ member: string; assigned: number; completed: number }>
+  }
+  trends: {
+    taskTypes: Array<{ type: string; count: number; color: string }>
+    priorities: Array<{ priority: string; count: number; color: string }>
+    statuses: Array<{ status: string; count: number; color: string }>
+  }
+}
+
+export interface ApiResponse<T> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean
+  data: T[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }

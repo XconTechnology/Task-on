@@ -88,7 +88,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     await usersCollection.updateOne(
       { id: userId },
       {
-        $pull: { teamIds: params.id },
+        $pull: { teamIds: params.id as any},
         $set: { updatedAt: new Date().toISOString() },
       },
     )

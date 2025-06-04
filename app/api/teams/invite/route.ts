@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
           })
         }
       } catch (error) {
-        results.push({ email, status: "error", message: "Failed to process invitation" })
+        results.push({ email, status: "error", message: "Failed to process invitation",error })
       }
     }
 

@@ -79,8 +79,6 @@ export async function POST(request: NextRequest) {
       teamName,
       description: description || "",
       workspaceId: userData.workspaceId,
-      productOwnerUserId: user.userId,
-      projectManagerUserId: user.userId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
