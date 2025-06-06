@@ -30,6 +30,7 @@ export interface Team {
   workspaceId: string
   createdBy: string
   memberCount?: number
+  members:any[]
   createdAt: string
   updatedAt: string
 }
