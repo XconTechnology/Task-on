@@ -1,9 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import { getUserFromRequest } from "@/lib/auth";
 import { canUserPerformAction, getUserRole } from "@/lib/permissions";
-export async function POST(request: NextRequest, context: { params: { id: string } }) {
+
+export async function POST(request, context) {
   const { id } = context.params;
+
   try {
     const user = getUserFromRequest(request);
 
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest, context: { params: { id: string
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(request, context) {
   const { id } = context.params;
 
   try {
@@ -85,7 +87,7 @@ export async function DELETE(request: NextRequest, context: { params: { id: stri
     await usersCollection.updateOne(
       { id: userId },
       {
-        $pull: { teamIds: id as any}, // No cast needed
+        $pull: { teamIds: id },
         $set: { updatedAt: new Date().toISOString() },
       }
     );

@@ -30,18 +30,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { workspaceApi } from "@/lib/api";
 
 export default function TeamsContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [teams, setTeams] = useState<any[]>([]);
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState<any>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
   const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
-  const [workspaceSettings, setWorkspaceSettings] = useState({
+  const [workspaceSettings, setWorkspaceSettings] = useState<any>({
     workspaceName: "",
     defaultRole: "Member",
     allowMemberInvites: true,
@@ -67,57 +68,51 @@ export default function TeamsContent() {
     }
   };
 
-  const fetchMembers = async () => {
-    try {
-      const response = await fetch("/api/workspace/members");
-      const data = await response.json();
-      if (data.success) {
-        setMembers(data.data || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch members:", error);
-    } finally {
-      setIsLoadingMembers(false);
-    }
-  };
 
-  const fetchWorkspaceSettings = async () => {
-    setIsLoadingSettings(true);
-    try {
-      const response = await fetch("/api/workspace/settings");
-      const data = await response.json();
-      if (data.success) {
-        setWorkspaceSettings(data.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch workspace settings:", error);
-    } finally {
-      setIsLoadingSettings(false);
+const fetchMembers = async () => {
+  try {
+    const data = await workspaceApi.getMembers()
+    if (data.success) {
+      setMembers(data.data || [])
     }
-  };
+  } catch (error) {
+    console.error("Failed to fetch members:", error)
+  } finally {
+    setIsLoadingMembers(false)
+  }
+}
 
-  const handleSaveSettings = async () => {
-    setIsLoadingSettings(true);
-    try {
-      const response = await fetch("/api/workspace/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(workspaceSettings),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        alert("Settings saved successfully!");
-      } else {
-        alert(data.error || "Failed to save settings");
-      }
-    } catch (error) {
-      console.error("Failed to save settings:", error);
-      alert("Failed to save settings");
-    } finally {
-      setIsLoadingSettings(false);
+const fetchWorkspaceSettings = async () => {
+  setIsLoadingSettings(true)
+  try {
+    const data = await workspaceApi.getSettings()
+    if (data.success) {
+      setWorkspaceSettings(data.data)
     }
-  };
+  } catch (error) {
+    console.error("Failed to fetch workspace settings:", error)
+  } finally {
+    setIsLoadingSettings(false)
+  }
+}
+
+const handleSaveSettings = async () => {
+  setIsLoadingSettings(true)
+  try {
+    const data = await workspaceApi.updateSettings(workspaceSettings)
+    if (data.success) {
+      alert("Settings saved successfully!")
+    } else {
+      alert(data.error || "Failed to save settings")
+    }
+  } catch (error) {
+    console.error("Failed to save settings:", error)
+    alert("Failed to save settings")
+  } finally {
+    setIsLoadingSettings(false)
+  }
+}
+
 
   const handleEditTeam = (team: any) => {
     setEditingTeam(team);
@@ -448,7 +443,7 @@ export default function TeamsContent() {
                   <Input
                     value={workspaceSettings.workspaceName}
                     onChange={(e) =>
-                      setWorkspaceSettings((prev) => ({
+                      setWorkspaceSettings((prev:any) => ({
                         ...prev,
                         workspaceName: e.target.value,
                       }))
@@ -463,7 +458,7 @@ export default function TeamsContent() {
                   <Select
                     value={workspaceSettings.defaultRole}
                     onValueChange={(value) =>
-                      setWorkspaceSettings((prev) => ({
+                      setWorkspaceSettings((prev:any) => ({
                         ...prev,
                         defaultRole: value,
                       }))
@@ -493,7 +488,7 @@ export default function TeamsContent() {
                     className="rounded"
                     checked={workspaceSettings.allowMemberInvites}
                     onChange={(e) =>
-                      setWorkspaceSettings((prev) => ({
+                      setWorkspaceSettings((prev:any) => ({
                         ...prev,
                         allowMemberInvites: e.target.checked,
                       }))

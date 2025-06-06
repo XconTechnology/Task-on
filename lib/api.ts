@@ -228,6 +228,27 @@ export const teamApi = {
   },
 }
 
+
+export const workspaceApi = {
+  // Get workspace members
+  getMembers: async () => {
+    return apiCall("/workspace/members")
+  },
+
+  // Get workspace settings
+  getSettings: async () => {
+    return apiCall("/workspace/settings")
+  },
+
+  // Update workspace settings
+  updateSettings: async (settings:any) => {
+    return apiCall("/workspace/settings", {
+      method: "PUT",
+      body: JSON.stringify(settings),
+    })
+  },
+}
+
 // Search API Functions
 
 export const searchApi = {
@@ -262,6 +283,7 @@ export const api = {
   users: userApi,
   teams: teamApi,
   search: searchApi,
+  workspace:workspaceApi
 }
 
 export default api

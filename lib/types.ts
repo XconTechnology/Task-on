@@ -13,15 +13,6 @@ export interface User {
   updatedAt: string
 }
 
-export interface Workspace {
-  id: string
-  name: string
-  ownerId: string
-  defaultRole: "Admin" | "Member"
-  allowMemberInvites: boolean
-  createdAt: string
-  updatedAt: string
-}
 
 export interface Team {
   id: string
@@ -146,13 +137,22 @@ export interface DashboardStats {
   teamMembers: number
   recentActivity: any[]
 }
+export interface Workspace {
+  id: string
+  name: string
+  ownerId: string
+  defaultRole: "Admin" | "Member"
+  allowMemberInvites: boolean
+  members: WorkspaceMember[]
+  createdAt: string
+  updatedAt: string
+}
 
 export type WorkspaceMember = {
-  id: string;
-  username: string;
-  email: string;
+  memberId: string;
   role?: string;
 };
+
 export interface AnalyticsData {
   keyMetrics: {
     totalTasks: number
