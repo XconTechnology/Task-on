@@ -1,5 +1,6 @@
 import type { Team, User, ApiResponse } from "@/lib/types"
 import { API_CONFIG } from "@/lib/constants"
+import { workspaceApi } from "../api"
 
 // Base API function with error handling
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
@@ -93,10 +94,7 @@ export const teamApi = {
   },
 
   // Invite users to workspace
-  inviteUsers: async (emails: string[], role = "Member"): Promise<ApiResponse<void>> => {
-    return apiCall<void>("/teams/invite", {
-      method: "POST",
-      body: JSON.stringify({ emails, role }),
-    })
+  inviteUsers: async (emails: string[], role: string, workspaceId?: string): Promise<ApiResponse<any>> => {
+    return workspaceApi.inviteUsers(emails, role, workspaceId)
   },
 }

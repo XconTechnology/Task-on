@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
     const db = await getDatabase()
     const usersCollection = db.collection("users")
 
-    // Get fresh user data
+    // Get user data
     const userData = await usersCollection.findOne(
       { id: user.userId },
-      { projection: { password: 0 } }, // Exclude password
+      { projection: { password: 0, tempPassword: 0 } }, // Exclude sensitive data
     )
 
     if (!userData) {
@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: { user: userData },
+      message: "User retrieved successfully",
     })
   } catch (error) {
     console.error("Get user error:", error)

@@ -1,18 +1,12 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { getDatabase } from "@/lib/mongodb";
-import {
-  hashPassword,
-  generateToken,
-  isValidEmail,
-  isValidPassword,
-  checkRateLimit,
-} from "@/lib/auth";
-import type { User } from "@/lib/types";
+import { type NextRequest, NextResponse } from "next/server"
+import { getDatabase } from "@/lib/mongodb"
+import { hashPassword, generateToken, isValidEmail, isValidPassword, checkRateLimit } from "@/lib/auth"
+import type { User, Workspace, WorkspaceMember } from "@/lib/types"
 
 export async function POST(request: NextRequest) {
   try {
-    const forwardedFor = request.headers.get("x-forwarded-for");
-    const clientIp = forwardedFor?.split(",")[0]?.trim() || "unknown";
+    const forwardedFor = request.headers.get("x-forwarded-for")
+    const clientIp = forwardedFor?.split(",")[0]?.trim() || "unknown"
 
     // Rate limiting
     if (!checkRateLimit(`signup:${clientIp}`, 3, 15 * 60 * 1000)) {
@@ -21,34 +15,25 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "Too many signup attempts. Please try again later.",
         },
-        { status: 429 }
-      );
+        { status: 429 },
+      )
     }
 
-    const body = await request.json();
-    const { email, password, username } = body;
+    const body = await request.json()
+    const { email, password, username } = body
 
     // Validation
     if (!email || !password || !username) {
-      return NextResponse.json(
-        { success: false, error: "Email, password, and username are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Email, password, and username are required" }, { status: 400 })
     }
 
     if (!isValidEmail(email)) {
-      return NextResponse.json(
-        { success: false, error: "Please enter a valid email address" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Please enter a valid email address" }, { status: 400 })
     }
 
-    const passwordValidation = isValidPassword(password);
+    const passwordValidation = isValidPassword(password)
     if (!passwordValidation.isValid) {
-      return NextResponse.json(
-        { success: false, error: passwordValidation.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: passwordValidation.message }, { status: 400 })
     }
 
     if (username.length < 2 || username.length > 30) {
@@ -57,18 +42,18 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "Username must be between 2 and 30 characters",
         },
-        { status: 400 }
-      );
+        { status: 400 },
+      )
     }
 
-    const db = await getDatabase();
-    const usersCollection = db.collection("users");
-    const workspacesCollection = db.collection("workspaces");
+    const db = await getDatabase()
+    const usersCollection = db.collection("users")
+    const workspacesCollection = db.collection("workspaces")
 
     // Check if user already exists
     const existingUser = await usersCollection.findOne({
       $or: [{ email: email.toLowerCase() }, { username }],
-    });
+    })
 
     if (existingUser) {
       return NextResponse.json(
@@ -76,65 +61,70 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "User with this email or username already exists",
         },
-        { status: 409 }
-      );
+        { status: 409 },
+      )
     }
 
     // Hash password
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hashPassword(password)
 
-    // Create workspace first
-    const workspaceId = `workspace_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
-    const newWorkspace = {
-      id: workspaceId,
-      name: `${username}'s Workspace`,
-      ownerId: "",
-      defaultRole: "Member",
-      allowMemberInvites: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    // Create user first
+    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    // Create user as Owner
-    const userId = `user_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
+    const workspaceId = `workspace_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
     const newUser: User = {
       id: userId,
       username,
       email: email.toLowerCase(),
       password: hashedPassword,
-      role: "Owner", // Set as Owner for workspace creator
-      workspaceId,
+      workspaceIds: [workspaceId], // Array with initial workspace
       profilePictureUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    };
+    }
 
-    // Update workspace with owner ID
-    newWorkspace.ownerId = userId;
+    // Create workspace member object
+    const workspaceMember: WorkspaceMember = {
+      memberId: userId,
+      username,
+      email: email.toLowerCase(),
+      role: "Owner", // Owner role in workspace
+      joinedAt: new Date().toISOString(),
+    }
+
+    // Create workspace with user as owner and member
+    const newWorkspace: Workspace = {
+      id: workspaceId,
+      name: `${username}'s Workspace`,
+      ownerId: userId,
+      defaultRole: "Member",
+      allowMemberInvites: true,
+      members: [workspaceMember], // User is first member with Owner role
+      pendingInvites: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
 
     // Insert both workspace and user
-    await workspacesCollection.insertOne(newWorkspace);
-    await usersCollection.insertOne(newUser);
+    await workspacesCollection.insertOne(newWorkspace)
+    await usersCollection.insertOne(newUser)
 
     // Generate JWT token
     const token = generateToken({
       userId: newUser.id,
       email: newUser.email,
       username: newUser.username,
-    });
+    })
 
     // Remove password from response
-    const { password: _, ...userResponse } = newUser;
+    const { password: _, ...userResponse } = newUser
 
     const response = NextResponse.json({
       success: true,
-      data: { user: userResponse },
+      data: { user: userResponse, workspace: newWorkspace },
       message: "Account created successfully",
-    });
+    })
 
     // Set HTTP-only cookie
     response.cookies.set("auth-token", token, {
@@ -143,14 +133,11 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",
-    });
+    })
 
-    return response;
+    return response
   } catch (error) {
-    console.error("Signup error:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("Signup error:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

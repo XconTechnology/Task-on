@@ -1,14 +1,14 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { X, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { teamApi } from "@/lib/api/teams"
+import { workspaceApi } from "@/lib/api"
+import { useUser } from "@/lib/user-context"
 
 type InviteModalProps = {
   isOpen: boolean
@@ -17,6 +17,7 @@ type InviteModalProps = {
 }
 
 export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalProps) {
+  const { currentWorkspace } = useUser()
   const [emails, setEmails] = useState("")
   const [role, setRole] = useState("Member")
   const [isLoading, setIsLoading] = useState(false)
@@ -36,10 +37,14 @@ export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalP
 
       if (emailList.length === 0) {
         alert("Please enter valid email addresses")
+        setIsLoading(false)
         return
       }
 
-      const response = await teamApi.inviteUsers(emailList, role)
+      // Use current workspace ID if available
+      const workspaceId = currentWorkspace?.id
+
+      const response = await workspaceApi.inviteUsers(emailList, role, workspaceId)
 
       if (response.success) {
         setResults(response.data || [])
@@ -89,6 +94,7 @@ export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalP
               className="w-full"
               disabled={isLoading}
             />
+            <p className="text-xs text-gray-500">Inviting to: {currentWorkspace?.name || "Current workspace"}</p>
           </div>
 
           {/* Role Selection */}
@@ -130,8 +136,8 @@ export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalP
                     }`}
                   >
                     <strong>{result.email}:</strong> {result.message}
-                    {result.tempPassword && (
-                      <div className="text-extra-small mt-1">Temp password: {result.tempPassword}</div>
+                    {result.inviteToken && (
+                      <div className="text-extra-small mt-1">Invitation link will be sent via email</div>
                     )}
                   </div>
                 ))}

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
-import type {  OnboardingData } from "@/lib/types"
+import type { OnboardingData, Workspace, WorkspaceMember } from "@/lib/types"
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,12 +23,33 @@ export async function POST(request: NextRequest) {
     const workspacesCollection = db.collection("workspaces")
     const usersCollection = db.collection("users")
 
+    // Get user data to create workspace member
+    const userData = await usersCollection.findOne({ id: user.userId })
+    if (!userData) {
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 })
+    }
+
     // Create workspace
     const workspaceId = `workspace_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const newWorkspace: any = {
+
+    // Create workspace member object for the user
+    const workspaceMember: WorkspaceMember = {
+      memberId: user.userId,
+      username: userData.username,
+      email: userData.email,
+      role: "Owner", // User is owner of their new workspace
+      joinedAt: new Date().toISOString(),
+    }
+
+    const newWorkspace: Workspace = {
       id: workspaceId,
       name: workspaceName,
       ownerId: user.userId,
+      defaultRole: "Member",
+      allowMemberInvites: true,
+      members: [workspaceMember], // Add user as first member
+      pendingInvites: [],
+      // Store onboarding data as additional fields
       usageType,
       managementType: managementType || [],
       features: features || [],
@@ -40,14 +61,12 @@ export async function POST(request: NextRequest) {
 
     await workspacesCollection.insertOne(newWorkspace)
 
-    // Update user with workspace ID
+    // FIXED: Add workspace ID to user's workspaceIds array (don't overwrite)
     await usersCollection.updateOne(
       { id: user.userId },
       {
-        $set: {
-          workspaceId: workspaceId,
-          updatedAt: new Date().toISOString(),
-        },
+        $addToSet: { workspaceIds: workspaceId }, // Use $addToSet to add to array without duplicates
+        $set: { updatedAt: new Date().toISOString() },
       },
     )
 

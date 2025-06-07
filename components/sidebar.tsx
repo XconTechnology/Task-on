@@ -1,49 +1,38 @@
-"use client";
+"use client"
 
-import React from "react";
+import React from "react"
 
-import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { useAppStore } from "@/lib/store";
-import { useUser } from "@/lib/user-context";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Home,
-  FolderOpen,
-  Users,
-  Plus,
-  Calendar,
-  BarChart3,
-  Clock,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import InviteModal from "./modals/invite-modal";
-import CreateTeamModal from "./modals/create-team-modal";
-import CreateProjectModal from "./modals/create-project-modal";
-import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useState } from "react"
+import { useRouter, usePathname } from "next/navigation"
+import { useAppStore } from "@/lib/store"
+import { useUser } from "@/lib/user-context"
+import { ChevronLeft, ChevronRight, Home, FolderOpen, Users, Plus, Calendar, BarChart3, Clock } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import InviteModal from "./modals/invite-modal"
+import CreateTeamModal from "./modals/create-team-modal"
+import CreateProjectModal from "./modals/create-project-modal"
+import Link from "next/link"
+import WorkspaceSwitcher from "./workspace-switcher"
 
 export default function Sidebar() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { user } = useUser();
-  const { isSidebarCollapsed, setSidebarCollapsed } = useAppStore();
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
-  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
-    useState(false);
+  const router = useRouter()
+  const pathname = usePathname()
+  const { user } = useUser()
+  const { isSidebarCollapsed, setSidebarCollapsed } = useAppStore()
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false)
   const [activeItem, setActiveItem] = useState(() => {
-    if (pathname.startsWith("/dashboard")) return "dashboard";
-    if (pathname.startsWith("/projects")) return "projects";
-    if (pathname.startsWith("/teams")) return "teams";
-    if (pathname.startsWith("/calendar")) return "calendar";
-    if (pathname.startsWith("/analytics")) return "analytics";
-    if (pathname.startsWith("/time-tracking")) return "time-tracking";
-    return "dashboard";
-  });
+    if (pathname.startsWith("/dashboard")) return "dashboard"
+    if (pathname.startsWith("/projects")) return "projects"
+    if (pathname.startsWith("/teams")) return "teams"
+    if (pathname.startsWith("/calendar")) return "calendar"
+    if (pathname.startsWith("/analytics")) return "analytics"
+    if (pathname.startsWith("/time-tracking")) return "time-tracking"
+    return "dashboard"
+  })
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: Home, path: "/dashboard" },
@@ -62,16 +51,16 @@ export default function Sidebar() {
       icon: Clock,
       path: "/time-tracking",
     },
-  ];
+  ]
 
   const handleNavigation = (item: (typeof menuItems)[0]) => {
-    setActiveItem(item.id);
-  };
+    setActiveItem(item.id)
+  }
 
   const handleProjectCreated = (newProject: any) => {
     // Refresh projects or navigate to new project
-    router.push(`/projects/${newProject.id}`);
-  };
+    router.push(`/projects/${newProject.id}`)
+  }
 
   return (
     <>
@@ -83,40 +72,14 @@ export default function Sidebar() {
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            {!isSidebarCollapsed && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-              >
-                <Avatar className="h-8 w-8 border-2 border-purple-200">
-                  <AvatarImage
-                    src={
-                      user?.profilePictureUrl ||
-                      "/placeholder.svg?height=32&width=32"
-                    }
-                  />
-                  <AvatarFallback className="bg-purple-100 text-purple-800">
-                    {user?.username?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-small hidden sm:block">
-                  {user?.username || "User"}
-                </span>
-                
-              </Button>
-            )}
+            {!isSidebarCollapsed && <WorkspaceSwitcher />}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
               className="p-1 h-8 w-8"
             >
-              {isSidebarCollapsed ? (
-                <ChevronRight size={16} />
-              ) : (
-                <ChevronLeft size={16} />
-              )}
+              {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </Button>
           </div>
         </div>
@@ -126,7 +89,7 @@ export default function Sidebar() {
           <nav className="p-2">
             <ul className="space-y-1">
               {menuItems.map((item) => {
-                const Icon = item.icon;
+                const Icon = item.icon
                 return (
                   <li key={item.id}>
                     <Link
@@ -139,12 +102,10 @@ export default function Sidebar() {
                       }`}
                     >
                       <Icon size={18} className="flex-shrink-0" />
-                      {!isSidebarCollapsed && (
-                        <span className="ml-3">{item.label}</span>
-                      )}
+                      {!isSidebarCollapsed && <span className="ml-3">{item.label}</span>}
                     </Link>
                   </li>
-                );
+                )
               })}
             </ul>
           </nav>
@@ -152,14 +113,10 @@ export default function Sidebar() {
           {!isSidebarCollapsed && (
             <>
               {/* Recent Projects */}
-              <RecentProjectsSection
-                onCreateProject={() => setIsCreateProjectModalOpen(true)}
-              />
+              <RecentProjectsSection onCreateProject={() => setIsCreateProjectModalOpen(true)} />
 
               {/* Teams */}
-              <TeamsSection
-                onCreateTeam={() => setIsCreateTeamModalOpen(true)}
-              />
+              <TeamsSection onCreateTeam={() => setIsCreateTeamModalOpen(true)} />
             </>
           )}
         </div>
@@ -180,60 +137,49 @@ export default function Sidebar() {
         )}
       </div>
 
-      <InviteModal
-        isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
-      />
-      <CreateTeamModal
-        isOpen={isCreateTeamModalOpen}
-        onClose={() => setIsCreateTeamModalOpen(false)}
-      />
+      <InviteModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
+      <CreateTeamModal isOpen={isCreateTeamModalOpen} onClose={() => setIsCreateTeamModalOpen(false)} />
       <CreateProjectModal
         isOpen={isCreateProjectModalOpen}
         onClose={() => setIsCreateProjectModalOpen(false)}
         onSuccess={handleProjectCreated}
       />
     </>
-  );
+  )
 }
 
 function RecentProjectsSection({
   onCreateProject,
 }: {
-  onCreateProject: () => void;
+  onCreateProject: () => void
 }) {
-  const [projects, setProjects] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [projects, setProjects] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   // Fetch real projects
   React.useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch("/api/projects");
-        const data = await response.json();
+        const response = await fetch("/api/projects")
+        const data = await response.json()
         if (data.success) {
-          setProjects(data.data.slice(0, 4)); // Show only first 4
+          setProjects(data.data.slice(0, 4)) // Show only first 4
         }
       } catch (error) {
-        console.error("Failed to fetch projects:", error);
+        console.error("Failed to fetch projects:", error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchProjects();
-  }, []);
+    fetchProjects()
+  }, [])
 
   return (
     <div className="p-4 border-t border-gray-100">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-label">Recent Projects</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-1 h-6 w-6"
-          onClick={onCreateProject}
-        >
+        <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={onCreateProject}>
           <Plus size={12} />
         </Button>
       </div>
@@ -262,10 +208,7 @@ function RecentProjectsSection({
                 <p className="text-medium truncate">{project.name}</p>
                 <div className="flex items-center space-x-2 mt-1">
                   <div className="w-full bg-gray-200 rounded-full h-1">
-                    <div
-                      className="bg-blue-600 h-1 rounded-full"
-                      style={{ width: "75%" }}
-                    />
+                    <div className="bg-blue-600 h-1 rounded-full" style={{ width: "75%" }} />
                   </div>
                   <span className="text-muted-small">75%</span>
                 </div>
@@ -278,12 +221,7 @@ function RecentProjectsSection({
         ) : (
           <div className="text-center py-4">
             <p className="text-muted-small">No projects yet</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onCreateProject}
-              className="mt-2"
-            >
+            <Button variant="ghost" size="sm" onClick={onCreateProject} className="mt-2">
               <Plus size={12} className="mr-1" />
               <span className="text-small">Create first project</span>
             </Button>
@@ -291,42 +229,37 @@ function RecentProjectsSection({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 function TeamsSection({ onCreateTeam }: { onCreateTeam: () => void }) {
-  const [teams, setTeams] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [teams, setTeams] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   // Fetch real teams
   React.useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const response = await fetch("/api/teams");
-        const data = await response.json();
+        const response = await fetch("/api/teams")
+        const data = await response.json()
         if (data.success) {
-          setTeams(data.data.slice(0, 3)); // Show only first 3
+          setTeams(data.data.slice(0, 3)) // Show only first 3
         }
       } catch (error) {
-        console.error("Failed to fetch teams:", error);
+        console.error("Failed to fetch teams:", error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchTeams();
-  }, []);
+    fetchTeams()
+  }, [])
 
   return (
     <div className="p-4 border-t border-gray-100">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-label">Teams</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-1 h-6 w-6"
-          onClick={onCreateTeam}
-        >
+        <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={onCreateTeam}>
           <Plus size={12} />
         </Button>
       </div>
@@ -350,27 +283,18 @@ function TeamsSection({ onCreateTeam }: { onCreateTeam: () => void }) {
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
             >
               <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-small font-medium">
-                  {team.teamName.charAt(0)}
-                </span>
+                <span className="text-white text-small font-medium">{team.teamName.charAt(0)}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-medium truncate">{team.teamName}</p>
-                <p className="text-muted-small">
-                  {team.memberCount || 0} members
-                </p>
+                <p className="text-muted-small">{team.memberCount || 0} members</p>
               </div>
             </Link>
           ))
         ) : (
           <div className="text-center py-4">
             <p className="text-muted-small">No teams yet</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onCreateTeam}
-              className="mt-2"
-            >
+            <Button variant="ghost" size="sm" onClick={onCreateTeam} className="mt-2">
               <Plus size={12} className="mr-1" />
               <span className="text-small">Create first team</span>
             </Button>
@@ -378,5 +302,5 @@ function TeamsSection({ onCreateTeam }: { onCreateTeam: () => void }) {
         )}
       </div>
     </div>
-  );
+  )
 }

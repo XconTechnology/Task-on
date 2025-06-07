@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
-import { getUserFromRequest, hashPassword } from "@/lib/auth"
-import type { User } from "@/lib/types"
+import { getUserFromRequest } from "@/lib/auth"
+import type { PendingInvite, WorkspaceMember } from "@/lib/types"
+import crypto from "crypto"
+import { sendInvitationEmail, sendWorkspaceAddedEmail } from "@/lib/email-service"
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { emails, role = "Member" } = body
+    const { emails, role = "Member", workspaceId } = body
 
     // Validation
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
@@ -21,68 +23,167 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase()
     const usersCollection = db.collection("users")
+    const workspacesCollection = db.collection("workspaces")
 
-    // Get user's workspace
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    // Get user's current workspace if workspaceId not provided
+    let targetWorkspaceId = workspaceId
+
+    if (!targetWorkspaceId) {
+      // Get user's first workspace as default
+      const userData = await usersCollection.findOne({ id: user.userId })
+      if (!userData?.workspaceIds || userData.workspaceIds.length === 0) {
+        return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+      }
+      targetWorkspaceId = userData.workspaceIds[0]
+    }
+
+    // Get workspace and check if user has permission to invite
+    const workspace = await workspacesCollection.findOne({ id: targetWorkspaceId })
+    if (!workspace) {
+      return NextResponse.json({ success: false, error: "Workspace not found" }, { status: 404 })
+    }
+
+    // Get inviter's name for email
+    const inviterData = await usersCollection.findOne({ id: user.userId })
+    const inviterName = inviterData?.username || "Someone"
+
+    // Initialize members array if it doesn't exist
+    if (!workspace.members) {
+      await workspacesCollection.updateOne({ id: targetWorkspaceId }, { $set: { members: [], pendingInvites: [] } })
+      workspace.members = []
+      workspace.pendingInvites = []
+    }
+
+    // Check if user is member of workspace and has permission to invite
+    const userMember = workspace.members.find((member: WorkspaceMember) => member.memberId === user.userId)
+
+    if (!userMember) {
+      return NextResponse.json({ success: false, error: "You are not a member of this workspace" }, { status: 403 })
+    }
+
+    // Check permissions (Owner and Admin can invite, Members only if allowed)
+    const canInvite =
+      userMember.role === "Owner" ||
+      userMember.role === "Admin" ||
+      (userMember.role === "Member" && workspace.allowMemberInvites)
+
+    if (!canInvite) {
+      return NextResponse.json({ success: false, error: "You don't have permission to invite users" }, { status: 403 })
     }
 
     const results = []
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
     for (const email of emails) {
       try {
         // Check if user already exists
-        const existingUser = await usersCollection.findOne({ email: email.toLowerCase() })
+        const existingUser = await usersCollection.findOne({
+          email: email.toLowerCase(),
+        })
 
         if (existingUser) {
-          if (existingUser.workspaceId === userData.workspaceId) {
-            results.push({ email, status: "already_member", message: "User is already a member" })
+          // Check if user is already a member of this workspace
+          const isAlreadyMember = workspace.members.some(
+            (member: WorkspaceMember) => member.memberId === existingUser.id,
+          )
+
+          if (isAlreadyMember) {
+            results.push({
+              email,
+              status: "already_member",
+              message: "User is already a member",
+            })
           } else {
-            // Update user's workspace
+            // Add existing user to workspace
+            const newMember: WorkspaceMember = {
+              memberId: existingUser.id,
+              username: existingUser.username,
+              email: existingUser.email,
+              role,
+              joinedAt: new Date().toISOString(),
+            }
+
+            // Update workspace members
+            await workspacesCollection.updateOne(
+              { id: targetWorkspaceId },
+              {
+                $push: { members: newMember },
+                $set: { updatedAt: new Date().toISOString() },
+              },
+            )
+
+            // Update user's workspaceIds
             await usersCollection.updateOne(
               { id: existingUser.id },
               {
-                $set: {
-                  workspaceId: userData.workspaceId,
-                  updatedAt: new Date().toISOString(),
-                },
+                $addToSet: { workspaceIds: targetWorkspaceId }, // Use $addToSet here too
+                $set: { updatedAt: new Date().toISOString() },
               },
             )
-            results.push({ email, status: "added", message: "User added to workspace" })
+
+            // Send notification email to existing user
+            const dashboardUrl = `${baseUrl}/dashboard`
+            const emailResult = await sendWorkspaceAddedEmail(email, workspace.name, dashboardUrl, inviterName)
+
+            results.push({
+              email,
+              status: "added",
+              message: "User added to workspace and notified",
+              emailSent: emailResult.success,
+              emailError: emailResult.error,
+            })
           }
         } else {
-          // Create new user with temporary password
-          const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-          const tempPassword = Math.random().toString(36).slice(-8)
-          const hashedPassword = await hashPassword(tempPassword)
+          // Create pending invite for new user
+          const inviteToken = crypto.randomBytes(32).toString("hex")
+          const expiresAt = new Date()
+          expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
 
-          const newUser: User = {
-            id: userId,
-            username: email.split("@")[0],
+          const pendingInvite: PendingInvite = {
+            id: `invite_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             email: email.toLowerCase(),
-            password: hashedPassword,
-            profilePictureUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-            workspaceId: userData.workspaceId,
             role,
-            isInvited: true,
-            tempPassword,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            invitedBy: user.userId,
+            invitedAt: new Date().toISOString(),
+            token: inviteToken,
+            expiresAt: expiresAt.toISOString(),
           }
 
-          await usersCollection.insertOne(newUser)
+          // Add pending invite to workspace
+          await workspacesCollection.updateOne(
+            { id: targetWorkspaceId },
+            {
+              $push: { pendingInvites: pendingInvite },
+              $set: { updatedAt: new Date().toISOString() },
+            },
+          )
 
-          // In a real app, you would send an email invitation here
+          // Send email invitation
+          const inviteUrl = `${baseUrl}/invite?token=${inviteToken}`
+          const emailResult = await sendInvitationEmail(email, workspace.name, inviteUrl, inviterName)
+
           results.push({
             email,
             status: "invited",
-            message: "Invitation sent",
-            tempPassword, // In production, this would be sent via email
+            message: "Invitation sent via email",
+            emailSent: emailResult.success,
+            emailError: emailResult.error,
+            // Include these for development/testing only
+            ...(process.env.NODE_ENV === "development" && {
+              inviteToken,
+              inviteUrl,
+            }),
           })
         }
       } catch (error) {
-        results.push({ email, status: "error", message: "Failed to process invitation",error })
+        console.error(`Error processing invite for ${email}:`, error)
+        results.push({
+          email,
+          status: "error",
+          message: "Failed to process invitation",
+        })
       }
     }
 
