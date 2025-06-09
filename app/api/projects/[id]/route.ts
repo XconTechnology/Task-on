@@ -25,14 +25,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
-
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
-    if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
 
     const project = await projectsCollection.findOne({
       id: projectId,
@@ -74,14 +76,16 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: "End date must be after start date" }, { status: 400 })
     }
 
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
-
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
-    if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
 
     // Get user's role in the workspace
     const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
@@ -140,15 +144,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
     const tasksCollection = db.collection("tasks")
-
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
-    if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
 
     // Get user's role in the workspace
     const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
@@ -170,7 +176,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 })
     }
 
-    await tasksCollection.deleteMany({ projectId })
+    // Delete all tasks in this project
+    await tasksCollection.deleteMany({ projectId, workspaceId: currentWorkspaceId })
     await projectsCollection.deleteOne({ id: projectId })
 
     return NextResponse.json({

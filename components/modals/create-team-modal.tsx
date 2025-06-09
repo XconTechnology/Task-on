@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { teamApi } from "@/lib/api/teams"
+import { workspaceApi } from "@/lib/api" // Import workspaceApi from lib/api
 import { successToast, errorToast } from "@/lib/toast-utils"
 
 type CreateTeamModalProps = {
@@ -38,10 +39,10 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
   const fetchAvailableMembers = async () => {
     setIsLoadingMembers(true)
     try {
-      const response = await fetch("/api/workspace/members")
-      const data = await response.json()
-      if (data.success) {
-        setAvailableMembers(data.data || [])
+      // Using workspaceApi from lib/api instead of direct fetch
+      const response = await workspaceApi.getMembers()
+      if (response.success) {
+        setAvailableMembers(response.data || [])
       }
     } catch (error) {
       console.error("Failed to fetch members:", error)
@@ -62,11 +63,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
         // If members were selected, add them to the team
         if (selectedMembers.length > 0) {
           try {
-            await fetch(`/api/teams/${response.data?.id}/members`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userIds: selectedMembers }),
-            })
+            await teamApi.addTeamMembers(response.data?.id, selectedMembers)
           } catch (memberError) {
             console.error("Failed to add members:", memberError)
             // Continue with success flow even if adding members fails

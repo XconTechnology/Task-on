@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { projectApi, teamApi } from "@/lib/api" // Import from lib/api
+import { successToast, errorToast } from "@/lib/toast-utils"
 
 type CreateProjectModalProps = {
   isOpen: boolean
@@ -37,10 +39,10 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
   const fetchTeams = async () => {
     setIsLoadingTeams(true)
     try {
-      const response = await fetch("/api/teams")
-      const data = await response.json()
-      if (data.success) {
-        setTeams(data.data || [])
+      // Using teamApi from lib/api instead of direct fetch
+      const response = await teamApi.getTeams()
+      if (response.success) {
+        setTeams(response.data || [])
       }
     } catch (error) {
       console.error("Failed to fetch teams:", error)
@@ -55,23 +57,28 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
 
     setIsLoading(true)
     try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
+      // Using projectApi from lib/api instead of direct fetch
+      const response = await projectApi.createProject(formData)
 
-      const data = await response.json()
-
-      if (data.success) {
-        onSuccess?.(data.data)
+      if (response.success) {
+        successToast({
+          title: "Project Created",
+          description: "The project has been successfully created.",
+        })
+        onSuccess?.(response.data)
         handleClose()
       } else {
-        alert(data.error || "Failed to create project")
+        errorToast({
+          title: "Project Creation Failed",
+          description: response.error || "Failed to create project. Please try again.",
+        })
       }
     } catch (error) {
       console.error("Failed to create project:", error)
-      alert("Failed to create project")
+      errorToast({
+        title: "Project Creation Failed",
+        description: "An unexpected error occurred. Please try again.",
+      })
     } finally {
       setIsLoading(false)
     }

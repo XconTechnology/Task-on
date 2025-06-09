@@ -13,14 +13,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    // Try to get workspace ID from header first, then fallback to user's workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
-
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
-    if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
 
     // Get all projects in the workspace
     const projects = await projectsCollection
@@ -58,14 +60,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "End date must be after start date" }, { status: 400 })
     }
 
+    // Try to get workspace ID from header first, then fallback to user's workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
-
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
-    if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
 
     // Get user's role in the workspace
     const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)

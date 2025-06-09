@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
-import { getWorkspaceMember } from "@/lib/workspace-utils"
+import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -12,11 +12,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
-    // Get current workspace ID from header
-    const currentWorkspaceId = request.headers.get("x-workspace-id")
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
 
     if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace specified" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
     }
 
     const db = await getDatabase()
@@ -91,11 +92,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     const body = await request.json()
 
-    // Get current workspace ID from header
-    const currentWorkspaceId = request.headers.get("x-workspace-id")
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
 
     if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace specified" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
     }
 
     const db = await getDatabase()
@@ -148,11 +150,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
-    // Get current workspace ID from header
-    const currentWorkspaceId = request.headers.get("x-workspace-id")
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
 
     if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace specified" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
     }
 
     const db = await getDatabase()

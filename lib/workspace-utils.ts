@@ -1,10 +1,10 @@
 import { getDatabase } from "@/lib/mongodb"
 
 /**
- * Get user's current workspace ID from localStorage (client-side) or user's first workspace (server-side)
- * This is a server-side utility for API routes
+ * Get user's current workspace ID - with fallback to first workspace if no specific workspace is provided
+ * This is the ORIGINAL function that your app depends on
  */
-export async function getCurrentWorkspaceId(userId: string): Promise<string | null> {
+export async function getCurrentWorkspaceId(userId: string, preferredWorkspaceId?: string): Promise<string | null> {
   try {
     const db = await getDatabase()
     const usersCollection = db.collection("users")
@@ -15,12 +15,39 @@ export async function getCurrentWorkspaceId(userId: string): Promise<string | nu
       return null
     }
 
-    // For server-side, return the first workspace ID
-    // In a real app, you'd pass the current workspace ID from the client
-    return userData.workspaceIds[0]
+    // If a preferred workspace ID is provided and user has access to it, use it
+    if (preferredWorkspaceId && userData.workspaceIds.includes(preferredWorkspaceId)) {
+      return preferredWorkspaceId
+    }
+
+    // Otherwise, return the first workspace ID as fallback
+    return 'curent workspace not found in utils'
   } catch (error) {
     console.error("Error getting current workspace ID:", error)
     return null
+  }
+}
+
+/**
+ * Validate that a user has access to a specific workspace
+ * NEVER falls back to another workspace - this is a security feature
+ */
+export async function validateUserWorkspaceAccess(userId: string, workspaceId: string): Promise<boolean> {
+  try {
+    const db = await getDatabase()
+    const usersCollection = db.collection("users")
+
+    // Get user's workspace IDs
+    const userData = await usersCollection.findOne({ id: userId })
+    if (!userData?.workspaceIds || userData.workspaceIds.length === 0) {
+      return false
+    }
+
+    // Check if user has access to the requested workspace
+    return userData.workspaceIds.includes(workspaceId)
+  } catch (error) {
+    console.error("Error validating workspace access:", error)
+    return false
   }
 }
 

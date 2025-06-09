@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { successToast, errorToast } from "@/lib/toast-utils"
 import { teamApi } from "@/lib/api/teams"
+import { workspaceApi } from "@/lib/api" // Import workspaceApi from lib/api
 
 type EditTeamModalProps = {
   isOpen: boolean
@@ -62,11 +63,13 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
 
   const fetchAvailableUsers = async () => {
     try {
-      const response = await fetch("/api/workspace/members")
-      const data = await response.json()
-      if (data.success) {
+      // Using workspaceApi from lib/api instead of direct fetch
+      const response = await workspaceApi.getMembers()
+      if (response.success) {
         // Filter out users who are already in the team
-        const available = data.data.filter((user: any) => !members.some((member: any) => member.id === user.memberId))
+        const available = response.data.filter(
+          (user: any) => !members.some((member: any) => member.id === user.memberId),
+        )
         setAvailableUsers(available)
       }
     } catch (error) {
@@ -126,13 +129,10 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/teams/${team.id}`, {
-        method: "DELETE",
-      })
+      // Using teamApi instead of direct fetch
+      const response = await teamApi.deleteTeam(team.id)
 
-      const data = await response.json()
-
-      if (data.success) {
+      if (response.success) {
         successToast({
           title: "Team Deleted",
           description: "The team has been successfully deleted.",
@@ -143,7 +143,7 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
       } else {
         errorToast({
           title: "Delete Failed",
-          description: data.error || "Failed to delete team. Please try again.",
+          description: response.error || "Failed to delete team. Please try again.",
         })
       }
     } catch (error) {
@@ -159,13 +159,10 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
 
   const handleRemoveMember = async (userId: string) => {
     try {
-      const response = await fetch(`/api/teams/${team.id}/members?userId=${userId}`, {
-        method: "DELETE",
-      })
+      // Using teamApi instead of direct fetch
+      const response = await teamApi.removeTeamMember(team.id, userId)
 
-      const data = await response.json()
-
-      if (data.success) {
+      if (response.success) {
         successToast({
           title: "Member Removed",
           description: "The member has been removed from the team.",
@@ -176,7 +173,7 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
       } else {
         errorToast({
           title: "Remove Failed",
-          description: data.error || "Failed to remove member. Please try again.",
+          description: response.error || "Failed to remove member. Please try again.",
         })
       }
     } catch (error) {

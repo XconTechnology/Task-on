@@ -1,35 +1,26 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useState, useEffect } from "react";
-import { Calendar, Users, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Priority, Status } from "@/lib/types";
+import type React from "react"
+import { useState, useEffect } from "react"
+import { Calendar, Users, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Priority, Status } from "@/lib/types"
+import { taskApi, workspaceApi } from "@/lib/api" // Import from lib/api
+import { successToast, errorToast } from "@/lib/toast-utils"
 
 type CreateTaskModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  projectId: string;
-  onTaskCreated?: (task: any) => void;
-};
+  isOpen: boolean
+  onClose: () => void
+  projectId: string
+  onTaskCreated?: (task: any) => void
+}
 
 export default function CreateTaskModal({
   isOpen,
@@ -59,13 +50,13 @@ export default function CreateTaskModal({
   const fetchAvailableMembers = async () => {
     setIsLoadingMembers(true);
     try {
-      const response = await fetch("/api/workspace/members");
-      const data = await response.json();
-      if (data.success) {
-        setAvailableMembers(data.data || []);
+      // Using workspaceApi from lib/api instead of direct fetch
+      const response = await workspaceApi.getMembers();
+      if (response.success) {
+        setAvailableMembers(response.data || []);
         // Set first user as default creator
-        if (data.data && data.data.length > 0) {
-          setFormData((prev) => ({ ...prev, createdBy: data.data[0].id }));
+        if (response.data && response.data.length > 0) {
+          setFormData((prev) => ({ ...prev, createdBy: response.data[0].id }));
         }
       }
     } catch (error) {
@@ -81,28 +72,33 @@ export default function CreateTaskModal({
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          projectId,
-          assignedTo: selectedMember || undefined,
-        }),
+      // Using taskApi from lib/api instead of direct fetch
+      const response = await taskApi.createTask({
+        ...formData,
+        projectId,
+        assignedTo: selectedMember || undefined,
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        onTaskCreated?.(data.data);
+      if (response.success) {
+        successToast({
+          title: "Task Created",
+          description: "The task has been successfully created.",
+        });
+        onTaskCreated?.(response.data);
         handleClose();
       } else {
-        console.error("Failed to create task:", data.error);
+        errorToast({
+          title: "Task Creation Failed",
+          description: response.error || "Failed to create task. Please try again.",
+        });
+        console.error("Failed to create task:", response.error);
       }
     } catch (error) {
       console.error("Failed to create task:", error);
+      errorToast({
+        title: "Task Creation Failed",
+        description: "An unexpected error occurred. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }

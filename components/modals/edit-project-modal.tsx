@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { projectApi, teamApi } from "@/lib/api" // Import from lib/api
+import { successToast, errorToast } from "@/lib/toast-utils"
 
 type EditProjectModalProps = {
   isOpen: boolean
@@ -46,10 +48,10 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
   const fetchTeams = async () => {
     setIsLoadingTeams(true)
     try {
-      const response = await fetch("/api/teams")
-      const data = await response.json()
-      if (data.success) {
-        setTeams(data.data || [])
+      // Using teamApi from lib/api instead of direct fetch
+      const response = await teamApi.getTeams()
+      if (response.success) {
+        setTeams(response.data || [])
       }
     } catch (error) {
       console.error("Failed to fetch teams:", error)
@@ -64,23 +66,28 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/projects/${project.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
+      // Using projectApi from lib/api instead of direct fetch
+      const response = await projectApi.updateProject(project.id, formData)
 
-      const data = await response.json()
-
-      if (data.success) {
-        onSuccess?.(data.data)
+      if (response.success) {
+        successToast({
+          title: "Project Updated",
+          description: "The project has been successfully updated.",
+        })
+        onSuccess?.(response.data)
         handleClose()
       } else {
-        alert(data.error || "Failed to update project")
+        errorToast({
+          title: "Update Failed",
+          description: response.error || "Failed to update project. Please try again.",
+        })
       }
     } catch (error) {
       console.error("Failed to update project:", error)
-      alert("Failed to update project")
+      errorToast({
+        title: "Update Failed",
+        description: "An unexpected error occurred. Please try again.",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -91,21 +98,28 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/projects/${project.id}`, {
-        method: "DELETE",
-      })
+      // Using projectApi from lib/api instead of direct fetch
+      const response = await projectApi.deleteProject(project.id)
 
-      const data = await response.json()
-
-      if (data.success) {
+      if (response.success) {
+        successToast({
+          title: "Project Deleted",
+          description: "The project has been successfully deleted.",
+        })
         onDelete?.(project.id)
         handleClose()
       } else {
-        alert(data.error || "Failed to delete project")
+        errorToast({
+          title: "Delete Failed",
+          description: response.error || "Failed to delete project. Please try again.",
+        })
       }
     } catch (error) {
       console.error("Failed to delete project:", error)
-      alert("Failed to delete project")
+      errorToast({
+        title: "Delete Failed",
+        description: "An unexpected error occurred. Please try again.",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -157,8 +171,8 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
               <Trash2 size={48} className="mx-auto text-red-500 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Project</h3>
               <p className="text-gray-600 mb-4">
-                Are you sure you want to delete &quot;{project.name}&quot;? This will also delete all associated tasks. This
-                action cannot be undone.
+                Are you sure you want to delete &quot;{project.name}&quot;? This will also delete all associated tasks.
+                This action cannot be undone.
               </p>
               <div className="flex justify-center space-x-3">
                 <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isLoading}>

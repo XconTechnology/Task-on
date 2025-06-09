@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
+import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
 
 function getIdFromRequest(request: NextRequest) {
   const segments = request.nextUrl.pathname.split("/")
@@ -17,16 +18,20 @@ export async function GET(request: NextRequest) {
     }
 
     const id = getIdFromRequest(request)
+
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const tasksCollection = db.collection("tasks")
     const usersCollection = db.collection("users")
 
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
-
-    const task = await tasksCollection.findOne({ id, workspaceId: userData.workspaceId })
+    const task = await tasksCollection.findOne({ id, workspaceId: currentWorkspaceId })
     if (!task) {
       return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
     }
@@ -37,7 +42,14 @@ export async function GET(request: NextRequest) {
     const populatedTask = {
       ...task,
       author: author ? { id: author.id, username: author.username, email: author.email } : null,
-      assignee: assignee ? { id: assignee.id, username: assignee.username, email: assignee.email } : null,
+      assignee: assignee
+        ? {
+            id: assignee.id,
+            username: assignee.username,
+            email: assignee.email,
+            profilePictureUrl: assignee.profilePictureUrl,
+          }
+        : null,
     }
 
     return NextResponse.json({ success: true, data: populatedTask, message: "Task retrieved successfully" })
@@ -63,34 +75,43 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Task title is required" }, { status: 400 })
     }
 
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const tasksCollection = db.collection("tasks")
     const usersCollection = db.collection("users")
 
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    // Get user's role in the workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
     }
 
-    const userRole = getUserRole(userData.role)
+    const userRole = getUserRole(workspaceMember.role)
     if (!canUserPerformAction(userRole, "task", "update")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
     const updatedTask = await tasksCollection.findOneAndUpdate(
-      { id, workspaceId: userData.workspaceId },
+      { id, workspaceId: currentWorkspaceId },
       {
         $set: {
           title: title.trim(),
           description: description?.trim() || "",
-          status: status || "todo",
-          priority: priority || "medium",
+          status: status || "To Do",
+          priority: priority || "Medium",
           assignedTo: assignedTo || undefined,
           dueDate: dueDate || undefined,
           updatedAt: new Date().toISOString(),
         },
       },
-      { returnDocument: "after" }
+      { returnDocument: "after" },
     )
 
     if (!updatedTask?.value) {
@@ -107,7 +128,14 @@ export async function PUT(request: NextRequest) {
     const populatedTask = {
       ...updatedTask.value,
       author: author ? { id: author.id, username: author.username, email: author.email } : null,
-      assignee: assignee ? { id: assignee.id, username: assignee.username, email: assignee.email } : null,
+      assignee: assignee
+        ? {
+            id: assignee.id,
+            username: assignee.username,
+            email: assignee.email,
+            profilePictureUrl: assignee.profilePictureUrl,
+          }
+        : null,
     }
 
     return NextResponse.json({ success: true, data: populatedTask, message: "Task updated successfully" })
@@ -126,21 +154,30 @@ export async function DELETE(request: NextRequest) {
     }
 
     const id = getIdFromRequest(request)
-    const db = await getDatabase()
-    const tasksCollection = db.collection("tasks")
-    const usersCollection = db.collection("users")
 
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
     }
 
-    const userRole = getUserRole(userData.role)
+    const db = await getDatabase()
+    const tasksCollection = db.collection("tasks")
+
+    // Get user's role in the workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
+    }
+
+    const userRole = getUserRole(workspaceMember.role)
     if (!canUserPerformAction(userRole, "task", "delete")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    const task = await tasksCollection.findOne({ id, workspaceId: userData.workspaceId })
+    const task = await tasksCollection.findOne({ id, workspaceId: currentWorkspaceId })
     if (!task) {
       return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 })
     }

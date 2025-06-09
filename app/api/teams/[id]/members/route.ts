@@ -19,15 +19,16 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ success: false, error: "User IDs are required" }, { status: 400 })
     }
 
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const teamsCollection = db.collection("teams")
-    const workspacesCollection = db.collection("workspaces")
-
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
-    if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
 
     // Get user's role in the current workspace
     const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
@@ -49,20 +50,21 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
     }
 
-    // Add team ID to workspace members' teamIds array
-    await workspacesCollection.updateOne(
+    // Add user IDs to team members array (avoid duplicates)
+    const currentMembers = team.members || []
+    const newMembers = [...new Set([...currentMembers, ...userIds])]
+
+    await teamsCollection.updateOne(
       {
-        id: currentWorkspaceId,
-        "members.memberId": { $in: userIds },
+        id: params.id,
+        workspaceId: currentWorkspaceId,
       },
       {
-        $addToSet: {
-          "members.$[elem].teamIds": params.id,
+        $set: {
+          members: newMembers,
+          memberCount: newMembers.length,
+          updatedAt: new Date().toISOString(),
         },
-        $set: { updatedAt: new Date().toISOString() },
-      },
-      {
-        arrayFilters: [{ "elem.memberId": { $in: userIds } }],
       },
     )
 
@@ -91,14 +93,16 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 })
     }
 
-    const db = await getDatabase()
-    const workspacesCollection = db.collection("workspaces")
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
 
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
     if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
     }
+
+    const db = await getDatabase()
+    const teamsCollection = db.collection("teams")
 
     // Get user's role in the current workspace
     const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
@@ -112,17 +116,29 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Remove team ID from workspace member's teamIds array
-    await workspacesCollection.updateOne(
+    // Remove user ID from team members array
+    const team = await teamsCollection.findOne({
+      id: params.id,
+      workspaceId: currentWorkspaceId,
+    })
+
+    if (!team) {
+      return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
+    }
+
+    const updatedMembers = (team.members || []).filter((memberId: string) => memberId !== userId)
+
+    await teamsCollection.updateOne(
       {
-        id: currentWorkspaceId,
-        "members.memberId": userId,
+        id: params.id,
+        workspaceId: currentWorkspaceId,
       },
       {
-        $pull: {
-          "members.$.teamIds": params.id,
+        $set: {
+          members: updatedMembers,
+          memberCount: updatedMembers.length,
+          updatedAt: new Date().toISOString(),
         },
-        $set: { updatedAt: new Date().toISOString() },
       },
     )
 

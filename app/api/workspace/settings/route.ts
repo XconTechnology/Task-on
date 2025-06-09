@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
     const workspacesCollection = db.collection("workspaces")
 
     // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
     if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
@@ -59,7 +61,9 @@ export async function PUT(request: NextRequest) {
     const workspacesCollection = db.collection("workspaces")
 
     // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
     if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }

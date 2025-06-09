@@ -16,16 +16,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    // Get current workspace ID from header or fallback to user's first workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const tasksCollection = db.collection("tasks")
     const projectsCollection = db.collection("projects")
     const workspacesCollection = db.collection("workspaces")
-
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
-    if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
 
     // Get project
     const project = await projectsCollection.findOne({
@@ -38,13 +40,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all tasks for this project
-    const tasks = await tasksCollection.find({ projectId }).toArray()
+    const tasks = await tasksCollection.find({ projectId, workspaceId: currentWorkspaceId }).toArray()
 
     // Calculate statistics
     const totalTasks = tasks.length
-    const completedTasks = tasks.filter((task) => task.status === "done").length
-    const inProgressTasks = tasks.filter((task) => task.status === "in-progress").length
-    const todoTasks = tasks.filter((task) => task.status === "todo").length
+    const completedTasks = tasks.filter((task) => task.status === "Completed").length
+    const inProgressTasks = tasks.filter((task) => task.status === "In Progress").length
+    const todoTasks = tasks.filter((task) => task.status === "To Do").length
 
     // Calculate progress percentage
     const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
@@ -68,10 +70,12 @@ export async function GET(request: NextRequest) {
     // Get team member count (if project has a team assigned)
     let totalTeamMembers = assignedMembers.length
     if (project.teamId) {
-      const teamMembersCount = workspace.members.filter(
-        (member: any) => member.teamIds && member.teamIds.includes(project.teamId),
-      ).length
-      totalTeamMembers = Math.max(totalTeamMembers, teamMembersCount)
+      // Get team and count its members
+      const teamsCollection = db.collection("teams")
+      const team = await teamsCollection.findOne({ id: project.teamId, workspaceId: currentWorkspaceId })
+      if (team?.members) {
+        totalTeamMembers = Math.max(totalTeamMembers, team.members.length)
+      }
     }
 
     return NextResponse.json({

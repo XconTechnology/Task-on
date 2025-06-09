@@ -216,6 +216,46 @@ export interface PaginatedResponse<T> {
   }
 }
 
+export interface ChatMessage {
+  id: string
+  teamId: string
+  userId: string
+  username: string
+  userEmail: string
+  profilePictureUrl?: string
+  message: string
+  timestamp: number
+  createdAt: string
+  edited?: boolean
+  editedAt?: string
+}
+
+export interface TeamChatRoom {
+  id: string // same as teamId
+  teamId: string
+  teamName: string
+  workspaceId: string
+  members: string[] // array of user IDs
+  lastMessage?: {
+    message: string
+    timestamp: number
+    userId: string
+    username: string
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChatUser {
+  id: string
+  username: string
+  email: string
+  profilePictureUrl?: string
+  isOnline: boolean
+  lastSeen?: number
+}
+
+
 {
   /*
 

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
+import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
 
 // GET /api/tasks - Get tasks with optional projectId filter
 export async function GET(request: NextRequest) {
@@ -13,21 +14,22 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    
     const projectId = searchParams.get("projectId")
-console.log(projectId)
+
+    // Try to get workspace ID from header first, then fallback to user's workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const tasksCollection = db.collection("tasks")
     const usersCollection = db.collection("users")
 
-    // Get user's workspace
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
-    }
-
     // Build query
-    const query: any = { workspaceId: userData.workspaceId }
+    const query: any = { workspaceId: currentWorkspaceId }
     if (projectId) {
       query.projectId = projectId
     }
@@ -44,7 +46,14 @@ console.log(projectId)
         return {
           ...task,
           author: author ? { id: author.id, username: author.username, email: author.email } : null,
-          assignee: assignee ? { id: assignee.id, username: assignee.username, email: assignee.email } : null,
+          assignee: assignee
+            ? {
+                id: assignee.id,
+                username: assignee.username,
+                email: assignee.email,
+                profilePictureUrl: assignee.profilePictureUrl,
+              }
+            : null,
         }
       }),
     )
@@ -81,26 +90,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Project ID is required" }, { status: 400 })
     }
 
+    // Try to get workspace ID from header first, then fallback to user's workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
+    }
+
     const db = await getDatabase()
     const tasksCollection = db.collection("tasks")
     const usersCollection = db.collection("users")
     const projectsCollection = db.collection("projects")
 
-    // Get user's workspace and role
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    // Get user's role in the workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
     }
 
-    const userRole = getUserRole(userData.role)
+    const userRole = getUserRole(workspaceMember.role)
     if (!canUserPerformAction(userRole, "task", "create")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Verify project exists and belongs to user's workspace
+    // Verify project exists and belongs to current workspace
     const project = await projectsCollection.findOne({
       id: projectId,
-      workspaceId: userData.workspaceId,
+      workspaceId: currentWorkspaceId,
     })
 
     if (!project) {
@@ -113,11 +130,11 @@ export async function POST(request: NextRequest) {
       id: taskId,
       title: title.trim(),
       description: description?.trim() || "",
-      status: status || "todo",
-      priority: priority || "medium",
+      status: status || "To Do",
+      priority: priority || "Medium",
       projectId,
-      workspaceId: userData.workspaceId,
-      createdBy: user.userId, // Auto-assign from current user
+      workspaceId: currentWorkspaceId,
+      createdBy: user.userId,
       assignedTo: assignedTo || undefined,
       dueDate: dueDate || undefined,
       createdAt: new Date().toISOString(),
@@ -133,7 +150,14 @@ export async function POST(request: NextRequest) {
     const populatedTask = {
       ...newTask,
       author: author ? { id: author.id, username: author.username, email: author.email } : null,
-      assignee: assignee ? { id: assignee.id, username: assignee.username, email: assignee.email } : null,
+      assignee: assignee
+        ? {
+            id: assignee.id,
+            username: assignee.username,
+            email: assignee.email,
+            profilePictureUrl: assignee.profilePictureUrl,
+          }
+        : null,
     }
 
     return NextResponse.json({

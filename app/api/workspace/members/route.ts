@@ -11,15 +11,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
-    const db = await getDatabase()
-    const usersCollection = db.collection("users")
-    const workspacesCollection = db.collection("workspaces")
+    // Try to get workspace ID from header first, then fallback to user's workspace
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
 
-    // Get current workspace ID
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
     if (!currentWorkspaceId) {
-      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })
     }
+
+    const db = await getDatabase()
+    const workspacesCollection = db.collection("workspaces")
 
     // Get workspace with members
     const workspace = await workspacesCollection.findOne({ id: currentWorkspaceId })

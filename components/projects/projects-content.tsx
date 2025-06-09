@@ -21,6 +21,7 @@ import EditProjectModal from "@/components/modals/edit-project-modal";
 import type { Project } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { projectApi } from "@/lib/api";
 
 export default function ProjectsContent() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -36,19 +37,18 @@ export default function ProjectsContent() {
   }, []);
 
   const fetchProjects = async () => {
-    try {
-      const response = await fetch("/api/projects");
-      const data = await response.json();
+  try {
+    const response = await projectApi.getProjects(); // ✅ Using your projectApi
 
-      if (data.success) {
-        setProjects(data.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch projects:", error);
-    } finally {
-      setIsLoading(false);
+    if (response.success) {
+      setProjects(response.data || []);
     }
-  };
+  } catch (error) {
+    console.error("Failed to fetch projects:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleProjectCreated = (newProject: Project) => {
     setProjects((prev) => [newProject, ...prev]);
