@@ -482,3 +482,49 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
   */
 }
+
+
+
+{/*
+
+  api calls in lib/api
+  
+  export async function apiCall<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    const url = `${API_CONFIG.BASE_URL}${endpoint}`;
+  
+    const defaultOptions: RequestInit = {
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+      ...options,
+    };
+  
+    try {
+      const response = await fetch(url, defaultOptions);
+      const data = await response.json();
+  
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || `HTTP error! status: ${response.status}`,
+        };
+      }
+  
+      return {
+        success: true,
+        data: data.data || data,
+        message: data.message,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Network error occurred",
+      };
+    }
+  }
+  
+  */}

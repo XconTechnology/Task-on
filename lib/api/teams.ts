@@ -1,100 +1,59 @@
-import type { Team, User, ApiResponse } from "@/lib/types"
-import { API_CONFIG } from "@/lib/constants"
-import { workspaceApi } from "../api"
+import { apiCall } from "../api_call";
 
-// Base API function with error handling
-async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  const url = `${API_CONFIG.BASE_URL}${endpoint}`
-
-  const defaultOptions: RequestInit = {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  }
-
-  try {
-    const response = await fetch(url, defaultOptions)
-    const data = await response.json()
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.error || `HTTP error! status: ${response.status}`,
-      }
-    }
-
-    return {
-      success: true,
-      data: data.data || data,
-      message: data.message,
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Network error occurred",
-    }
-  }
-}
-
-// Team API Functions
 export const teamApi = {
-  // Get all teams for user's workspace
-  getTeams: async (): Promise<ApiResponse<Team[]>> => {
-    return apiCall<Team[]>("/teams")
+  // Get all teams
+  getTeams: async () => {
+    return apiCall("/teams")
   },
 
-  // Get team by ID
-  getTeam: async (id: string): Promise<ApiResponse<Team>> => {
-    return apiCall<Team>(`/teams/${id}`)
+  // Get single team
+  getTeam: async (teamId: string) => {
+    return apiCall(`/teams/${teamId}`)
   },
 
-  // Create new team
-  createTeam: async (team: Partial<Team>): Promise<ApiResponse<Team>> => {
-    return apiCall<Team>("/teams", {
+  // Create team
+  createTeam: async (teamData: { teamName: string; description?: string }) => {
+    return apiCall("/teams", {
       method: "POST",
-      body: JSON.stringify(team),
+      body: JSON.stringify(teamData),
     })
   },
 
   // Update team
-  updateTeam: async (id: string, team: Partial<Team>): Promise<ApiResponse<Team>> => {
-    return apiCall<Team>(`/teams/${id}`, {
+  updateTeam: async (teamId: string, teamData: { teamName: string; description?: string }) => {
+    return apiCall(`/teams/${teamId}`, {
       method: "PUT",
-      body: JSON.stringify(team),
+      body: JSON.stringify(teamData),
     })
   },
 
   // Delete team
-  deleteTeam: async (id: string): Promise<ApiResponse<void>> => {
-    return apiCall<void>(`/teams/${id}`, {
+  deleteTeam: async (teamId: string) => {
+    return apiCall(`/teams/${teamId}`, {
       method: "DELETE",
     })
   },
 
-  // Get team members
-  getTeamMembers: async (teamId: string): Promise<ApiResponse<User[]>> => {
-    return apiCall<User[]>(`/teams/${teamId}/members`)
-  },
-
-  // Add member to team
-  addTeamMember: async (teamId: string, userId: string): Promise<ApiResponse<void>> => {
-    return apiCall<void>(`/teams/${teamId}/members`, {
+  // Add team member
+  addTeamMember: async (teamId: string, userId: string) => {
+    return apiCall(`/teams/${teamId}/members`, {
       method: "POST",
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userIds: [userId] }),
     })
   },
 
-  // Remove member from team
-  removeTeamMember: async (teamId: string, userId: string): Promise<ApiResponse<void>> => {
-    return apiCall<void>(`/teams/${teamId}/members/${userId}`, {
+  // Remove team member
+  removeTeamMember: async (teamId: string, userId: string) => {
+    return apiCall(`/teams/${teamId}/members?userId=${userId}`, {
       method: "DELETE",
     })
   },
 
-  // Invite users to workspace
-  inviteUsers: async (emails: string[], role: string, workspaceId?: string): Promise<ApiResponse<any>> => {
-    return workspaceApi.inviteUsers(emails, role, workspaceId)
+  // Add multiple team members
+  addTeamMembers: async (teamId: string, userIds: string[]) => {
+    return apiCall(`/teams/${teamId}/members`, {
+      method: "POST",
+      body: JSON.stringify({ userIds }),
+    })
   },
 }

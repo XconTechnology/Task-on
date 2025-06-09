@@ -2,7 +2,7 @@ import type { Project, Task, User, Team, ApiResponse, Status } from "./types";
 import { API_CONFIG } from "./constants";
 
 // Base API function with error handling and retries
-async function apiCall<T>(
+export async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {

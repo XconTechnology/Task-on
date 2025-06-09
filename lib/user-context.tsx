@@ -15,6 +15,7 @@ interface UserContextType {
   currentWorkspace: any | null
   setCurrentWorkspace: (workspace: any) => void
   refreshWorkspaces: () => Promise<void>
+  getCurrentWorkspaceId: () => string | null
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -25,6 +26,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   // Add workspace state
   const [workspaces, setWorkspaces] = useState<any[]>([])
   const [currentWorkspace, setCurrentWorkspace] = useState<any | null>(null)
+  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null)
 
   const fetchUser = async () => {
     try {
@@ -51,12 +53,28 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const fetchWorkspaces = async () => {
     try {
       const response = await workspaceApi.getUserWorkspaces()
-      console.log('response',response)
       if (response.success && response.data) {
         setWorkspaces(response.data)
-        // Set first workspace as current if none selected
-        if (response.data.length > 0 && !currentWorkspace) {
-          setCurrentWorkspace(response.data[0])
+
+        // Initialize localStorage with first workspace if nothing is saved
+        const savedWorkspaceId = localStorage.getItem("currentWorkspaceId")
+
+        if (!savedWorkspaceId && response.data.length > 0) {
+          // Set first workspace as default
+          const firstWorkspace = response.data[0]
+          setCurrentWorkspace(firstWorkspace)
+          localStorage.setItem("currentWorkspaceId", firstWorkspace.id)
+        } else if (savedWorkspaceId) {
+          // Find and set the saved workspace
+          const savedWorkspace = response.data.find((ws: any) => ws.id === savedWorkspaceId)
+          if (savedWorkspace) {
+            setCurrentWorkspace(savedWorkspace)
+          } else {
+            // Fallback to first workspace if saved one doesn't exist
+            const firstWorkspace = response.data[0]
+            setCurrentWorkspace(firstWorkspace)
+            localStorage.setItem("currentWorkspaceId", firstWorkspace.id)
+          }
         }
       }
     } catch (error) {
@@ -64,7 +82,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  console.log(workspaces)
   const refreshUser = async () => {
     await fetchUser()
   }
@@ -89,6 +106,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     fetchUser()
   }, [])
 
+  useEffect(() => {
+    const savedWorkspaceId = localStorage.getItem("currentWorkspaceId")
+    if (savedWorkspaceId && workspaces.length > 0) {
+      const savedWorkspace = workspaces.find((ws) => ws.id === savedWorkspaceId)
+      if (savedWorkspace) {
+        setCurrentWorkspace(savedWorkspace)
+      }
+    }
+  }, [workspaces])
+
+  const getCurrentWorkspaceId = (): string | null => {
+    return currentWorkspaceId || currentWorkspace?.id || null
+  }
+
+  const handleSetCurrentWorkspace = (workspace: any) => {
+    setCurrentWorkspace(workspace)
+    setCurrentWorkspaceId(workspace?.id || null)
+    // Persist to localStorage
+    if (workspace?.id) {
+      localStorage.setItem("currentWorkspaceId", workspace.id)
+    } else {
+      localStorage.removeItem("currentWorkspaceId")
+    }
+  }
+
   return (
     <UserContext.Provider
       value={{
@@ -98,8 +140,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         signOut,
         workspaces,
         currentWorkspace,
-        setCurrentWorkspace,
+        setCurrentWorkspace: handleSetCurrentWorkspace,
         refreshWorkspaces,
+        getCurrentWorkspaceId,
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
+import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
 // GET /api/projects/[id]/stats - Get project statistics
 export async function GET(request: NextRequest) {
@@ -17,19 +18,19 @@ export async function GET(request: NextRequest) {
 
     const db = await getDatabase()
     const tasksCollection = db.collection("tasks")
-    const usersCollection = db.collection("users")
     const projectsCollection = db.collection("projects")
+    const workspacesCollection = db.collection("workspaces")
 
-    // Get user's workspace
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
     // Get project
     const project = await projectsCollection.findOne({
       id: projectId,
-      workspaceId: userData.workspaceId,
+      workspaceId: currentWorkspaceId,
     })
 
     if (!project) {
@@ -48,20 +49,28 @@ export async function GET(request: NextRequest) {
     // Calculate progress percentage
     const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
+    // Get workspace to access members
+    const workspace = await workspacesCollection.findOne({ id: currentWorkspaceId })
+    if (!workspace?.members) {
+      return NextResponse.json({ success: false, error: "Workspace members not found" }, { status: 404 })
+    }
+
     // Get unique team members assigned to tasks
     const assignedUserIds = [...new Set(tasks.map((task) => task.assignedTo).filter(Boolean))]
-    const teamMembers = await usersCollection
-      .find({ id: { $in: assignedUserIds } })
-      .project({ id: 1, username: 1, email: 1 })
-      .toArray()
+    const assignedMembers = workspace.members
+      .filter((member: any) => assignedUserIds.includes(member.memberId))
+      .map((member: any) => ({
+        id: member.memberId,
+        username: member.username,
+        email: member.email,
+      }))
 
     // Get team member count (if project has a team assigned)
-    let totalTeamMembers = teamMembers.length
+    let totalTeamMembers = assignedMembers.length
     if (project.teamId) {
-      const teamMembersCount = await usersCollection.countDocuments({
-        teamIds: { $in: [project.teamId] },
-        workspaceId: userData.workspaceId,
-      })
+      const teamMembersCount = workspace.members.filter(
+        (member: any) => member.teamIds && member.teamIds.includes(project.teamId),
+      ).length
       totalTeamMembers = Math.max(totalTeamMembers, teamMembersCount)
     }
 
@@ -74,7 +83,7 @@ export async function GET(request: NextRequest) {
         todoTasks,
         progress,
         teamMembers: totalTeamMembers,
-        assignedMembers: teamMembers,
+        assignedMembers,
       },
     })
   } catch (error) {

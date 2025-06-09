@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
-import type { OnboardingData, Workspace, WorkspaceMember } from "@/lib/types"
+import type { OnboardingData } from "@/lib/types"
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,50 +23,40 @@ export async function POST(request: NextRequest) {
     const workspacesCollection = db.collection("workspaces")
     const usersCollection = db.collection("users")
 
-    // Get user data to create workspace member
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 })
-    }
-
     // Create workspace
     const workspaceId = `workspace_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-    // Create workspace member object for the user
-    const workspaceMember: WorkspaceMember = {
-      memberId: user.userId,
-      username: userData.username,
-      email: userData.email,
-      role: "Owner", // User is owner of their new workspace
-      joinedAt: new Date().toISOString(),
-    }
-
-    const newWorkspace: Workspace = {
+    const newWorkspace: any = {
       id: workspaceId,
       name: workspaceName,
       ownerId: user.userId,
-      defaultRole: "Member",
-      allowMemberInvites: true,
-      members: [workspaceMember], // Add user as first member
-      pendingInvites: [],
-      // Store onboarding data as additional fields
       usageType,
       managementType: managementType || [],
       features: features || [],
       referralSource,
       teamInvites: teamInvites || [],
+      members: [
+        {
+          memberId: user.userId,
+          role: "Owner",
+          joinedAt: new Date().toISOString(),
+        },
+      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
 
     await workspacesCollection.insertOne(newWorkspace)
 
-    // FIXED: Add workspace ID to user's workspaceIds array (don't overwrite)
+    // Update user with workspace ID - use $addToSet to add to array without duplicates
     await usersCollection.updateOne(
       { id: user.userId },
       {
-        $addToSet: { workspaceIds: workspaceId }, // Use $addToSet to add to array without duplicates
-        $set: { updatedAt: new Date().toISOString() },
+        $addToSet: {
+          workspaceIds: workspaceId,
+        },
+        $set: {
+          updatedAt: new Date().toISOString(),
+        },
       },
     )
 

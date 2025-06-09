@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { hashPassword, generateToken, isValidEmail, isValidPassword, checkRateLimit } from "@/lib/auth"
-import type { User, Workspace, WorkspaceMember } from "@/lib/types"
+import type { User, } from "@/lib/types"
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,7 +48,6 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase()
     const usersCollection = db.collection("users")
-    const workspacesCollection = db.collection("workspaces")
 
     // Check if user already exists
     const existingUser = await usersCollection.findOne({
@@ -71,43 +70,19 @@ export async function POST(request: NextRequest) {
     // Create user first
     const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    const workspaceId = `workspace_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
     const newUser: User = {
       id: userId,
       username,
       email: email.toLowerCase(),
       password: hashedPassword,
-      workspaceIds: [workspaceId], // Array with initial workspace
+      workspaceIds: [], // Array with initial workspace
       profilePictureUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
 
-    // Create workspace member object
-    const workspaceMember: WorkspaceMember = {
-      memberId: userId,
-      username,
-      email: email.toLowerCase(),
-      role: "Owner", // Owner role in workspace
-      joinedAt: new Date().toISOString(),
-    }
-
-    // Create workspace with user as owner and member
-    const newWorkspace: Workspace = {
-      id: workspaceId,
-      name: `${username}'s Workspace`,
-      ownerId: userId,
-      defaultRole: "Member",
-      allowMemberInvites: true,
-      members: [workspaceMember], // User is first member with Owner role
-      pendingInvites: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
+  
     // Insert both workspace and user
-    await workspacesCollection.insertOne(newWorkspace)
     await usersCollection.insertOne(newUser)
 
     // Generate JWT token
@@ -122,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-      data: { user: userResponse, workspace: newWorkspace },
+      data: { user: userResponse },
       message: "Account created successfully",
     })
 

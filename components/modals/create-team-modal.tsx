@@ -183,18 +183,18 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
                 {availableMembers.length > 0 ? (
                   availableMembers.map((member: any) => (
                     <div
-                      key={member.id}
+                      key={member.memberId}
                       className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                        selectedMembers.includes(member.id) ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50"
+                        selectedMembers.includes(member.memberId) ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50"
                       }`}
                     >
                       <Checkbox
-                        checked={selectedMembers.includes(member.id)}
+                        checked={selectedMembers.includes(member.memberId)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            toggleMember(member.id)
+                            toggleMember(member.memberId)
                           } else {
-                            toggleMember(member.id)
+                            toggleMember(member.memberId)
                           }
                         }}
                       />
@@ -236,7 +236,7 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
                 <p className="text-small text-blue-700 mb-2">Selected members will be added to this team:</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedMembers.map((memberId) => {
-                    const member = availableMembers.find((m: any) => m.id === memberId)
+                    const member = availableMembers.find((m: any) => m.memberId === memberId)
                     return (
                       <div
                         key={memberId}

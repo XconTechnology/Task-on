@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
+import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
 
 // ✅ Utility function to extract projectId from URL
 function getProjectIdFromRequest(request: NextRequest): string | null {
@@ -26,16 +27,16 @@ export async function GET(request: NextRequest) {
 
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
-    const usersCollection = db.collection("users")
 
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
     const project = await projectsCollection.findOne({
       id: projectId,
-      workspaceId: userData.workspaceId,
+      workspaceId: currentWorkspaceId,
     })
 
     if (!project) {
@@ -75,11 +76,20 @@ export async function PUT(request: NextRequest) {
 
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
-    const usersCollection = db.collection("users")
 
-    const userData = await usersCollection.findOne({ id: user.userId })
-    const userRole = getUserRole(userData?.role)
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    }
 
+    // Get user's role in the workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
+    }
+
+    const userRole = getUserRole(workspaceMember.role)
     if (!canUserPerformAction(userRole, "project", "update")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
@@ -87,7 +97,7 @@ export async function PUT(request: NextRequest) {
     const updatedProject = await projectsCollection.findOneAndUpdate(
       {
         id: projectId,
-        workspaceId: userData?.workspaceId,
+        workspaceId: currentWorkspaceId,
       },
       {
         $set: {
@@ -133,18 +143,27 @@ export async function DELETE(request: NextRequest) {
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
     const tasksCollection = db.collection("tasks")
-    const usersCollection = db.collection("users")
 
-    const userData = await usersCollection.findOne({ id: user.userId })
-    const userRole = getUserRole(userData?.role)
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
+    }
 
+    // Get user's role in the workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
+    }
+
+    const userRole = getUserRole(workspaceMember.role)
     if (!canUserPerformAction(userRole, "project", "delete")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
     const project = await projectsCollection.findOne({
       id: projectId,
-      workspaceId: userData?.workspaceId,
+      workspaceId: currentWorkspaceId,
     })
 
     if (!project) {

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
+import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,22 +12,32 @@ export async function GET(request: NextRequest) {
     }
 
     const db = await getDatabase()
-    const usersCollection = db.collection("users")
     const teamsCollection = db.collection("teams")
+    const workspacesCollection = db.collection("workspaces")
 
-    // Get user's workspace
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
     // Get teams for the workspace
-    const teams = await teamsCollection.find({ workspaceId: userData.workspaceId }).toArray()
+    const teams = await teamsCollection.find({ workspaceId: currentWorkspaceId }).toArray()
+
+    // Get workspace to access members
+    const workspace = await workspacesCollection.findOne({ id: currentWorkspaceId })
+    if (!workspace?.members) {
+      return NextResponse.json({ success: false, error: "Workspace members not found" }, { status: 404 })
+    }
 
     // Get member counts for each team
     const teamsWithCounts = await Promise.all(
       teams.map(async (team) => {
-        const memberCount = await usersCollection.countDocuments({ teamId: team.id })
+        // Count members who have this team in their teamIds
+        const memberCount = workspace.members.filter(
+          (member: any) => member.teamIds && member.teamIds.includes(team.id),
+        ).length
+
         return {
           ...team,
           memberCount,
@@ -62,12 +73,11 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDatabase()
-    const usersCollection = db.collection("users")
     const teamsCollection = db.collection("teams")
 
-    // Get user's workspace
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
@@ -77,7 +87,7 @@ export async function POST(request: NextRequest) {
       id: teamId,
       teamName,
       description: description || "",
-      workspaceId: userData.workspaceId,
+      workspaceId: currentWorkspaceId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }

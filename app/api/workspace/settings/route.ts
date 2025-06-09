@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
-import { canUserPerformAction, getUserRole } from "@/lib/permissions"
+import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,31 +12,32 @@ export async function GET(request: NextRequest) {
     }
 
     const db = await getDatabase()
-    const usersCollection = db.collection("users")
     const workspacesCollection = db.collection("workspaces")
 
-    // Get user's workspace and role
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
-    // Check permissions
-    const userRole = getUserRole(userData.role)
-    if (!canUserPerformAction(userRole, "workspace", "read")) {
-      return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
+    // Get workspace settings
+    const workspace = await workspacesCollection.findOne({ id: currentWorkspaceId })
+    if (!workspace) {
+      return NextResponse.json({ success: false, error: "Workspace not found" }, { status: 404 })
     }
 
-    // Get workspace settings
-    const workspace = await workspacesCollection.findOne({ id: userData.workspaceId })
+    // Extract settings from workspace
+    const settings = {
+      name: workspace.name,
+      usageType: workspace.usageType,
+      managementType: workspace.managementType,
+      features: workspace.features,
+      // Add any other settings you need
+    }
 
     return NextResponse.json({
       success: true,
-      data: {
-        workspaceName: workspace?.name || "My Workspace",
-        defaultRole: workspace?.defaultRole || "Member",
-        allowMemberInvites: workspace?.allowMemberInvites !== false,
-      },
+      data: settings,
     })
   } catch (error) {
     console.error("Get workspace settings error:", error)
@@ -53,41 +54,46 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { workspaceName, defaultRole, allowMemberInvites } = body
 
     const db = await getDatabase()
-    const usersCollection = db.collection("users")
     const workspacesCollection = db.collection("workspaces")
 
-    // Get user's workspace and role
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
-    // Check permissions
-    const userRole = getUserRole(userData.role)
-    if (!canUserPerformAction(userRole, "workspace", "update")) {
+    // Check if user is owner or admin
+    const workspace = await workspacesCollection.findOne({ id: currentWorkspaceId })
+    if (!workspace) {
+      return NextResponse.json({ success: false, error: "Workspace not found" }, { status: 404 })
+    }
+
+    const userMember = workspace.members.find((m: any) => m.memberId === user.userId)
+    if (!userMember || (userMember.role !== "Owner" && userMember.role !== "Admin")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
     // Update workspace settings
     const updatedWorkspace = await workspacesCollection.findOneAndUpdate(
-      { id: userData.workspaceId },
+      { id: currentWorkspaceId },
       {
         $set: {
-          name: workspaceName,
-          defaultRole: defaultRole,
-          allowMemberInvites: allowMemberInvites,
+          ...body,
           updatedAt: new Date().toISOString(),
         },
       },
       { returnDocument: "after" },
     )
 
+    if (!updatedWorkspace?.value) {
+      return NextResponse.json({ success: false, error: "Failed to update workspace settings" }, { status: 500 })
+    }
+
     return NextResponse.json({
       success: true,
-      data: updatedWorkspace?.value,
+      data: updatedWorkspace.value,
       message: "Workspace settings updated successfully",
     })
   } catch (error) {

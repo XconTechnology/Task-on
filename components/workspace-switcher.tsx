@@ -19,29 +19,38 @@ import { useUser } from "@/lib/user-context"
 export default function WorkspaceSwitcher() {
   const router = useRouter()
   const { workspaces, currentWorkspace, setCurrentWorkspace, isLoading } = useUser()
-  const [isSwitching, setIsSwitching] = useState(true)
-
-  console.log(workspaces)
-  console.log(currentWorkspace)
+  const [isSwitching, setIsSwitching] = useState(false)
 
   const handleWorkspaceSwitch = async (workspace: any) => {
+    if (isSwitching) return // Prevent multiple clicks
+
     try {
       setIsSwitching(true)
+
+      // Update the current workspace immediately for better UX
+      setCurrentWorkspace(workspace)
+
+      // Call the API to switch workspace
       const response = await workspaceApi.switchWorkspace(workspace.id)
+
       if (response.success) {
-        setCurrentWorkspace(workspace)
-        // Refresh the page to update workspace context
+        // Force a refresh of the page to update all data
         window.location.reload()
+      } else {
+        // Revert if API call failed
+        console.error("Failed to switch workspace:", response.error)
+        // Don't revert the UI change, just log the error
       }
     } catch (error) {
       console.error("Failed to switch workspace:", error)
+      // Don't revert the UI change, just log the error
     } finally {
       setIsSwitching(false)
     }
   }
 
   const handleCreateWorkspace = () => {
-    router.push("/onboarding")
+    router.push("/workspace/create")
   }
 
   const handleSettings = () => {
@@ -138,7 +147,12 @@ export default function WorkspaceSwitcher() {
               {workspaces
                 .filter((ws) => ws.id !== currentWorkspace?.id)
                 .map((workspace) => (
-                  <DropdownMenuItem key={workspace.id} onClick={() => handleWorkspaceSwitch(workspace)} className="p-2">
+                  <DropdownMenuItem
+                    key={workspace.id}
+                    onClick={() => handleWorkspaceSwitch(workspace)}
+                    className="p-2"
+                    disabled={isSwitching}
+                  >
                     <div className="flex items-center space-x-3 w-full">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${workspace.name}`} />

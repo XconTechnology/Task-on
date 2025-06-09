@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
+import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
 import type { Project } from "@/lib/types"
 
 export async function GET(request: NextRequest) {
@@ -14,17 +15,16 @@ export async function GET(request: NextRequest) {
 
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
-    const usersCollection = db.collection("users")
 
-    // Get user's workspace
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
     // Get all projects in the workspace
     const projects = await projectsCollection
-      .find({ workspaceId: userData.workspaceId })
+      .find({ workspaceId: currentWorkspaceId })
       .sort({ createdAt: -1 })
       .toArray()
 
@@ -60,15 +60,20 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
-    const usersCollection = db.collection("users")
 
-    // Get user's workspace and role
-    const userData = await usersCollection.findOne({ id: user.userId })
-    if (!userData?.workspaceId) {
+    // Get current workspace ID
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found" }, { status: 404 })
     }
 
-    const userRole = getUserRole(userData.role)
+    // Get user's role in the workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
+    }
+
+    const userRole = getUserRole(workspaceMember.role)
     if (!canUserPerformAction(userRole, "project", "create")) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
@@ -79,7 +84,7 @@ export async function POST(request: NextRequest) {
       id: projectId,
       name: name.trim(),
       description: description?.trim() || "",
-      workspaceId: userData.workspaceId,
+      workspaceId: currentWorkspaceId,
       createdBy: user.userId,
       teamId: teamId && teamId !== "none" ? teamId : undefined,
       startDate: startDate || undefined,

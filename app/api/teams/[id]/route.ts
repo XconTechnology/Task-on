@@ -1,0 +1,184 @@
+import { NextResponse } from "next/server"
+import { getDatabase } from "@/lib/mongodb"
+import { getUserFromRequest } from "@/lib/auth"
+import { canUserPerformAction, getUserRole } from "@/lib/permissions"
+import { getWorkspaceMember } from "@/lib/workspace-utils"
+
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const user = getUserFromRequest(request)
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
+    }
+
+    // Get current workspace ID from header
+    const currentWorkspaceId = request.headers.get("x-workspace-id")
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace specified" }, { status: 400 })
+    }
+
+    const db = await getDatabase()
+    const teamsCollection = db.collection("teams")
+    const usersCollection = db.collection("users")
+
+    // Get user's role in the current workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
+    }
+
+    const userRole = getUserRole(workspaceMember.role)
+
+    if (!canUserPerformAction(userRole, "team", "read")) {
+      return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
+    }
+
+    const team = await teamsCollection.findOne({
+      id: params.id,
+      workspaceId: currentWorkspaceId,
+    })
+
+    if (!team) {
+      return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
+    }
+
+    // Get full user details for team members
+    const memberIds = team.members || []
+    const memberDetails = []
+
+    if (memberIds.length > 0) {
+      const users = await usersCollection.find({ id: { $in: memberIds } }).toArray()
+
+      for (const userId of memberIds) {
+        const user = users.find((u) => u.id === userId)
+        if (user) {
+          memberDetails.push({
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            profilePictureUrl: user.profilePictureUrl,
+            role: workspaceMember.role, // Use workspace role
+          })
+        }
+      }
+    }
+
+    const teamWithMembers = {
+      ...team,
+      members: memberDetails,
+      memberCount: memberDetails.length,
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: teamWithMembers,
+    })
+  } catch (error) {
+    console.error("Get team error:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const user = getUserFromRequest(request)
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
+    }
+
+    const body = await request.json()
+
+    // Get current workspace ID from header
+    const currentWorkspaceId = request.headers.get("x-workspace-id")
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace specified" }, { status: 400 })
+    }
+
+    const db = await getDatabase()
+    const teamsCollection = db.collection("teams")
+
+    // Get user's role in the current workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
+    }
+
+    if (!canUserPerformAction(workspaceMember.role || "Member", "team", "update")) {
+      return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
+    }
+
+    const updatedTeam = await teamsCollection.findOneAndUpdate(
+      {
+        id: params.id,
+        workspaceId: currentWorkspaceId,
+      },
+      {
+        $set: {
+          ...body,
+          updatedAt: new Date().toISOString(),
+        },
+      },
+      { returnDocument: "after" },
+    )
+
+    if (!updatedTeam?.value) {
+      return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: updatedTeam.value,
+      message: "Team updated successfully",
+    })
+  } catch (error) {
+    console.error("Update team error:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const user = getUserFromRequest(request)
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
+    }
+
+    // Get current workspace ID from header
+    const currentWorkspaceId = request.headers.get("x-workspace-id")
+
+    if (!currentWorkspaceId) {
+      return NextResponse.json({ success: false, error: "No workspace specified" }, { status: 400 })
+    }
+
+    const db = await getDatabase()
+    const teamsCollection = db.collection("teams")
+
+    // Get user's role in the current workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
+    }
+
+    if (!canUserPerformAction(workspaceMember.role || "Member", "team", "delete")) {
+      return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
+    }
+
+    await teamsCollection.deleteOne({
+      id: params.id,
+      workspaceId: currentWorkspaceId,
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: "Team deleted successfully",
+    })
+  } catch (error) {
+    console.error("Delete team error:", error)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+  }
+}
