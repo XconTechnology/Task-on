@@ -3,6 +3,7 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
 import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
+import { notificationService } from "@/lib/services/notification-service"
 
 // GET /api/tasks - Get tasks with optional projectId filter
 export async function GET(request: NextRequest) {
@@ -142,6 +143,26 @@ export async function POST(request: NextRequest) {
     }
 
     await tasksCollection.insertOne(newTask)
+
+    // Create notification if task is assigned to someone
+    if (assignedTo && assignedTo !== user.userId) {
+      try {
+        const assigneeUser = await usersCollection.findOne({ id: assignedTo })
+        if (assigneeUser) {
+          await notificationService.notifyTaskAssigned(
+            assignedTo,
+            currentWorkspaceId,
+            taskId,
+            title.trim(),
+            project.name,
+            user.username || "Someone",
+          )
+        }
+      } catch (notificationError) {
+        console.error("Error creating task assignment notification:", notificationError)
+        // Don't fail the task creation if notification fails
+      }
+    }
 
     // Get populated task data
     const author = await usersCollection.findOne({ id: user.userId })

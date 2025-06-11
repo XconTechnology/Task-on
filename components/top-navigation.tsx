@@ -63,7 +63,7 @@ export default function TopNavigation() {
             </Button>
 
             {/* Upgrade Button */}
-            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white hidden sm:flex">
+            <Button size="sm" className="bg-primary  hover:bg-green-700 text-white hidden sm:flex">
               <span className="text-xs">Upgrade</span>
             </Button>
 

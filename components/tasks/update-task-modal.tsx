@@ -1,181 +1,157 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useState, useEffect } from "react";
-import { Calendar, Users, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Priority, Status, WorkspaceMember, type Task } from "@/lib/types";
+import type React from "react"
+import { useState, useEffect } from "react"
+import { Calendar, Users, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Priority, Status, type Task } from "@/lib/types"
+import { taskApi, workspaceApi } from "@/lib/api"
+import { successToast, errorToast } from "@/lib/toast-utils"
+import { useUser } from "@/lib/user-context"
 
 type UpdateTaskModalProps = {
-  task: Task | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onTaskUpdated?: (task: Task) => void;
-};
+  task: Task | null
+  isOpen: boolean
+  onClose: () => void
+  onTaskUpdated?: (task: Task) => void
+}
 
-export default function UpdateTaskModal({
-  task,
-  isOpen,
-  onClose,
-  onTaskUpdated,
-}: UpdateTaskModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
-  const [availableMembers, setAvailableMembers] = useState<WorkspaceMember[]>([]);
-  const [selectedMember, setSelectedMember] = useState<string>("");
+export default function UpdateTaskModal({ task, isOpen, onClose, onTaskUpdated }: UpdateTaskModalProps) {
+  const { user } = useUser()
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false)
+  const [availableMembers, setAvailableMembers] = useState<any[]>([])
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([])
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    status: "todo" as Status,
-    priority: "medium" as Priority,
+    status: "To Do" as Status,
+    priority: "Medium" as Priority,
     dueDate: "",
-  });
+  })
 
   useEffect(() => {
     if (isOpen && task) {
       setFormData({
         title: task.title || "",
         description: task.description || "",
-        status: task.status || "todo",
-        priority: task.priority || "medium",
+        status: task.status || "To Do",
+        priority: task.priority || "Medium",
         dueDate: task.dueDate || "",
-      });
-      setSelectedMember(task.assignedTo || "");
-      fetchAvailableMembers();
+      })
+      // Set selected members based on current assignment
+      setSelectedMembers(task.assignedTo ? [task.assignedTo] : [])
+      fetchAvailableMembers()
     }
-  }, [isOpen, task]);
+  }, [isOpen, task])
 
   const fetchAvailableMembers = async () => {
-    setIsLoadingMembers(true);
+    setIsLoadingMembers(true)
     try {
-      const response = await fetch("/api/workspace/members");
-      const data = await response.json();
-      if (data.success) {
-        setAvailableMembers(data.data || []);
+      const response = await workspaceApi.getMembers()
+      if (response.success && response.data) {
+        setAvailableMembers(response.data)
+      } else {
+        console.error("Failed to fetch members:", response.error)
+        setAvailableMembers([])
       }
     } catch (error) {
-      console.error("Failed to fetch members:", error);
+      console.error("Failed to fetch members:", error)
+      setAvailableMembers([])
     } finally {
-      setIsLoadingMembers(false);
+      setIsLoadingMembers(false)
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title.trim() || !task) return;
+    e.preventDefault()
+    if (!formData.title.trim() || !task) return
 
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          assignedTo: selectedMember || undefined,
-        }),
-      });
+      // For single assignment, take the first selected member
+      const assignedTo = selectedMembers.length > 0 ? selectedMembers[0] : undefined
 
-      const data = await response.json();
+      const response = await taskApi.updateTask(task.id, {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        status: formData.status,
+        priority: formData.priority,
+        assignedTo,
+        dueDate: formData.dueDate || undefined,
+      })
 
-      // Even if the API returns an error, if we have data, consider it a success
-      if (response.ok || data.data) {
-        const updatedTask = data.data || {
-          ...task,
-          ...formData,
-          assignedTo: selectedMember || undefined,
-        };
-        onTaskUpdated?.(updatedTask);
-
-        // Show success toast
-        import("@/lib/toast-utils").then(({ successToast }) => {
-          successToast({
-            title: "Task Updated",
-            description: "The task has been successfully updated.",
-          });
-        });
-
-        handleClose();
+      if (response.success && response.data) {
+        successToast({
+          title: "Task Updated",
+          description: "The task has been successfully updated.",
+        })
+        onTaskUpdated?.(response.data)
+        handleClose()
       } else {
-        // Show error toast
-        import("@/lib/toast-utils").then(({ errorToast }) => {
-          errorToast({
-            title: "Update Failed",
-            description:
-              data.error || "Failed to update task. Please try again.",
-          });
-        });
-        console.error("Failed to update task:", data.error);
-      }
-    } catch (error) {
-      // Show error toast
-      import("@/lib/toast-utils").then(({ errorToast }) => {
         errorToast({
           title: "Update Failed",
-          description: "An unexpected error occurred. Please try again.",
-        });
-      });
-      console.error("Failed to update task:", error);
+          description: response.error || "Failed to update task. Please try again.",
+        })
+        console.error("Failed to update task:", response.error)
+      }
+    } catch (error) {
+      console.error("Failed to update task:", error)
+      errorToast({
+        title: "Update Failed",
+        description: "An unexpected error occurred. Please try again.",
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleClose = () => {
     setFormData({
       title: "",
       description: "",
-      status:  Status.ToDo,
-      priority: Priority.Medium,
+      status: "To Do" as Status,
+      priority: "Medium" as Priority,
       dueDate: "",
-    });
-    setSelectedMember("");
-    onClose();
-  };
+    })
+    setSelectedMembers([])
+    onClose()
+  }
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
 
   const toggleMember = (memberId: string) => {
-    setSelectedMember(selectedMember === memberId ? "" : memberId);
-  };
+    setSelectedMembers((prev) => {
+      if (prev.includes(memberId)) {
+        return prev.filter((id) => id !== memberId)
+      } else {
+        return [memberId] // For single assignment
+      }
+    })
+  }
 
-  if (!task) return null;
+  const removeMember = (memberId: string) => {
+    setSelectedMembers((prev) => prev.filter((id) => id !== memberId))
+  }
+
+  if (!task) return null
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold text-gray-900">
-              Update Task
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              className="p-1 h-8 w-8"
-            >
+            <DialogTitle className="text-xl font-semibold text-gray-900">Update Task</DialogTitle>
+            <Button variant="ghost" size="sm" onClick={handleClose} className="p-1 h-8 w-8">
               <X size={16} />
             </Button>
           </div>
@@ -184,10 +160,7 @@ export default function UpdateTaskModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
-            <label
-              htmlFor="title"
-              className="text-medium font-medium text-gray-900"
-            >
+            <label htmlFor="title" className="text-sm font-medium text-gray-900">
               Title
             </label>
             <Input
@@ -203,10 +176,7 @@ export default function UpdateTaskModal({
 
           {/* Description */}
           <div className="space-y-2">
-            <label
-              htmlFor="description"
-              className="text-medium font-medium text-gray-900"
-            >
+            <label htmlFor="description" className="text-sm font-medium text-gray-900">
               Description (Optional)
             </label>
             <Textarea
@@ -223,33 +193,23 @@ export default function UpdateTaskModal({
           {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-label">Status</label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleInputChange("status", value)}
-              >
+              <label className="text-sm font-medium text-gray-900">Status</label>
+              <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={Status.ToDo}>To Do</SelectItem>
-                  <SelectItem value={Status.WorkInProgress}>
-                    In Progress
-                  </SelectItem>
-                  <SelectItem value={Status.UnderReview}>
-                    Under Review
-                  </SelectItem>
+                  <SelectItem value={Status.WorkInProgress}>In Progress</SelectItem>
+                  <SelectItem value={Status.UnderReview}>Under Review</SelectItem>
                   <SelectItem value={Status.Completed}>Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-label">Priority</label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) => handleInputChange("priority", value)}
-              >
+              <label className="text-sm font-medium text-gray-900">Priority</label>
+              <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -266,10 +226,7 @@ export default function UpdateTaskModal({
 
           {/* Due Date */}
           <div className="space-y-2">
-            <label
-              htmlFor="dueDate"
-              className="text-medium font-medium text-gray-900"
-            >
+            <label htmlFor="dueDate" className="text-sm font-medium text-gray-900">
               Due Date (Optional)
             </label>
             <div className="relative">
@@ -288,24 +245,34 @@ export default function UpdateTaskModal({
             </div>
           </div>
 
+          {/* Created By - Display only */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-900">Created By</label>
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={task.author?.profilePictureUrl || "/placeholder.svg"} />
+                <AvatarFallback>{task.author?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{task.author?.username || "Unknown User"}</p>
+                <p className="text-xs text-gray-600">{task.author?.email || ""}</p>
+              </div>
+            </div>
+          </div>
+
           {/* Assign To Member */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-medium font-medium text-gray-900">
-                Assign To Member (Optional)
-              </label>
-              <Badge variant="secondary" className="text-small">
-                {selectedMember ? "1 selected" : "0 selected"}
+              <label className="text-sm font-medium text-gray-900">Assign To Member (Optional)</label>
+              <Badge variant="secondary" className="text-xs">
+                {selectedMembers.length} selected
               </Badge>
             </div>
 
             {isLoadingMembers ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg"
-                  >
+                  <div key={i} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
                     <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
                     <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse" />
                     <div className="flex-1 space-y-2">
@@ -320,38 +287,30 @@ export default function UpdateTaskModal({
                 {availableMembers.length > 0 ? (
                   availableMembers.map((member: any) => (
                     <div
-                      key={member.id}
+                      key={member.memberId}
                       className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                        selectedMember === member.id
-                          ? "bg-blue-50 border-blue-200"
+                        selectedMembers.includes(member.memberId)
+                          ? "bg-blue-50 border border-blue-200"
                           : "hover:bg-gray-50"
                       }`}
                     >
                       <Checkbox
-                        checked={selectedMember === member.id}
+                        checked={selectedMembers.includes(member.memberId)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            toggleMember(member.id);
-                          } else if (selectedMember === member.id) {
-                            toggleMember(member.id);
+                            setSelectedMembers([member.memberId]) // For single assignment
+                          } else {
+                            setSelectedMembers([])
                           }
                         }}
                       />
                       <Avatar className="h-10 w-10">
-                        <AvatarImage
-                          src={member.profilePictureUrl || "/placeholder.svg"}
-                        />
-                        <AvatarFallback>
-                          {member.username.charAt(0).toUpperCase()}
-                        </AvatarFallback>
+                        <AvatarImage src={member.profilePictureUrl || "/placeholder.svg"} />
+                        <AvatarFallback>{member.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="text-medium font-medium text-gray-900">
-                          {member.username}
-                        </p>
-                        <p className="text-small text-gray-600">
-                          {member.email}
-                        </p>
+                        <p className="text-sm font-medium text-gray-900">{member.username}</p>
+                        <p className="text-xs text-gray-600">{member.email}</p>
                       </div>
                       {member.role && (
                         <Badge
@@ -360,8 +319,8 @@ export default function UpdateTaskModal({
                             member.role === "Owner"
                               ? "bg-yellow-100 text-yellow-700"
                               : member.role === "Admin"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-700"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-gray-100 text-gray-700"
                           }
                         >
                           {member.role}
@@ -372,49 +331,48 @@ export default function UpdateTaskModal({
                 ) : (
                   <div className="text-center py-8">
                     <Users size={48} className="mx-auto text-gray-300 mb-4" />
-                    <p className="text-description">No members available</p>
+                    <p className="text-sm text-gray-500">No members available</p>
                   </div>
                 )}
               </div>
             )}
 
-            {selectedMember && (
+            {/* Selected Members Display */}
+            {selectedMembers.length > 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-small text-blue-700 mb-2">
-                  Selected member will be assigned to this task:
-                </p>
+                <p className="text-xs text-blue-700 mb-2">Selected member will be assigned to this task:</p>
                 <div className="flex flex-wrap gap-2">
-                  {(() => {
-                    const member = availableMembers.find(
-                      (m: any) => m.id === selectedMember
-                    );
+                  {selectedMembers.map((memberId) => {
+                    const member = availableMembers.find((m) => m.memberId === memberId)
+                    if (!member) return null
+
                     return (
-                      <div className="flex items-center space-x-2 bg-white border border-blue-200 rounded-full px-3 py-1">
+                      <div
+                        key={memberId}
+                        className="flex items-center space-x-2 bg-white border border-blue-200 rounded-full px-3 py-1"
+                      >
                         <Avatar className="h-5 w-5">
-                          <AvatarImage
-                            src={
-                               "/placeholder.svg"
-                            }
-                          />
-                          <AvatarFallback className="text-extra-small">
-                            {member?.username.charAt(0).toUpperCase()}
+                          <AvatarImage src={member.profilePictureUrl || "/placeholder.svg"} />
+                          <AvatarFallback className="text-xs">
+                            {member.username?.charAt(0).toUpperCase() || "U"}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-small text-gray-900">
-                          {member?.username}
-                        </span>
+                        <span className="text-xs text-gray-900">{member.username}</span>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           className="p-0 h-4 w-4 text-gray-400 hover:text-red-500"
-                          onClick={() => setSelectedMember("")}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeMember(memberId)
+                          }}
                         >
                           <X size={12} />
                         </Button>
                       </div>
-                    );
-                  })()}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -422,13 +380,8 @@ export default function UpdateTaskModal({
 
           {/* Actions */}
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
-              <span className="text-medium">Cancel</span>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -438,15 +391,15 @@ export default function UpdateTaskModal({
               {isLoading ? (
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                  <span className="text-medium">Updating...</span>
+                  <span>Updating...</span>
                 </div>
               ) : (
-                <span className="text-medium">Update Task</span>
+                "Update Task"
               )}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

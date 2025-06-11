@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { workspaceApi } from "@/lib/api";
+import Link from "next/link";
 
 export default function TeamsContent() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -141,10 +142,10 @@ const handleSaveSettings = async () => {
     team.teamName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredMembers = members.filter(
+  const filteredMembers = members?.filter(
     (member: any) =>
-      member.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase())
+      member.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -261,6 +262,7 @@ const handleSaveSettings = async () => {
                         </Button>
                       </div>
                     </CardHeader>
+                    <Link href={`/chat/${team.id}`}>
                     <CardContent className="pt-0">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -285,6 +287,7 @@ const handleSaveSettings = async () => {
                         </Badge>
                       </div>
                     </CardContent>
+                    </Link>
                   </Card>
                 ))
               ) : (

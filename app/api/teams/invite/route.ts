@@ -3,7 +3,8 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import type { PendingInvite, WorkspaceMember } from "@/lib/types"
 import crypto from "crypto"
-import { sendInvitationEmail, sendWorkspaceAddedEmail } from "@/lib/email-service"
+import { sendInvitationEmail, sendWorkspaceInvitationEmail } from "@/lib/email-service"
+import { notificationService } from "@/lib/services/notification-service"
 
 export async function POST(request: NextRequest) {
   try {
@@ -96,41 +97,55 @@ export async function POST(request: NextRequest) {
               message: "User is already a member",
             })
           } else {
-            // Add existing user to workspace
-            const newMember: WorkspaceMember = {
-              memberId: existingUser.id,
-              username: existingUser.username,
-              email: existingUser.email,
+            // CHANGED: Don't auto-add existing users, send invitation notification instead
+            const inviteToken = crypto.randomBytes(32).toString("hex")
+
+            // Create notification for existing user
+            await notificationService.notifyWorkspaceInvitation(
+              existingUser.id,
+              targetWorkspaceId,
+              workspace.name,
+              inviterName,
+              inviteToken,
+            )
+
+            // Create pending invite
+            const expiresAt = new Date()
+            expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
+
+            const pendingInvite: PendingInvite = {
+              id: `invite_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              email: email.toLowerCase(),
               role,
-              joinedAt: new Date().toISOString(),
+              invitedBy: user.userId,
+              invitedAt: new Date().toISOString(),
+              token: inviteToken,
+              expiresAt: expiresAt.toISOString(),
             }
 
-            // Update workspace members
+            // Add pending invite to workspace
             await workspacesCollection.updateOne(
               { id: targetWorkspaceId },
               {
-                $push: { members: newMember },
+                $push: { pendingInvites: pendingInvite },
                 $set: { updatedAt: new Date().toISOString() },
               },
             )
 
-            // Update user's workspaceIds
-            await usersCollection.updateOne(
-              { id: existingUser.id },
-              {
-                $addToSet: { workspaceIds: targetWorkspaceId }, // Use $addToSet here too
-                $set: { updatedAt: new Date().toISOString() },
-              },
+            // Send email invitation to existing user
+            const inviteUrl = `${baseUrl}/invite?token=${inviteToken}`
+            const emailResult = await sendWorkspaceInvitationEmail(
+              email,
+              workspace.name,
+              inviteUrl,
+              inviterName,
+              true, // isExistingUser
             )
-
-            // Send notification email to existing user
-            const dashboardUrl = `${baseUrl}/dashboard`
-            const emailResult = await sendWorkspaceAddedEmail(email, workspace.name, dashboardUrl, inviterName)
 
             results.push({
               email,
-              status: "added",
-              message: "User added to workspace and notified",
+              status: "invitation_sent",
+              message: "Invitation sent to existing user",
               emailSent: emailResult.success,
               emailError: emailResult.error,
             })

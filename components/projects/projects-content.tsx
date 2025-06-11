@@ -97,11 +97,11 @@ export default function ProjectsContent() {
             </p>
           </div>
           <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-primary hover:bg-blue-700 text-white"
             onClick={() => setIsCreateModalOpen(true)}
           >
             <Plus size={16} className="mr-2" />
-            <span className="text-medium">New Project</span>
+            <span className="text-medium text-white">New Project</span>
           </Button>
         </div>
 

@@ -3,6 +3,7 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
 import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
+import { notificationService } from "@/lib/services/notification-service"
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -67,6 +68,43 @@ export async function POST(request: Request, { params }: { params: { id: string 
         },
       },
     )
+
+    // After successfully adding members to the team, add:
+
+    // Create notifications for existing team members about new members
+    if (userIds.length > 0) {
+      try {
+        const usersCollection = db.collection("users")
+        const newMembers = await usersCollection.find({ id: { $in: userIds } }).toArray()
+
+        for (const newMember of newMembers) {
+          // Notify existing team members about new member
+          const existingMemberIds = currentMembers.filter((id) => id !== newMember.id)
+          if (existingMemberIds.length > 0) {
+            await notificationService.notifyTeamMemberAdded(
+              existingMemberIds,
+              currentWorkspaceId,
+              params.id,
+              team.teamName,
+              newMember.username,
+              newMember.email,
+            )
+          }
+
+          // Notify the new member that they were added to the team
+          await notificationService.notifyAddedToTeam(
+            newMember.id,
+            currentWorkspaceId,
+            params.id,
+            team.teamName,
+            user.username || "Someone",
+          )
+        }
+      } catch (notificationError) {
+        console.error("Error creating team member notifications:", notificationError)
+        // Don't fail the operation if notification fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

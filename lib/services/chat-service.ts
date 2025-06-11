@@ -14,13 +14,18 @@ import {
   setDoc,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import type { ChatMessage, TeamChatRoom, ChatUser } from "@/lib/types"
+import type { ChatMessage, TeamChatRoom, ChatUser } from "@/lib/types/chat"
 
 export class ChatService {
   // Collections
   private readonly MESSAGES_COLLECTION = "messages"
   private readonly CHAT_ROOMS_COLLECTION = "chatRooms"
   private readonly ONLINE_USERS_COLLECTION = "onlineUsers"
+
+  // Add connection pooling and caching at the top of the class
+  private messageCache = new Map<string, ChatMessage[]>()
+  private cacheExpiry = new Map<string, number>()
+  private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
   /**
    * Create or update a team chat room
@@ -103,14 +108,21 @@ export class ChatService {
     }
   }
 
-  /**
-   * Get messages for a team (with pagination)
-   */
+  // Optimize getTeamMessages method
   async getTeamMessages(teamId: string, limitCount = 50, beforeTimestamp?: number): Promise<ChatMessage[]> {
     try {
+      // Check cache first
+      const cacheKey = `${teamId}_${limitCount}_${beforeTimestamp || "latest"}`
+      const cached = this.messageCache.get(cacheKey)
+      const cacheTime = this.cacheExpiry.get(cacheKey)
+
+      if (cached && cacheTime && Date.now() - cacheTime < this.CACHE_DURATION) {
+        return cached
+      }
+
+      // Rest of the existing method...
       let q
 
-      // Try a simpler query first that doesn't require complex indexing
       if (beforeTimestamp) {
         q = query(
           collection(db, this.MESSAGES_COLLECTION),
@@ -139,10 +151,18 @@ export class ChatService {
           } as ChatMessage)
         })
 
-        // Return in chronological order (oldest first)
-        return messages.reverse()
+        const result = messages.reverse()
+
+        // Cache the result
+        this.messageCache.set(cacheKey, result)
+        this.cacheExpiry.set(cacheKey, Date.now())
+
+        // Clean old cache entries
+        this.cleanCache()
+
+        return result
       } catch (indexError) {
-        // If we get an index error, try a simpler query without ordering
+        // Existing fallback logic...
         console.warn("Index error in getTeamMessages, falling back to simpler query:", indexError)
 
         const fallbackQuery = query(
@@ -161,7 +181,6 @@ export class ChatService {
           } as ChatMessage)
         })
 
-        // Sort manually in memory
         return fallbackMessages.sort((a, b) => a.timestamp - b.timestamp)
       }
     } catch (error) {
@@ -412,6 +431,17 @@ export class ChatService {
     } catch (error) {
       console.error("Error editing message:", error)
       throw error
+    }
+  }
+
+  // Add cache cleaning method
+  private cleanCache(): void {
+    const now = Date.now()
+    for (const [key, time] of this.cacheExpiry.entries()) {
+      if (now - time > this.CACHE_DURATION) {
+        this.messageCache.delete(key)
+        this.cacheExpiry.delete(key)
+      }
     }
   }
 }

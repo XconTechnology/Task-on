@@ -1,3 +1,19 @@
+// Cache for API responses
+const apiCache = new Map<string, { data: any; timestamp: number; ttl: number }>()
+
+// Cache cleanup interval (5 minutes)
+setInterval(
+  () => {
+    const now = Date.now()
+    for (const [key, value] of apiCache.entries()) {
+      if (now - value.timestamp > value.ttl) {
+        apiCache.delete(key)
+      }
+    }
+  },
+  5 * 60 * 1000,
+)
+
 // Utility to get current workspace ID from localStorage with retries
 function getCurrentWorkspaceIdFromStorage(retries = 3): string | null {
   if (typeof window === "undefined") {
@@ -27,14 +43,30 @@ function getCurrentWorkspaceIdFromStorage(retries = 3): string | null {
 
 export async function apiCall<T>(
   endpoint: string,
-  options: RequestInit = {},
-): Promise<{ success: boolean; data?: T; error?: string }> {
+  options: RequestInit & { cache?: boolean; cacheTTL?: number } = {},
+): Promise<{ success: boolean; data?: T; error?: string; unreadCount?: number }> {
   try {
+    const { cache = false, cacheTTL = 5 * 60 * 1000, ...fetchOptions } = options // 5 minutes default cache
+
+    // Check cache for GET requests
+    if (cache && (!fetchOptions.method || fetchOptions.method === "GET")) {
+      const cacheKey = `${endpoint}${JSON.stringify(fetchOptions)}`
+      const cached = apiCache.get(cacheKey)
+      if (cached && Date.now() - cached.timestamp < cached.ttl) {
+        return cached.data
+      }
+    }
+
     // Get current workspace ID from localStorage with retries
     const currentWorkspaceId = getCurrentWorkspaceIdFromStorage(3)
 
     // If we're on the client and don't have a workspace ID, that's an error
-    if (typeof window !== "undefined" && !currentWorkspaceId) {
+    if (
+      typeof window !== "undefined" &&
+      !currentWorkspaceId &&
+      !endpoint.includes("/auth/") &&
+      !endpoint.includes("/workspaces/user")
+    ) {
       return {
         success: false,
         error: "No workspace selected. Please select a workspace to continue.",
@@ -51,10 +83,10 @@ export async function apiCall<T>(
     }
 
     const response = await fetch(`/api${endpoint}`, {
-      ...options,
+      ...fetchOptions,
       headers: {
         ...defaultHeaders,
-        ...options.headers,
+        ...fetchOptions.headers,
       },
     })
 
@@ -67,16 +99,42 @@ export async function apiCall<T>(
       }
     }
 
-    return {
+    const result = {
       success: data.success !== false,
       data: data.data,
       error: data.error,
+      unreadCount: data.unreadCount,
     }
+
+    // Cache successful GET requests
+    if (cache && (!fetchOptions.method || fetchOptions.method === "GET") && result.success) {
+      const cacheKey = `${endpoint}${JSON.stringify(fetchOptions)}`
+      apiCache.set(cacheKey, {
+        data: result,
+        timestamp: Date.now(),
+        ttl: cacheTTL,
+      })
+    }
+
+    return result
   } catch (error) {
     console.error("API call failed:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",
     }
+  }
+}
+
+// Clear cache function for when data changes
+export function clearApiCache(pattern?: string) {
+  if (pattern) {
+    for (const key of apiCache.keys()) {
+      if (key.includes(pattern)) {
+        apiCache.delete(key)
+      }
+    }
+  } else {
+    apiCache.clear()
   }
 }

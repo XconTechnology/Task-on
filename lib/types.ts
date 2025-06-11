@@ -255,6 +255,51 @@ export interface ChatUser {
   lastSeen?: number
 }
 
+// Updated Notification Types
+export interface Notification {
+  id: string
+  userId: string
+  workspaceId: string
+  type: NotificationType
+  title: string
+  message: string
+  data?: NotificationData
+  isRead: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export enum NotificationType {
+  TASK_ASSIGNED = "task_assigned",
+  TEAM_MEMBER_ADDED = "team_member_added",
+  WORKSPACE_MEMBER_JOINED = "workspace_member_joined",
+  ADDED_TO_TEAM = "added_to_team",
+  PROJECT_ASSIGNED = "project_assigned",
+  TASK_STATUS_CHANGED = "task_status_changed",
+  WORKSPACE_INVITATION = "workspace_invitation", // NEW
+}
+
+export interface NotificationData {
+  taskId?: string
+  taskTitle?: string
+  projectId?: string
+  projectName?: string
+  teamId?: string
+  teamName?: string
+  workspaceId?: string
+  workspaceName?: string
+  assignedBy?: string
+  assignedByName?: string
+  newMemberName?: string
+  newMemberEmail?: string
+  inviteToken?: string // NEW
+  invitedByName?: string // NEW
+  requiresAction?: boolean // NEW
+  rejected?: boolean // NEW
+  rejectedAt?: string // NEW
+  [key: string]: any
+}
+
 
 {
   /*
