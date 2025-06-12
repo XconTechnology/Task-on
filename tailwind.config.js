@@ -25,7 +25,8 @@ const config = {
     },
     extend: {
       colors: {
-        primary: '#16a34a',
+        primary: '#1d9c6f',
+        bg_hovered: '#15803d',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

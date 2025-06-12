@@ -14,7 +14,7 @@ import { chatService } from "@/lib/services/chat-service"
 import type { ChatMessage, ChatUser } from "@/lib/types"
 import { apiCall } from "@/lib/api_call"
 import ChatSidebar from "@/components/chat/chat-sidebar"
-import AppLayout from "@/components/layout/app-layout"
+import EmojiPicker from "@/components/chat/emoji-picker"
 
 interface TeamData {
   id: string
@@ -62,6 +62,9 @@ export default function TeamChatPage() {
   // Validate access and load initial data
   useEffect(() => {
     if (!teamId || !user) return
+
+    // Pre-warm chat service before validation
+    chatService.preWarmChat(teamId).catch(console.error)
 
     const validateAccess = async () => {
       try {
@@ -156,17 +159,19 @@ export default function TeamChatPage() {
 
     if (!newMessage.trim() || isSending || !teamData || !userData) return
 
+    const messageText = newMessage.trim()
+    setNewMessage("") // Clear input immediately for better UX
     setIsSending(true)
+
     try {
       await apiCall(`/chat/teams/${teamId}/messages`, {
         method: "POST",
-        body: JSON.stringify({ message: newMessage.trim() }),
+        body: JSON.stringify({ message: messageText }),
       })
-
-      setNewMessage("")
     } catch (error) {
       console.error("Error sending message:", error)
       setError("Failed to send message")
+      setNewMessage(messageText) // Restore message on error
     } finally {
       setIsSending(false)
     }
@@ -260,20 +265,19 @@ export default function TeamChatPage() {
   const messageGroups = groupMessagesByDate(messages)
 
   return (
-    <AppLayout>
-      <div className="flex h-full bg-gray-50">
+    <div className="flex h-full bg-gray-50">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+        <div className="bg-white border-b border-gray-200 px-6 py-2 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4 min-w-0">
               <Button variant="ghost" size="sm" onClick={() => router.push("/teams")} className="p-2 flex-shrink-0">
                 <ArrowLeft size={16} />
               </Button>
               <div className="min-w-0">
-                <h1 className="text-xl font-semibold text-gray-900 truncate">{teamData.teamName}</h1>
-                <p className="text-sm text-gray-500">
+                <h1 className="text-lg font-semibold text-gray-900 truncate">{teamData.teamName}</h1>
+                <p className="text-xs text-gray-500">
                   {teamMembers.length} member{teamMembers.length !== 1 ? "s" : ""}
                   {onlineUsers.filter((u) => u.isOnline).length > 0 && (
                     <span className="ml-2">• {onlineUsers.filter((u) => u.isOnline).length} online</span>
@@ -361,14 +365,7 @@ export default function TeamChatPage() {
 
                       {isOwnMessage && (
                         <div className="flex-shrink-0">
-                          {showAvatar ? (
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={message.profilePictureUrl || "/placeholder.svg"} />
-                              <AvatarFallback>{message.username.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                          ) : (
-                            <div className="h-8 w-8" />
-                          )}
+                            <div className="h-8 w-8 py-5" />
                         </div>
                       )}
                     </div>
@@ -395,6 +392,7 @@ export default function TeamChatPage() {
                 maxLength={1000}
               />
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                <EmojiPicker onEmojiSelect={handleEmojiSelect} />
               </div>
             </div>
             <Button
@@ -409,7 +407,6 @@ export default function TeamChatPage() {
               )}
             </Button>
           </form>
-          <div className="text-xs text-gray-500 mt-2">{newMessage.length}/1000 characters</div>
         </div>
       </div>
 
@@ -425,6 +422,5 @@ export default function TeamChatPage() {
         />
       )}
     </div>
-    </AppLayout>
   )
 }

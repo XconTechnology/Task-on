@@ -1,6 +1,5 @@
-import { initializeApp, getApps, type FirebaseApp } from "firebase/app"
-import { getFirestore, type Firestore } from "firebase/firestore"
-import { getAuth, type Auth } from "firebase/auth"
+import { initializeApp, getApps } from "firebase/app"
+import { getFirestore, enableNetwork, disableNetwork } from "firebase/firestore"
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,16 +10,80 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-// Initialize Firebase only if it hasn't been initialized
-let app: FirebaseApp
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig)
-} else {
-  app = getApps()[0]
+// Initialize Firebase
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+
+// Initialize Firestore with optimizations
+export const db = getFirestore(app)
+
+// Connection management class
+class FirebaseConnectionManager {
+  private isConnected = false
+  private connectionPromise: Promise<void> | null = null
+  private reconnectTimeout: NodeJS.Timeout | null = null
+
+  async ensureConnection(): Promise<void> {
+    if (this.isConnected) {
+      return Promise.resolve()
+    }
+
+    if (this.connectionPromise) {
+      return this.connectionPromise
+    }
+
+    this.connectionPromise = this.connect()
+    return this.connectionPromise
+  }
+
+  private async connect(): Promise<void> {
+    try {
+      await enableNetwork(db)
+      this.isConnected = true
+      this.connectionPromise = null
+      console.log("Firebase connection established")
+    } catch (error) {
+      console.error("Firebase connection failed:", error)
+      this.isConnected = false
+      this.connectionPromise = null
+
+      // Retry connection after 2 seconds
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout)
+      }
+
+      this.reconnectTimeout = setTimeout(() => {
+        this.ensureConnection()
+      }, 2000)
+
+      throw error
+    }
+  }
+
+  async disconnect(): Promise<void> {
+    try {
+      await disableNetwork(db)
+      this.isConnected = false
+      this.connectionPromise = null
+
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout)
+        this.reconnectTimeout = null
+      }
+    } catch (error) {
+      console.error("Firebase disconnect failed:", error)
+    }
+  }
+
+  isConnectionActive(): boolean {
+    return this.isConnected
+  }
 }
 
-// Initialize Firestore
-export const db: Firestore = getFirestore(app)
-export const auth: Auth = getAuth(app)
+// Export singleton connection manager
+export const firebaseConnectionManager = new FirebaseConnectionManager()
 
-export default app
+// Pre-warm connection on module load
+if (typeof window !== "undefined") {
+  // Only in browser environment
+  firebaseConnectionManager.ensureConnection().catch(console.error)
+}

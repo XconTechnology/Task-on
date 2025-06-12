@@ -63,6 +63,7 @@ export interface DashboardPageStats {
   monthCompletedTasks: number
   projectsCount: number
   completionRate: number
+  todayCompletionRate:number
   weeklyActivity: Array<{ date: string; tasks: number; day: string }>
   monthlyActivity: Array<{ date: string; tasks: number }>
   priorityStats: {

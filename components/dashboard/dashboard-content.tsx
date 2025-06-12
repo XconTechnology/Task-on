@@ -7,6 +7,7 @@ import { DashboardPageStats, Priority, Status } from "@/lib/types";
 import DashboardSkeleton from "./DashboardSkeleton";
 import { generateMonthlyActivity, generateWeeklyActivity } from "@/lib/utils";
 import DashboardPage from "./DashboardPage";
+import { taskApi } from "@/lib/api";
 
 export default function DashboardContent() {
   const { user } = useUser();
@@ -16,12 +17,9 @@ export default function DashboardContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch all tasks
-        const tasksResponse = await fetch("/api/tasks");
-        const tasksData = await tasksResponse.json();
-
-        if (tasksData.success) {
-          const allTasks = tasksData.data || [];
+        const response = await taskApi.getALLTasks();
+        if (response.success && response.data) {
+          const allTasks = response.data || [];
 
           // Calculate time-based stats using correct Status enum
           const now = new Date();
@@ -34,17 +32,17 @@ export default function DashboardContent() {
           weekStart.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1); // Start of month
 
-          const todayCompleted = allTasks.filter((task:any) => {
+          const todayCompleted = allTasks.filter((task: any) => {
             const taskDate = new Date(task.updatedAt);
             return task.status === Status.Completed && taskDate >= today;
           }).length;
 
-          const weekCompleted = allTasks.filter((task:any) => {
+          const weekCompleted = allTasks.filter((task: any) => {
             const taskDate = new Date(task.updatedAt);
             return task.status === Status.Completed && taskDate >= weekStart;
           }).length;
 
-          const monthCompleted = allTasks.filter((task:any) => {
+          const monthCompleted = allTasks.filter((task: any) => {
             const taskDate = new Date(task.updatedAt);
             return task.status === Status.Completed && taskDate >= monthStart;
           }).length;
@@ -52,31 +50,37 @@ export default function DashboardContent() {
           // Calculate basic stats
           const totalTasks = allTasks.length;
           const completedTasks = allTasks.filter(
-            (task:any) => task.status === Status.Completed
+            (task: any) => task.status === Status.Completed
           ).length;
           const inProgressTasks = allTasks.filter(
-            (task:any) => task.status === Status.WorkInProgress
+            (task: any) => task.status === Status.WorkInProgress
           ).length;
           const todoTasks = allTasks.filter(
-            (task:any) => task.status === Status.ToDo
+            (task: any) => task.status === Status.ToDo
           ).length;
           const completionRate =
             totalTasks > 0
               ? Math.round((completedTasks / totalTasks) * 100)
               : 0;
-
+          const todayCompletionRate =
+            totalTasks > 0
+              ? Math.round((todayCompleted / totalTasks) * 100)
+              : 0;
           // Calculate priority stats
           const priorityStats = {
-            urgent: allTasks.filter((task:any) => task.priority === Priority.Urgent)
-              .length,
-            high: allTasks.filter((task:any) => task.priority === Priority.High)
-              .length,
-            medium: allTasks.filter((task:any) => task.priority === Priority.Medium)
-              .length,
-            low: allTasks.filter((task:any) => task.priority === Priority.Low)
+            urgent: allTasks.filter(
+              (task: any) => task.priority === Priority.Urgent
+            ).length,
+            high: allTasks.filter(
+              (task: any) => task.priority === Priority.High
+            ).length,
+            medium: allTasks.filter(
+              (task: any) => task.priority === Priority.Medium
+            ).length,
+            low: allTasks.filter((task: any) => task.priority === Priority.Low)
               .length,
             backlog: allTasks.filter(
-              (task:any) => task.priority === Priority.Backlog
+              (task: any) => task.priority === Priority.Backlog
             ).length,
           };
 
@@ -92,11 +96,13 @@ export default function DashboardContent() {
             todayCompletedTasks: todayCompleted,
             weekCompletedTasks: weekCompleted,
             monthCompletedTasks: monthCompleted,
-            projectsCount: new Set(allTasks.map((task:any) => task.projectId)).size,
+            projectsCount: new Set(allTasks.map((task: any) => task.projectId))
+              .size,
             completionRate,
             weeklyActivity,
             monthlyActivity,
             priorityStats,
+            todayCompletionRate
           });
         }
       } catch (error) {
@@ -186,8 +192,8 @@ export default function DashboardContent() {
     { name: "Backlog", value: stats.priorityStats.backlog, color: "#6b7280" },
   ].filter((item) => item.value > 0);
 
-  if(!user){
-    return <div>no user</div>
+  if (!user) {
+    return <div>no user</div>;
   }
   return (
     <div>

@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  addDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -12,9 +11,10 @@ import {
   getDocs,
   getDoc,
   setDoc,
+  writeBatch,
 } from "firebase/firestore"
-import { db } from "@/lib/firebase"
-import type { ChatMessage, TeamChatRoom, ChatUser } from "@/lib/types/chat"
+import { db, firebaseConnectionManager } from "@/lib/firebase"
+import type { ChatMessage, TeamChatRoom, ChatUser } from "@/lib/types"
 
 export class ChatService {
   // Collections
@@ -22,13 +22,71 @@ export class ChatService {
   private readonly CHAT_ROOMS_COLLECTION = "chatRooms"
   private readonly ONLINE_USERS_COLLECTION = "onlineUsers"
 
-  // Add connection pooling and caching at the top of the class
+  // Enhanced caching and connection management
   private messageCache = new Map<string, ChatMessage[]>()
   private cacheExpiry = new Map<string, number>()
+  private chatRoomCache = new Map<string, TeamChatRoom>()
+  private pendingMessages = new Map<string, any>()
   private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+  // Connection state
+  private isInitialized = false
+  private initializationPromise: Promise<void> | null = null
+
   /**
-   * Create or update a team chat room
+   * Initialize chat service with pre-warmed connections
+   */
+  async initialize(): Promise<void> {
+    if (this.isInitialized) {
+      return Promise.resolve()
+    }
+
+    if (this.initializationPromise) {
+      return this.initializationPromise
+    }
+
+    this.initializationPromise = this.performInitialization()
+    return this.initializationPromise
+  }
+
+  private async performInitialization(): Promise<void> {
+    try {
+      // Ensure Firebase connection is active
+      await firebaseConnectionManager.ensureConnection()
+
+      // Pre-warm Firestore collections by making a lightweight query
+      const warmupPromises = [
+        this.warmupCollection(this.MESSAGES_COLLECTION),
+        this.warmupCollection(this.CHAT_ROOMS_COLLECTION),
+        this.warmupCollection(this.ONLINE_USERS_COLLECTION),
+      ]
+
+      await Promise.all(warmupPromises)
+
+      this.isInitialized = true
+      this.initializationPromise = null
+      console.log("Chat service initialized successfully")
+    } catch (error) {
+      console.error("Chat service initialization failed:", error)
+      this.isInitialized = false
+      this.initializationPromise = null
+      throw error
+    }
+  }
+
+  private async warmupCollection(collectionName: string): Promise<void> {
+    try {
+      // Make a minimal query to warm up the connection
+      const q = query(collection(db, collectionName), limit(1))
+      await getDocs(q)
+    } catch (error) {
+      console.warn(`Failed to warm up collection ${collectionName}:`, error)
+      // Don't throw - this is just optimization
+    }
+  }
+
+  /**
+   * Create or update a team chat room with optimizations
    */
   async createOrUpdateChatRoom(teamData: {
     teamId: string
@@ -37,6 +95,18 @@ export class ChatService {
     members: string[]
   }): Promise<void> {
     try {
+      await this.initialize()
+
+      // Check cache first
+      const cached = this.chatRoomCache.get(teamData.teamId)
+      if (
+        cached &&
+        cached.teamName === teamData.teamName &&
+        JSON.stringify(cached.members) === JSON.stringify(teamData.members)
+      ) {
+        return // No changes needed
+      }
+
       const chatRoomRef = doc(db, this.CHAT_ROOMS_COLLECTION, teamData.teamId)
 
       const chatRoom: TeamChatRoom = {
@@ -45,11 +115,14 @@ export class ChatService {
         teamName: teamData.teamName,
         workspaceId: teamData.workspaceId,
         members: teamData.members,
-        createdAt: new Date().toISOString(),
+        createdAt: cached?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
 
       await setDoc(chatRoomRef, chatRoom, { merge: true })
+
+      // Update cache
+      this.chatRoomCache.set(teamData.teamId, chatRoom)
     } catch (error) {
       console.error("Error creating/updating chat room:", error)
       throw new Error("Failed to create chat room")
@@ -57,7 +130,7 @@ export class ChatService {
   }
 
   /**
-   * Send a message to a team chat
+   * Send a message with optimized performance and queuing
    */
   async sendMessage(messageData: {
     teamId: string
@@ -77,8 +150,11 @@ export class ChatService {
         throw new Error("Message too long (max 1000 characters)")
       }
 
-      const messagesRef = collection(db, this.MESSAGES_COLLECTION)
+      // Ensure service is initialized
+      await this.initialize()
+
       const timestamp = Date.now()
+      const tempId = `temp_${timestamp}_${Math.random()}`
 
       const message: Omit<ChatMessage, "id"> = {
         teamId: messageData.teamId,
@@ -91,36 +167,67 @@ export class ChatService {
         createdAt: new Date().toISOString(),
       }
 
-      const docRef = await addDoc(messagesRef, message)
+      // Add to pending messages for immediate UI update
+      this.pendingMessages.set(tempId, { ...message, id: tempId, isPending: true })
 
-      // Update last message in chat room
-      await this.updateLastMessage(messageData.teamId, {
-        message: messageData.message.trim(),
-        timestamp,
-        userId: messageData.userId,
-        username: messageData.username,
-      })
+      try {
+        // Use batch write for better performance
+        const batch = writeBatch(db)
 
-      return docRef.id
+        // Add message
+        const messagesRef = collection(db, this.MESSAGES_COLLECTION)
+        const messageDocRef = doc(messagesRef)
+        batch.set(messageDocRef, message)
+
+        // Update last message in chat room
+        const chatRoomRef = doc(db, this.CHAT_ROOMS_COLLECTION, messageData.teamId)
+        batch.update(chatRoomRef, {
+          lastMessage: {
+            message: messageData.message.trim(),
+            timestamp,
+            userId: messageData.userId,
+            username: messageData.username,
+          },
+          updatedAt: new Date().toISOString(),
+        })
+
+        // Commit batch
+        await batch.commit()
+
+        // Remove from pending
+        this.pendingMessages.delete(tempId)
+
+        // Clear relevant cache
+        this.clearMessageCache(messageData.teamId)
+
+        return messageDocRef.id
+      } catch (error) {
+        // Remove from pending on error
+        this.pendingMessages.delete(tempId)
+        throw error
+      }
     } catch (error) {
       console.error("Error sending message:", error)
       throw error
     }
   }
 
-  // Optimize getTeamMessages method
+  /**
+   * Optimized getTeamMessages with better caching
+   */
   async getTeamMessages(teamId: string, limitCount = 50, beforeTimestamp?: number): Promise<ChatMessage[]> {
     try {
+      await this.initialize()
+
       // Check cache first
       const cacheKey = `${teamId}_${limitCount}_${beforeTimestamp || "latest"}`
       const cached = this.messageCache.get(cacheKey)
       const cacheTime = this.cacheExpiry.get(cacheKey)
 
       if (cached && cacheTime && Date.now() - cacheTime < this.CACHE_DURATION) {
-        return cached
+        return this.mergePendingMessages(cached, teamId)
       }
 
-      // Rest of the existing method...
       let q
 
       if (beforeTimestamp) {
@@ -160,9 +267,8 @@ export class ChatService {
         // Clean old cache entries
         this.cleanCache()
 
-        return result
+        return this.mergePendingMessages(result, teamId)
       } catch (indexError) {
-        // Existing fallback logic...
         console.warn("Index error in getTeamMessages, falling back to simpler query:", indexError)
 
         const fallbackQuery = query(
@@ -181,7 +287,8 @@ export class ChatService {
           } as ChatMessage)
         })
 
-        return fallbackMessages.sort((a, b) => a.timestamp - b.timestamp)
+        const result = fallbackMessages.sort((a, b) => a.timestamp - b.timestamp)
+        return this.mergePendingMessages(result, teamId)
       }
     } catch (error) {
       console.error("Error getting team messages:", error)
@@ -190,70 +297,107 @@ export class ChatService {
   }
 
   /**
-   * Subscribe to real-time messages for a team
+   * Enhanced subscription with better error handling
    */
   subscribeToTeamMessages(teamId: string, callback: (messages: ChatMessage[]) => void, limitCount = 50): () => void {
-    try {
-      const q = query(
-        collection(db, this.MESSAGES_COLLECTION),
-        where("teamId", "==", teamId),
-        orderBy("timestamp", "desc"),
-        limit(limitCount),
-      )
+    let unsubscribe: (() => void) | null = null
 
-      return onSnapshot(
-        q,
-        (querySnapshot) => {
-          const messages: ChatMessage[] = []
+    const setupSubscription = async () => {
+      try {
+        await this.initialize()
 
-          querySnapshot.forEach((doc) => {
-            messages.push({
-              id: doc.id,
-              ...doc.data(),
-            } as ChatMessage)
-          })
+        const q = query(
+          collection(db, this.MESSAGES_COLLECTION),
+          where("teamId", "==", teamId),
+          orderBy("timestamp", "desc"),
+          limit(limitCount),
+        )
 
-          // Return in chronological order (oldest first)
-          callback(messages.reverse())
-        },
-        (error) => {
-          console.error("Error in message subscription:", error)
+        unsubscribe = onSnapshot(
+          q,
+          (querySnapshot) => {
+            const messages: ChatMessage[] = []
 
-          // If we get an index error, try a simpler query without ordering
-          if (error.code === "failed-precondition" || error.message.includes("requires an index")) {
-            console.warn("Index error in subscribeToTeamMessages, falling back to simpler query")
+            querySnapshot.forEach((doc) => {
+              messages.push({
+                id: doc.id,
+                ...doc.data(),
+              } as ChatMessage)
+            })
 
-            const fallbackQuery = query(
-              collection(db, this.MESSAGES_COLLECTION),
-              where("teamId", "==", teamId),
-              limit(limitCount),
-            )
+            // Return in chronological order with pending messages
+            const result = messages.reverse()
+            callback(this.mergePendingMessages(result, teamId))
+          },
+          (error) => {
+            console.error("Error in message subscription:", error)
 
-            return onSnapshot(
-              fallbackQuery,
-              (fallbackSnapshot) => {
-                const fallbackMessages: ChatMessage[] = []
+            // Fallback to simpler query
+            if (error.code === "failed-precondition" || error.message.includes("requires an index")) {
+              console.warn("Index error in subscribeToTeamMessages, falling back to simpler query")
 
-                fallbackSnapshot.forEach((doc) => {
-                  fallbackMessages.push({
-                    id: doc.id,
-                    ...doc.data(),
-                  } as ChatMessage)
-                })
+              const fallbackQuery = query(
+                collection(db, this.MESSAGES_COLLECTION),
+                where("teamId", "==", teamId),
+                limit(limitCount),
+              )
 
-                // Sort manually in memory
-                callback(fallbackMessages.sort((a, b) => a.timestamp - b.timestamp))
-              },
-              (fallbackError) => {
-                console.error("Error in fallback message subscription:", fallbackError)
-              },
-            )
-          }
-        },
-      )
-    } catch (error) {
-      console.error("Error setting up message subscription:", error)
-      return () => {}
+              unsubscribe = onSnapshot(
+                fallbackQuery,
+                (fallbackSnapshot) => {
+                  const fallbackMessages: ChatMessage[] = []
+
+                  fallbackSnapshot.forEach((doc) => {
+                    fallbackMessages.push({
+                      id: doc.id,
+                      ...doc.data(),
+                    } as ChatMessage)
+                  })
+
+                  const result = fallbackMessages.sort((a, b) => a.timestamp - b.timestamp)
+                  callback(this.mergePendingMessages(result, teamId))
+                },
+                (fallbackError) => {
+                  console.error("Error in fallback message subscription:", fallbackError)
+                },
+              )
+            }
+          },
+        )
+      } catch (error) {
+        console.error("Error setting up message subscription:", error)
+      }
+    }
+
+    setupSubscription()
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
+  }
+
+  /**
+   * Merge pending messages with fetched messages
+   */
+  private mergePendingMessages(messages: ChatMessage[], teamId: string): ChatMessage[] {
+    const pendingForTeam = Array.from(this.pendingMessages.values())
+      .filter((msg) => msg.teamId === teamId)
+      .map((msg) => ({ ...msg, isPending: true }))
+
+    return [...messages, ...pendingForTeam].sort((a, b) => a.timestamp - b.timestamp)
+  }
+
+  /**
+   * Clear message cache for a team
+   */
+  private clearMessageCache(teamId: string): void {
+    for (const key of this.messageCache.keys()) {
+      if (key.startsWith(teamId)) {
+        this.messageCache.delete(key)
+        this.cacheExpiry.delete(key)
+      }
     }
   }
 
@@ -282,15 +426,25 @@ export class ChatService {
   }
 
   /**
-   * Get chat room info
+   * Get chat room info with caching
    */
   async getChatRoom(teamId: string): Promise<TeamChatRoom | null> {
     try {
+      await this.initialize()
+
+      // Check cache first
+      const cached = this.chatRoomCache.get(teamId)
+      if (cached) {
+        return cached
+      }
+
       const chatRoomRef = doc(db, this.CHAT_ROOMS_COLLECTION, teamId)
       const docSnap = await getDoc(chatRoomRef)
 
       if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as TeamChatRoom
+        const chatRoom = { id: docSnap.id, ...docSnap.data() } as TeamChatRoom
+        this.chatRoomCache.set(teamId, chatRoom)
+        return chatRoom
       }
 
       return null
@@ -301,7 +455,7 @@ export class ChatService {
   }
 
   /**
-   * Set user online status
+   * Set user online status with optimization
    */
   async setUserOnline(
     userId: string,
@@ -312,6 +466,8 @@ export class ChatService {
     },
   ): Promise<void> {
     try {
+      await this.initialize()
+
       const userRef = doc(db, this.ONLINE_USERS_COLLECTION, userId)
       const chatUser: ChatUser = {
         id: userId,
@@ -333,6 +489,8 @@ export class ChatService {
    */
   async setUserOffline(userId: string): Promise<void> {
     try {
+      if (!this.isInitialized) return // Don't initialize just to set offline
+
       const userRef = doc(db, this.ONLINE_USERS_COLLECTION, userId)
       await updateDoc(userRef, {
         isOnline: false,
@@ -344,10 +502,12 @@ export class ChatService {
   }
 
   /**
-   * Get online users for a team
+   * Get online users with caching
    */
   async getOnlineUsers(userIds: string[]): Promise<ChatUser[]> {
     try {
+      await this.initialize()
+
       if (userIds.length === 0) return []
 
       const users: ChatUser[] = []
@@ -358,14 +518,20 @@ export class ChatService {
         batches.push(userIds.slice(i, i + 10))
       }
 
-      for (const batch of batches) {
+      const batchPromises = batches.map(async (batch) => {
         const q = query(collection(db, this.ONLINE_USERS_COLLECTION), where("id", "in", batch))
-
         const querySnapshot = await getDocs(q)
+        const batchUsers: ChatUser[] = []
+
         querySnapshot.forEach((doc) => {
-          users.push({ id: doc.id, ...doc.data() } as ChatUser)
+          batchUsers.push({ id: doc.id, ...doc.data() } as ChatUser)
         })
-      }
+
+        return batchUsers
+      })
+
+      const batchResults = await Promise.all(batchPromises)
+      batchResults.forEach((batchUsers) => users.push(...batchUsers))
 
       return users
     } catch (error) {
@@ -379,6 +545,8 @@ export class ChatService {
    */
   async deleteMessage(messageId: string, userId: string): Promise<void> {
     try {
+      await this.initialize()
+
       const messageRef = doc(db, this.MESSAGES_COLLECTION, messageId)
       const messageDoc = await getDoc(messageRef)
 
@@ -392,6 +560,9 @@ export class ChatService {
       }
 
       await deleteDoc(messageRef)
+
+      // Clear cache
+      this.clearMessageCache(messageData.teamId)
     } catch (error) {
       console.error("Error deleting message:", error)
       throw error
@@ -411,6 +582,8 @@ export class ChatService {
         throw new Error("Message too long (max 1000 characters)")
       }
 
+      await this.initialize()
+
       const messageRef = doc(db, this.MESSAGES_COLLECTION, messageId)
       const messageDoc = await getDoc(messageRef)
 
@@ -428,23 +601,71 @@ export class ChatService {
         edited: true,
         editedAt: new Date().toISOString(),
       })
+
+      // Clear cache
+      this.clearMessageCache(messageData.teamId)
     } catch (error) {
       console.error("Error editing message:", error)
       throw error
     }
   }
 
-  // Add cache cleaning method
+  /**
+   * Enhanced cache cleaning with better memory management
+   */
   private cleanCache(): void {
     const now = Date.now()
+
+    // Clean message cache
     for (const [key, time] of this.cacheExpiry.entries()) {
       if (now - time > this.CACHE_DURATION) {
         this.messageCache.delete(key)
         this.cacheExpiry.delete(key)
       }
     }
+
+    // Clean chat room cache (longer TTL)
+    if (this.chatRoomCache.size > 50) {
+      // Keep only the 30 most recently used
+      const entries = Array.from(this.chatRoomCache.entries())
+      entries.slice(0, -30).forEach(([key]) => {
+        this.chatRoomCache.delete(key)
+      })
+    }
+
+    // Clean old pending messages (older than 30 seconds)
+    for (const [key, message] of this.pendingMessages.entries()) {
+      if (now - message.timestamp > 30000) {
+        this.pendingMessages.delete(key)
+      }
+    }
+  }
+
+  /**
+   * Pre-warm chat for a team (call this when user navigates to chat)
+   */
+  async preWarmChat(teamId: string): Promise<void> {
+    try {
+      await this.initialize()
+
+      // Pre-load chat room and recent messages
+      const promises = [
+        this.getChatRoom(teamId),
+        this.getTeamMessages(teamId, 20), // Load fewer messages for speed
+      ]
+
+      await Promise.all(promises)
+    } catch (error) {
+      console.warn("Pre-warm chat failed:", error)
+      // Don't throw - this is just optimization
+    }
   }
 }
 
 // Export singleton instance
 export const chatService = new ChatService()
+
+// Pre-initialize the service
+if (typeof window !== "undefined") {
+  chatService.initialize().catch(console.error)
+}

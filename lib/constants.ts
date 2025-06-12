@@ -1,5 +1,5 @@
 import { ArrowUpRight, Award, BarChart3, Calendar, CheckCircle, Circle, Clock, Pause, Play, TrendingUp, Zap } from "lucide-react"
-import {  Priority,  Status } from "./types"
+import {  NotificationType, Priority,  Status } from "./types"
 
 
 export const taskStatus = [Status?.ToDo, Status?.WorkInProgress, Status?.UnderReview, Status?.Completed]
@@ -344,3 +344,44 @@ export const MOCK_TASKS = [
     updatedAt: "2024-02-01T00:00:00Z",
   },
 ]
+
+
+  // Get notification icon based on type
+  export const getNotificationIcon = (type: NotificationType) => {
+    switch (type) {
+      case "task_assigned":
+        return "📋"
+      case "team_member_added":
+        return "👥"
+      case "workspace_member_joined":
+        return "🏢"
+      case "added_to_team":
+        return "✨"
+      case "project_assigned":
+        return "📁"
+      case "workspace_invitation":
+        return "📨"
+      default:
+        return "🔔"
+    }
+  }
+
+  // Get notification color based on type
+  export const getNotificationColor = (type: NotificationType) => {
+    switch (type) {
+      case "task_assigned":
+        return "bg-blue-100 text-blue-800"
+      case "team_member_added":
+        return "bg-green-100 text-green-800"
+      case "workspace_member_joined":
+        return "bg-purple-100 text-purple-800"
+      case "added_to_team":
+        return "bg-yellow-100 text-yellow-800"
+      case "project_assigned":
+        return "bg-indigo-100 text-indigo-800"
+      case "workspace_invitation":
+        return "bg-orange-100 text-orange-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }

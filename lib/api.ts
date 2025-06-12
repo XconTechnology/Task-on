@@ -1,5 +1,8 @@
-import type { Project, Task, User, ApiResponse, Status } from "./types"
+import type { Project, Task, User, ApiResponse, Status, ProjectStats } from "./types"
 import { apiCall } from "./api_call" // Import the working apiCall function
+
+// Project API Functions
+
 
 // Project API Functions
 export const projectApi = {
@@ -35,10 +38,20 @@ export const projectApi = {
       method: "DELETE",
     })
   },
+
+  // Get project stats (NEW)
+  getProjectStats: async (id: string): Promise<ApiResponse<ProjectStats>> => {
+    return apiCall<ProjectStats>(`/projects/${id}/stats`)
+  },
 }
+
+// Rest of the API functions remain unchanged
 
 // Task API Functions
 export const taskApi = {
+    getALLTasks: async (): Promise<ApiResponse<Task[]>> => {
+    return apiCall<Task[]>(`/tasks`)
+  },
   // Get tasks by project ID
   getTasks: async (projectId: string): Promise<ApiResponse<Task[]>> => {
     return apiCall<Task[]>(`/tasks?projectId=${projectId}`)

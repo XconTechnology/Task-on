@@ -2,10 +2,9 @@
 
 import { useState } from "react"
 import { useUser } from "@/lib/user-context"
-import { Plus, Bell, Settings, HelpCircle, LogOut, User, ChevronDown } from "lucide-react"
+import { Plus, Settings, HelpCircle, LogOut, User, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +15,10 @@ import {
 import GlobalSearch from "./global-search"
 import InviteModal from "./modals/invite-modal"
 import TaskDetailModal from "./task-detail-modal"
+import NotificationDropdown from "./notifications/notification-dropdown"
+import { taskApi } from "@/lib/api"
 import type { Task } from "@/lib/types"
+import Image from "next/image"
 
 export default function TopNavigation() {
   const { user, signOut } = useUser()
@@ -29,23 +31,29 @@ export default function TopNavigation() {
     setIsTaskDetailOpen(true)
   }
 
+  // Handle notification task click
+  const handleNotificationTaskClick = async (taskId: string) => {
+    try {
+      const response = await taskApi.getTask(taskId)
+      if (response.success && response.data) {
+        setSelectedTask(response.data)
+        setIsTaskDetailOpen(true)
+      }
+    } catch (error) {
+      console.error("Failed to fetch task:", error)
+    }
+  }
 
   return (
     <>
       <div className="bg-white border-b border-gray-200 px-4 py-2 shadow-sm">
         <div className="flex items-center justify-between">
           {/* Left Section */}
-          <div className="flex items-center space-x-4">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">PM</span>
-              </div>
-              <span className="font-semibold text-gray-800 hidden sm:block">ProjectFlow</span>
-            </div>
+          <div className="flex items-center space-x-4 pl-3">
+            <Image src={"/images/logo-dark.png"} width={74} height={74} alt="Taskon" />
           </div>
 
-     {/* Center Section - Search */}
+          {/* Center Section - Search */}
           <div className="flex-1 max-w-md mx-4">
             <GlobalSearch onTaskClick={handleTaskClick} />
           </div>
@@ -63,17 +71,12 @@ export default function TopNavigation() {
             </Button>
 
             {/* Upgrade Button */}
-            <Button size="sm" className="bg-primary  hover:bg-green-700 text-white hidden sm:flex">
+            <Button size="sm" className="bg-primary hover:bg-green-700 text-white hidden sm:flex">
               <span className="text-xs">Upgrade</span>
             </Button>
 
             {/* Notifications */}
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 relative">
-              <Bell size={18} />
-              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-extra-small px-1 min-w-[16px] h-4">
-                3
-              </Badge>
-            </Button>
+            <NotificationDropdown onTaskClick={handleNotificationTaskClick} />
 
             {/* Help */}
             <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 hidden sm:flex">
@@ -130,7 +133,7 @@ export default function TopNavigation() {
         }}
       />
 
-        <TaskDetailModal
+      <TaskDetailModal
         task={selectedTask}
         isOpen={isTaskDetailOpen}
         onClose={() => {

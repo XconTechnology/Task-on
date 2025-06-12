@@ -6,22 +6,16 @@ import {
   Search,
   Grid,
   List,
-  Calendar,
-  Users,
   Target,
-  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CreateProjectModal from "@/components/modals/create-project-modal";
 import EditProjectModal from "@/components/modals/edit-project-modal";
 import type { Project } from "@/lib/types";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { projectApi } from "@/lib/api";
+import ProjectCard from "./ProjectCard";
+import ProjectListItem from "./ProjectListItem";
 
 export default function ProjectsContent() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -87,7 +81,7 @@ export default function ProjectsContent() {
 
   return (
     <>
-      <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      <div className="p-6 space-y-6 overflow-hidden bg-gray-50 min-h-screen">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -97,7 +91,7 @@ export default function ProjectsContent() {
             </p>
           </div>
           <Button
-            className="bg-primary hover:bg-blue-700 text-white"
+            className="bg-primary hover:bg-bg_hovered text-white"
             onClick={() => setIsCreateModalOpen(true)}
           >
             <Plus size={16} className="mr-2" />
@@ -160,10 +154,10 @@ export default function ProjectsContent() {
                   Create your first project to get started.
                 </p>
                 <Button
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-primary hover:bg-bg_hovered"
                   onClick={() => setIsCreateModalOpen(true)}
                 >
-                  <Plus size={16} className="mr-2" />
+                  <Plus size={16} className="mr-2 text-white" />
                   <span className="text-medium text-white">Create Project</span>
                 </Button>
               </div>
@@ -195,220 +189,5 @@ export default function ProjectsContent() {
         onDelete={handleProjectDeleted}
       />
     </>
-  );
-}
-
-function ProjectCard({
-  project,
-  onEdit,
-}: {
-  project: Project;
-  onEdit: (project: Project) => void;
-}) {
-  const [stats, setStats] = useState({ progress: 0, teamMembers: 0 });
-
-  useEffect(() => {
-    fetchProjectStats();
-  }, [project.id]);
-
-  const fetchProjectStats = async () => {
-    try {
-      const response = await fetch(`/api/projects/${project.id}/stats`);
-      const data = await response.json();
-      if (data.success) {
-        setStats({
-          progress: data.data.progress,
-          teamMembers: data.data.teamMembers,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch project stats:", error);
-    }
-  };
-
-  return (
-    <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-              {project.name}
-            </CardTitle>
-            <p className="text-description mt-1 line-clamp-2">
-              {project.description}
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => onEdit(project)}
-          >
-            <MoreHorizontal size={16} />
-          </Button>
-        </div>
-      </CardHeader>
-      <Link href={`/projects/${project.id}`}>
-        <CardContent
-          className="pt-0"
-        >
-          <div className="space-y-4">
-            {/* Progress */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-small text-gray-600">Progress</span>
-                <span className="text-small font-medium text-gray-900">
-                  {stats.progress}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${stats.progress}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Team and Dates */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Users size={14} className="text-gray-400" />
-                <span className="text-small text-gray-600">
-                  {stats.teamMembers} members
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Calendar size={14} className="text-gray-400" />
-                <span className="text-small text-gray-600">
-                  {project.endDate
-                    ? new Date(project.endDate).toLocaleDateString()
-                    : "No deadline"}
-                </span>
-              </div>
-            </div>
-
-            {/* Status Badge */}
-            <div className="flex items-center justify-between">
-              <Badge
-                variant="secondary"
-                className="bg-green-100 text-green-700"
-              >
-                {project.status === "active"
-                  ? "Active"
-                  : project.status === "completed"
-                  ? "Completed"
-                  : "Archived"}
-              </Badge>
-              <div className="flex -space-x-2">
-                {Array.from({ length: Math.min(stats.teamMembers, 4) }).map(
-                  (_, i) => (
-                    <Avatar key={i} className="h-6 w-6 border-2 border-white">
-                      <AvatarImage
-                        src={`/placeholder.svg?height=24&width=24&text=${
-                          i + 1
-                        }`}
-                      />
-                      <AvatarFallback className="text-extra-small">
-                        U{i + 1}
-                      </AvatarFallback>
-                    </Avatar>
-                  )
-                )}
-                {stats.teamMembers > 4 && (
-                  <div className="h-6 w-6 bg-gray-100 border-2 border-white rounded-full flex items-center justify-center">
-                    <span className="text-extra-small text-gray-600">
-                      +{stats.teamMembers - 4}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Link>
-    </Card>
-  );
-}
-
-function ProjectListItem({
-  project,
-  onEdit,
-}: {
-  project: Project;
-  onEdit: (project: Project) => void;
-}) {
-  const [stats, setStats] = useState({ progress: 0, teamMembers: 0 });
-
-  useEffect(() => {
-    fetchProjectStats();
-  }, [project.id]);
-
-  const fetchProjectStats = async () => {
-    try {
-      const response = await fetch(`/api/projects/${project.id}/stats`);
-      const data = await response.json();
-      if (data.success) {
-        setStats({
-          progress: data.data.progress,
-          teamMembers: data.data.teamMembers,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch project stats:", error);
-    }
-  };
-
-  return (
-    <Card className="bg-white shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors">
-                  {project.name}
-                </h3>
-                <p className="text-description mt-1">{project.description}</p>
-              </div>
-              <div className="flex items-center space-x-8">
-                <div className="text-center">
-                  <p className="text-small text-gray-600">Progress</p>
-                  <p className="text-medium font-semibold text-gray-900">
-                    {stats.progress}%
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-small text-gray-600">Team</p>
-                  <p className="text-medium font-semibold text-gray-900">
-                    {stats.teamMembers} members
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-small text-gray-600">Due Date</p>
-                  <p className="text-medium font-semibold text-gray-900">
-                    {project.endDate
-                      ? new Date(project.endDate).toLocaleDateString()
-                      : "No deadline"}
-                  </p>
-                </div>
-                <Badge
-                  variant="secondary"
-                  className="bg-green-100 text-green-700"
-                >
-                  {project.status === "active"
-                    ? "Active"
-                    : project.status === "completed"
-                    ? "Completed"
-                    : "Archived"}
-                </Badge>
-              </div>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => onEdit(project)}>
-            <MoreHorizontal size={16} />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

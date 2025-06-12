@@ -6,6 +6,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getArray<T>(data: unknown): T[] {
+  return Array.isArray(data) ? data : [];
+}
+
 // Generate monthly activity data
 export const generateMonthlyActivity = (tasks: Task[]) => {
   const now = new Date();
@@ -420,3 +424,67 @@ export function calculateChange(tasks: any[], type: string, timeRange: string) {
   const change = Math.floor(Math.random() * 20) + 5; // Random positive change for demo
   return `+${change}%`;
 }
+
+
+{/* inbox page */}
+
+ // Format time ago
+  export const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+
+    if (diffInMinutes < 1) return "Just now"
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`
+    if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)}d ago`
+    return date.toLocaleDateString()
+  }
+
+  // Filter notifications based on search and tab
+
+// New function for progress bar colors
+export function getProgressColor(progress: number): string {
+  if (progress < 25) {
+    return "from-red-500 to-red-400" // Very low progress - red
+  } else if (progress < 50) {
+    return "from-amber-500 to-amber-400" // Low progress - amber/yellow
+  } else if (progress < 75) {
+    return "from-blue-500 to-blue-400" // Medium progress - blue
+  } else if (progress < 90) {
+    return "from-emerald-500 to-emerald-400" // Good progress - emerald
+  } else {
+    return "from-green-500 to-green-400" // Excellent progress - green
+  }
+}
+
+// Function to get text color based on progress
+export function getProgressTextColor(progress: number): string {
+  if (progress < 25) {
+    return "text-red-600" // Very low progress - red
+  } else if (progress < 50) {
+    return "text-amber-600" // Low progress - amber/yellow
+  } else if (progress < 75) {
+    return "text-blue-600" // Medium progress - blue
+  } else if (progress < 90) {
+    return "text-emerald-600" // Good progress - emerald
+  } else {
+    return "text-green-600" // Excellent progress - green
+  }
+}
+
+// Function to get lighter background color for cards based on progress
+export function getProgressBgColor(progress: number): string {
+  if (progress < 25) {
+    return "bg-red-50" // Very low progress - red
+  } else if (progress < 50) {
+    return "bg-amber-50" // Low progress - amber/yellow
+  } else if (progress < 75) {
+    return "bg-blue-50" // Medium progress - blue
+  } else if (progress < 90) {
+    return "bg-emerald-50" // Good progress - emerald
+  } else {
+    return "bg-green-50" // Excellent progress - green
+  }
+}
+

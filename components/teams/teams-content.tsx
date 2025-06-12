@@ -32,10 +32,11 @@ import {
 } from "@/components/ui/select";
 import { workspaceApi } from "@/lib/api";
 import Link from "next/link";
+import { Team } from "@/lib/types";
 
 export default function TeamsContent() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [teams, setTeams] = useState<any[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [members, setMembers] = useState<any>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(true);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
@@ -49,6 +50,7 @@ export default function TeamsContent() {
     allowMemberInvites: true,
   });
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+
 
   useEffect(() => {
     fetchTeams();
@@ -168,11 +170,11 @@ const handleSaveSettings = async () => {
               <span className="text-medium">Invite Members</span>
             </Button>
             <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className=" "
               onClick={() => setIsCreateTeamModalOpen(true)}
             >
               <Plus size={16} className="mr-2" />
-              <span className="text-medium">Create Team</span>
+              <span className="text-sm">Create Team</span>
             </Button>
           </div>
         </div>
@@ -238,13 +240,13 @@ const handleSaveSettings = async () => {
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
-                          <div className="h-12 w-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                          <div className="h-12 w-12 bg-gradient-to-r from-green-600 to-emerald-300 rounded-full flex items-center justify-center">
                             <span className="text-white font-semibold">
                               {team.teamName.charAt(0)}
                             </span>
                           </div>
                           <div>
-                            <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                            <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors">
                               {team.teamName}
                             </CardTitle>
                             <p className="text-description">
@@ -298,7 +300,7 @@ const handleSaveSettings = async () => {
                     Create your first team to get started.
                   </p>
                   <Button
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-primary hover:bg-bg_hovered"
                     onClick={() => setIsCreateTeamModalOpen(true)}
                   >
                     <Plus size={16} className="mr-2" />

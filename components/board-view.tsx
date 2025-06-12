@@ -112,7 +112,7 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="grid grid-cols-1 gap-1 p-6 md:grid-cols-2 xl:grid-cols-4 bg-gray-50 min-h-screen custom-scrollbar">
+      <div className="grid grid-cols-1  gap-1 p-6 md:grid-cols-2 xl:grid-cols-4 bg-gray-50 min-h-screen custom-scrollbar">
         {taskStatus.map((status) => (
           <TaskColumn
             key={status}

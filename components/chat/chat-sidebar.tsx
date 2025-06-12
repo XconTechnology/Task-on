@@ -58,10 +58,10 @@ export default function ChatSidebar({
   }
 
   return (
-    <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
+    <div className="w-72 bg-white border-l border-gray-200 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Team Members</h3>
+      <div className="flex items-center justify-between px-4 py-[0.85rem] border-b border-gray-200">
+        <h3 className="text-base font-semibold text-gray-900">Team Members</h3>
         <Button
           variant="ghost"
           size="sm"

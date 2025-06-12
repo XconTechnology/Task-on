@@ -24,6 +24,7 @@ import {
 import MetricCard from "./MetricCard"
 import { AnalyticsData } from "@/lib/types"
 import { monthlyOverviewConfig, productivityChartConfig, taskDistributionConfig } from "@/lib/constants"
+import { analyticsApi, taskApi } from "@/lib/api"
 
 
 
@@ -39,13 +40,12 @@ export default function AnalyticsContent() {
   const fetchAnalyticsData = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/analytics?timeRange=${timeRange}`)
-      const data = await response.json()
+      const response = await analyticsApi.getAnalytics(timeRange)
 
-      if (data.success) {
+      if (response.success) {
         // Ensure we have data for task types
-        if (!data.data.trends.taskTypes || data.data.trends.taskTypes.length === 0) {
-          data.data.trends.taskTypes = [
+        if (!response.data.trends.taskTypes || response.data.trends.taskTypes.length === 0) {
+          response.data.trends.taskTypes = [
             { type: "Feature", count: 45, color: "#4f46e5" },
             { type: "Bug Fix", count: 28, color: "#ef4444" },
             { type: "Enhancement", count: 32, color: "#0ea5e9" },
@@ -53,9 +53,9 @@ export default function AnalyticsContent() {
           ]
         }
 
-        setAnalyticsData(data.data)
+        setAnalyticsData(response.data)
       } else {
-        console.error("Failed to fetch analytics:", data.error)
+        console.error("Failed to fetch analytics:", response.error)
       }
     } catch (error) {
       console.error("Failed to fetch analytics data:", error)
