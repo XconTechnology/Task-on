@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useUser } from "@/lib/user-context"
-import TopNavigation from "@/components/top-navigation"
-import Sidebar from "@/components/sidebar"
+import { useUser } from "@/lib/user-context";
+import TopNavigation from "@/components/top-navigation";
+import Sidebar from "@/components/sidebar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useUser()
+  const { user, isLoading } = useUser();
 
   if (isLoading) {
     return (
@@ -17,11 +17,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <p className="text-description">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return null // Middleware will handle redirect
+    return null; // Middleware will handle redirect
   }
 
   return (
@@ -29,8 +29,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <TopNavigation />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-auto custom-scrollbar">{children}</main>
+        <main className="flex-1 overflow-auto custom-scrollbar">
+          {children}
+        </main>
       </div>
     </div>
-  )
+  );
 }
