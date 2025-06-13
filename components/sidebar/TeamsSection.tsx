@@ -52,7 +52,7 @@ const TeamsSection = ({ onCreateTeam }: { onCreateTeam: () => void }) => {
         ) : teams.length > 0 ? (
           teams.map((team: any) => (
             <Link
-              href={"/teams"}
+              href={`/chat/${team.id}`}
               key={team.id}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
             >
