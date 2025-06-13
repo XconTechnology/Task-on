@@ -32,18 +32,14 @@ export function TaskProvider({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  
-  useEffect(() => {
-    fetchTasks();
-  }, [projectId]);
 
-  if (!projectId) {
-    return null;
-  }
   const fetchTasks = async (pid?: string) => {
     setIsLoading(true);
     setError(null);
     try {
+      if (!projectId) {
+        return null;
+      }
       const response = await taskApi.getTasks(pid || projectId);
       if (response.success && response.data) {
         setTasks(response.data);
@@ -60,6 +56,10 @@ export function TaskProvider({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [projectId]);
 
   const refreshTasks = async (pid?: string) => {
     await fetchTasks(pid);

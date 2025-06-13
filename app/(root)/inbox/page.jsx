@@ -11,7 +11,7 @@ export default function InboxPage() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("all")
-  const [processingInvites, setProcessingInvites] = useState<Set<string>>(new Set())
+  const [processingInvites, setProcessingInvites] = useState(new Set())
 
   // Load notifications
   const loadNotifications = async (unreadOnly = false) => {

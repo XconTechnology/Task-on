@@ -24,8 +24,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <UserProvider>
 
+        <TaskProvider>
           {children}
           <Toaster />
+        </TaskProvider>
 
         </UserProvider>
       </body>
