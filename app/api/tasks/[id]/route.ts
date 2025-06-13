@@ -149,9 +149,10 @@ export async function PUT(request: NextRequest) {
         { status: 403 }
       );
     }
+    console.log('taskid', id)
 
     const updatedTask = await tasksCollection.findOneAndUpdate(
-      { id, workspaceId: currentWorkspaceId },
+      { id: id, workspaceId: currentWorkspaceId },
       {
         $set: {
           title: title.trim(),
@@ -172,8 +173,9 @@ export async function PUT(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    const author = updatedTask.value.createdBy
+    
+{/*
+      const author = updatedTask.value.createdBy
       ? await usersCollection.findOne({ id: updatedTask.value.createdBy })
       : null;
     const assignee = updatedTask.value.assignedTo
@@ -195,9 +197,11 @@ export async function PUT(request: NextRequest) {
         : null,
     };
 
+  */}
+
     return NextResponse.json({
       success: true,
-      data: populatedTask,
+      data: updatedTask,
       message: "Task updated successfully",
     });
   } catch (error) {

@@ -42,7 +42,7 @@ export default function SignInForm() {
         if (userData.success && userData.data.user.workspaceId) {
           router.push("/dashboard")
         } else {
-          router.push("/onboarding")
+          router.push("/dashboard")
         }
       } else {
         setError(data.error || "Sign in failed")

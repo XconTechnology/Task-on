@@ -124,13 +124,13 @@ export async function PUT(request, { params }) {
       { returnDocument: "after" }
     );
 
-    if (!updatedTeam?.value) {
+    if (!updatedTeam?.id) {
       return NextResponse.json({ success: false, error: "Team not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
-      data: updatedTeam.value,
+      data: updatedTeam,
       message: "Team updated successfully",
     });
   } catch (error) {
