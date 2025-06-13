@@ -15,6 +15,7 @@ import { Priority, Status, type Task } from "@/lib/types"
 import { taskApi, workspaceApi } from "@/lib/api"
 import { successToast, errorToast } from "@/lib/toast-utils"
 import { useUser } from "@/lib/user-context"
+import { useTasks } from "@/lib/contexts/task-context"
 
 type UpdateTaskModalProps = {
   task: Task | null
@@ -25,6 +26,7 @@ type UpdateTaskModalProps = {
 
 export default function UpdateTaskModal({ task, isOpen, onClose, onTaskUpdated }: UpdateTaskModalProps) {
   const { user } = useUser()
+  const { updateTask } = useTasks() // Get updateTask from context
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMembers, setIsLoadingMembers] = useState(false)
   const [availableMembers, setAvailableMembers] = useState<any[]>([])
@@ -89,10 +91,14 @@ export default function UpdateTaskModal({ task, isOpen, onClose, onTaskUpdated }
       })
 
       if (response.success && response.data) {
+        // Update the task in our context for real-time updates
+        updateTask(task.id, response.data)
+        
         successToast({
           title: "Task Updated",
           description: "The task has been successfully updated.",
         })
+        
         onTaskUpdated?.(response.data)
         handleClose()
       } else {
@@ -250,7 +256,7 @@ export default function UpdateTaskModal({ task, isOpen, onClose, onTaskUpdated }
             <label className="text-sm font-medium text-gray-900">Created By</label>
             <div className="flex items-center space-x-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={task.author?.profilePictureUrl || "/placeholder.svg"} />
+                <AvatarImage src={ "/placeholder.svg"} />
                 <AvatarFallback>{task.author?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
               </Avatar>
               <div>

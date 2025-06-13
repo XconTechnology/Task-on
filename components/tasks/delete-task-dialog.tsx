@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import type { Task } from "@/lib/types"
+import { taskApi } from "@/lib/api"
 
 type DeleteTaskDialogProps = {
   task: Task | null
@@ -24,47 +25,39 @@ export default function DeleteTaskDialog({ task, isOpen, onClose, onTaskDeleted 
   const [isLoading, setIsLoading] = useState(false)
 
   const handleDelete = async () => {
+    setIsLoading(true)
     if (!task) return
 
-    setIsLoading(true)
     try {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "DELETE",
-      })
-
-      const data = await response.json()
+      const data = await taskApi.deleteTask(task.id)
 
       if (data.success) {
         onTaskDeleted?.(task.id)
 
         // Show success toast
-        import("@/lib/toast-utils").then(({ successToast }) => {
-          successToast({
-            title: "Task Deleted",
-            description: "The task has been successfully deleted.",
-          })
+        const { successToast } = await import("@/lib/toast-utils")
+        successToast({
+          title: "Task Deleted",
+          description: "The task has been successfully deleted.",
         })
 
+        // Close the modal after showing the toast
         onClose()
       } else {
-        // Show error toast
-        import("@/lib/toast-utils").then(({ errorToast }) => {
-          errorToast({
-            title: "Delete Failed",
-            description: data.error || "Failed to delete task. Please try again.",
-          })
-        })
-        console.error("Failed to delete task:", data.error)
-      }
-    } catch (error) {
-      // Show error toast
-      import("@/lib/toast-utils").then(({ errorToast }) => {
+        const { errorToast } = await import("@/lib/toast-utils")
         errorToast({
           title: "Delete Failed",
-          description: "An unexpected error occurred. Please try again.",
+          description: data.error || "Failed to delete task. Please try again.",
         })
+        console.error("Delete task failed:", data.error)
+      }
+    } catch (error: any) {
+      const { errorToast } = await import("@/lib/toast-utils")
+      errorToast({
+        title: "Delete Failed",
+        description: error?.message || "An unexpected error occurred.",
       })
-      console.error("Failed to delete task:", error)
+      console.error("Unexpected delete error:", error)
     } finally {
       setIsLoading(false)
     }

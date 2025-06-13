@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Common functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isUserInWorkspace(workspaceId) {
+      // In a real implementation, you would check against a workspaces collection
+      // This is a simplified version
+      return true;
+    }
+    
+    // Task comments rules
+    match /taskComments/{commentId} {
+      // Allow read if user is in the workspace
+      allow read: if isSignedIn() && isUserInWorkspace(resource.data.workspaceId);
+      
+      // Allow create if user is in the workspace and sets their own userId
+      allow create: if isSignedIn() && 
+                     isUserInWorkspace(request.resource.data.workspaceId) &&
+                     request.resource.data.userId == request.auth.uid;
+      
+      // Allow update/delete only for the comment author
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

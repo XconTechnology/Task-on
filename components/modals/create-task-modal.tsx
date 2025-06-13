@@ -15,6 +15,7 @@ import { Priority, Status } from "@/lib/types"
 import { taskApi, workspaceApi } from "@/lib/api"
 import { successToast, errorToast } from "@/lib/toast-utils"
 import { useUser } from "@/lib/user-context"
+import { useTasks } from "@/lib/contexts/task-context"
 
 type CreateTaskModalProps = {
   isOpen: boolean
@@ -25,6 +26,7 @@ type CreateTaskModalProps = {
 
 export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCreated }: CreateTaskModalProps) {
   const { user } = useUser() // Get current user
+  const { addTask } = useTasks() // Get addTask from context
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMembers, setIsLoadingMembers] = useState(false)
   const [availableMembers, setAvailableMembers] = useState<any[]>([])
@@ -99,10 +101,14 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
       })
 
       if (response.success && response.data) {
+        // Add the new task to our context for real-time updates
+        addTask(response.data)
+
         successToast({
           title: "Task Created",
           description: "The task has been successfully created.",
         })
+
         onTaskCreated?.(response.data)
         handleClose()
       } else {

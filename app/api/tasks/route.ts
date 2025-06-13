@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
       createdBy: user.userId,
       assignedTo: assignedTo || undefined,
       dueDate: dueDate || undefined,
+      startDate: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }

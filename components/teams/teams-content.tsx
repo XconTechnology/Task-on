@@ -1,154 +1,287 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
+import { Plus, Search, Users, Crown, Shield, User, Mail, Settings } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
+import InviteModal from "@/components/modals/invite-modal"
+import CreateTeamModal from "@/components/modals/create-team-modal"
+import EditTeamModal from "@/components/modals/edit-team-modal"
+import { teamApi } from "@/lib/api/teams"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { workspaceApi } from "@/lib/api"
+import Link from "next/link"
+import type { Team, WorkspaceMember } from "@/lib/types"
+import MemberActionsDropdown from "@/components/workspace/member-actions-dropdown"
+import { useUser } from "@/lib/user-context"
 import {
-  Plus,
-  Search,
-  Users,
-  Crown,
-  Shield,
-  User,
-  Mail,
-  MoreHorizontal,
-  Settings,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import InviteModal from "@/components/modals/invite-modal";
-import CreateTeamModal from "@/components/modals/create-team-modal";
-import EditTeamModal from "@/components/modals/edit-team-modal";
-import { teamApi } from "@/lib/api/teams";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { workspaceApi } from "@/lib/api";
-import Link from "next/link";
-import { Team } from "@/lib/types";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { AlertTriangle, Check, Trash2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function TeamsContent() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [members, setMembers] = useState<any>([]);
-  const [isLoadingTeams, setIsLoadingTeams] = useState(true);
-  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
-  const [editingTeam, setEditingTeam] = useState(null);
-  const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false);
+  const { user } = useUser()
+  const { toast } = useToast()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [teams, setTeams] = useState<Team[]>([])
+  const [members, setMembers] = useState<WorkspaceMember[]>([])
+  const [isLoadingTeams, setIsLoadingTeams] = useState(true)
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true)
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)
+  const [editingTeam, setEditingTeam] = useState(null)
+  const [isEditTeamModalOpen, setIsEditTeamModalOpen] = useState(false)
   const [workspaceSettings, setWorkspaceSettings] = useState<any>({
     workspaceName: "",
     defaultRole: "Member",
     allowMemberInvites: true,
-  });
-  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  })
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false)
+  const [currentUserRole, setCurrentUserRole] = useState<string>("Member")
 
+  // Member role update state
+  const [isUpdateRoleDialogOpen, setIsUpdateRoleDialogOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<WorkspaceMember | null>(null)
+  const [selectedRole, setSelectedRole] = useState<string>("Member")
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Member delete state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
-    fetchTeams();
-    fetchMembers();
-    fetchWorkspaceSettings();
-  }, []);
+    fetchTeams()
+    fetchMembers()
+    fetchWorkspaceSettings()
+  }, [])
 
   const fetchTeams = async () => {
     try {
-      const response = await teamApi.getTeams();
+      const response = await teamApi.getTeams()
       if (response.success) {
-        setTeams(response.data || []);
+        setTeams(response.data || [])
       }
     } catch (error) {
-      console.error("Failed to fetch teams:", error);
+      console.error("Failed to fetch teams:", error)
     } finally {
-      setIsLoadingTeams(false);
+      setIsLoadingTeams(false)
     }
-  };
-
-
-const fetchMembers = async () => {
-  try {
-    const data = await workspaceApi.getMembers()
-    if (data.success) {
-      setMembers(data.data || [])
-    }
-  } catch (error) {
-    console.error("Failed to fetch members:", error)
-  } finally {
-    setIsLoadingMembers(false)
   }
-}
 
-const fetchWorkspaceSettings = async () => {
-  setIsLoadingSettings(true)
-  try {
-    const data = await workspaceApi.getSettings()
-    if (data.success) {
-      setWorkspaceSettings(data.data)
+  const fetchMembers = async () => {
+    try {
+      const data = await workspaceApi.getMembers()
+      if (data.success) {
+        setMembers(data.data || [])
+
+        // Find current user's role
+        if (user && data.data) {
+          const currentMember = data.data.find((member: any) => member.memberId === user.id)
+          if (currentMember) {
+            setCurrentUserRole(currentMember.role || "Member")
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch members:", error)
+    } finally {
+      setIsLoadingMembers(false)
     }
-  } catch (error) {
-    console.error("Failed to fetch workspace settings:", error)
-  } finally {
-    setIsLoadingSettings(false)
   }
-}
 
-const handleSaveSettings = async () => {
-  setIsLoadingSettings(true)
-  try {
-    const data = await workspaceApi.updateSettings(workspaceSettings)
-    if (data.success) {
-      alert("Settings saved successfully!")
-    } else {
-      alert(data.error || "Failed to save settings")
+  const fetchWorkspaceSettings = async () => {
+    setIsLoadingSettings(true)
+    try {
+      const data = await workspaceApi.getSettings()
+      if (data.success) {
+        setWorkspaceSettings(data.data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch workspace settings:", error)
+    } finally {
+      setIsLoadingSettings(false)
     }
-  } catch (error) {
-    console.error("Failed to save settings:", error)
-    alert("Failed to save settings")
-  } finally {
-    setIsLoadingSettings(false)
   }
-}
 
+  const handleSaveSettings = async () => {
+    setIsLoadingSettings(true)
+    try {
+      const data = await workspaceApi.updateSettings(workspaceSettings)
+      if (data.success) {
+        toast({
+          title: "Settings saved",
+          description: "Workspace settings have been updated successfully",
+        })
+      } else {
+        toast({
+          title: "Failed to save settings",
+          description: data.error || "An error occurred",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Failed to save settings:", error)
+      toast({
+        title: "Failed to save settings",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoadingSettings(false)
+    }
+  }
 
   const handleEditTeam = (team: any) => {
-    setEditingTeam(team);
-    setIsEditTeamModalOpen(true);
-  };
+    setEditingTeam(team)
+    setIsEditTeamModalOpen(true)
+  }
 
   const handleTeamCreated = (newTeam: any) => {
-    setTeams((prev) => [newTeam, ...prev]);
-  };
+    setTeams((prev) => [newTeam, ...prev])
+  }
 
   const handleTeamUpdated = (updatedTeam: any) => {
-    setTeams((prev) =>
-      prev.map((team: any) => (team.id === updatedTeam.id ? updatedTeam : team))
-    );
-  };
+    setTeams((prev) => prev.map((team: any) => (team.id === updatedTeam.id ? updatedTeam : team)))
+  }
 
   const handleTeamDeleted = (teamId: string) => {
-    setTeams((prev) => prev.filter((team: any) => team.id !== teamId));
-  };
+    setTeams((prev) => prev.filter((team: any) => team.id !== teamId))
+  }
 
   const handleInviteSuccess = () => {
-    fetchMembers(); // Refresh members list
-  };
+    fetchMembers() // Refresh members list
+  }
 
-  const filteredTeams = teams.filter((team: any) =>
-    team.teamName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Handle opening the update role dialog
+  const handleUpdateRole = (member: WorkspaceMember) => {
+    setSelectedMember(member)
+    setSelectedRole(member.role || "Member")
+    setIsUpdateRoleDialogOpen(true)
+  }
+
+  // Handle opening the delete member dialog
+  const handleRemoveMember = (member: WorkspaceMember) => {
+    setSelectedMember(member)
+    setIsDeleteDialogOpen(true)
+  }
+
+  // Handle saving the role update
+  const handleSaveRoleUpdate = async () => {
+    if (!selectedMember || selectedRole === selectedMember.role) {
+      setIsUpdateRoleDialogOpen(false)
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await workspaceApi.updateMemberRole(selectedMember.memberId, selectedRole)
+
+      if (response.success) {
+        toast({
+          title: "Role updated",
+          description: `${selectedMember.username}'s role has been updated to ${selectedRole}`,
+          variant: "default",
+        })
+        fetchMembers() // Refresh the members list
+      } else {
+        toast({
+          title: "Failed to update role",
+          description: response.error || "An error occurred while updating the role",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Failed to update role:", error)
+      toast({
+        title: "Failed to update role",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+      setIsUpdateRoleDialogOpen(false)
+    }
+  }
+
+  // Handle confirming member removal
+  const handleConfirmRemoveMember = async () => {
+    if (!selectedMember) {
+      setIsDeleteDialogOpen(false)
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const response = await workspaceApi.removeMember(selectedMember.memberId)
+
+      if (response.success) {
+        toast({
+          title: "Member removed",
+          description: `${selectedMember.username} has been removed from the workspace`,
+          variant: "default",
+        })
+        fetchMembers() // Refresh the members list
+      } else {
+        toast({
+          title: "Failed to remove member",
+          description: response.error || "An error occurred while removing the member",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Failed to remove member:", error)
+      toast({
+        title: "Failed to remove member",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+      setIsDeleteDialogOpen(false)
+    }
+  }
+
+  const filteredTeams = teams.filter((team: any) => team.teamName.toLowerCase().includes(searchQuery.toLowerCase()))
 
   const filteredMembers = members?.filter(
     (member: any) =>
       member.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      member.email?.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
+  // Role icons mapping
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "Owner":
+        return <Crown size={14} className="text-yellow-500" />
+      case "Admin":
+        return <Shield size={14} className="text-blue-500" />
+      default:
+        return <User size={14} className="text-gray-400" />
+    }
+  }
+
+  // Role badge styling
+  const getRoleBadgeClass = (role: string) => {
+    switch (role) {
+      case "Owner":
+        return "bg-yellow-100 text-yellow-700"
+      case "Admin":
+        return "bg-blue-100 text-blue-700"
+      default:
+        return "bg-gray-100 text-gray-700"
+    }
+  }
 
   return (
     <>
@@ -157,22 +290,14 @@ const handleSaveSettings = async () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="header-large">Teams</h1>
-            <p className="text-description mt-1">
-              Manage your teams and collaborate with members.
-            </p>
+            <p className="text-description mt-1">Manage your teams and collaborate with members.</p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              onClick={() => setIsInviteModalOpen(true)}
-            >
+            <Button variant="outline" onClick={() => setIsInviteModalOpen(true)}>
               <Mail size={16} className="mr-2" />
               <span className="text-medium">Invite Members</span>
             </Button>
-            <Button
-              className=" "
-              onClick={() => setIsCreateTeamModalOpen(true)}
-            >
+            <Button className=" " onClick={() => setIsCreateTeamModalOpen(true)}>
               <Plus size={16} className="mr-2" />
               <span className="text-sm">Create Team</span>
             </Button>
@@ -182,10 +307,7 @@ const handleSaveSettings = async () => {
         {/* Search */}
         <div className="bg-white p-4 rounded-lg shadow-sm">
           <div className="relative max-w-md">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={16}
-            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
             <Input
               placeholder="Search teams or members..."
               value={searchQuery}
@@ -241,17 +363,13 @@ const handleSaveSettings = async () => {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="h-12 w-12 bg-gradient-to-r from-green-600 to-emerald-300 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold">
-                              {team.teamName.charAt(0)}
-                            </span>
+                            <span className="text-white font-semibold">{team.teamName.charAt(0)}</span>
                           </div>
                           <div>
                             <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-primary transition-colors">
                               {team.teamName}
                             </CardTitle>
-                            <p className="text-description">
-                              {team.description || "No description"}
-                            </p>
+                            <p className="text-description">{team.description || "No description"}</p>
                           </div>
                         </div>
                         <Button
@@ -260,35 +378,28 @@ const handleSaveSettings = async () => {
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleEditTeam(team)}
                         >
-                          <MoreHorizontal size={16} />
+                          <Settings size={16} />
                         </Button>
                       </div>
                     </CardHeader>
                     <Link href={`/chat/${team.id}`}>
-                    <CardContent className="pt-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-1">
-                            <Users size={14} className="text-gray-400" />
-                            <span className="text-small text-gray-600">
-                              {team.memberCount || 0} members
-                            </span>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-1">
+                              <Users size={14} className="text-gray-400" />
+                              <span className="text-small text-gray-600">{team.memberCount || 0} members</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Settings size={14} className="text-gray-400" />
+                              <span className="text-small text-gray-600">0 projects</span>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <Settings size={14} className="text-gray-400" />
-                            <span className="text-small text-gray-600">
-                              0 projects
-                            </span>
-                          </div>
+                          <Badge variant="secondary" className="bg-green-100 text-green-700">
+                            Active
+                          </Badge>
                         </div>
-                        <Badge
-                          variant="secondary"
-                          className="bg-green-100 text-green-700"
-                        >
-                          Active
-                        </Badge>
-                      </div>
-                    </CardContent>
+                      </CardContent>
                     </Link>
                   </Card>
                 ))
@@ -296,13 +407,8 @@ const handleSaveSettings = async () => {
                 <div className="col-span-full text-center py-12">
                   <Users size={48} className="mx-auto text-gray-300 mb-4" />
                   <h3 className="header-small mb-2">No teams found</h3>
-                  <p className="text-description mb-4">
-                    Create your first team to get started.
-                  </p>
-                  <Button
-                    className="bg-primary hover:bg-bg_hovered"
-                    onClick={() => setIsCreateTeamModalOpen(true)}
-                  >
+                  <p className="text-description mb-4">Create your first team to get started.</p>
+                  <Button className="bg-primary hover:bg-bg_hovered" onClick={() => setIsCreateTeamModalOpen(true)}>
                     <Plus size={16} className="mr-2" />
                     <span className="text-medium text-white">Create Team</span>
                   </Button>
@@ -314,12 +420,8 @@ const handleSaveSettings = async () => {
           <TabsContent value="members" className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Team Members
-                </h3>
-                <p className="text-description">
-                  Manage your workspace members and their permissions.
-                </p>
+                <h3 className="text-lg font-semibold text-gray-900">Team Members</h3>
+                <p className="text-description">Manage your workspace members and their permissions.</p>
               </div>
               <div className="divide-y divide-gray-200">
                 {isLoadingMembers ? (
@@ -346,71 +448,42 @@ const handleSaveSettings = async () => {
                   ))
                 ) : filteredMembers.length > 0 ? (
                   filteredMembers.map((member: any) => (
-                    <div
-                      key={member.id}
-                      className="px-6 py-4 hover:bg-gray-50 transition-colors"
-                    >
+                    <div key={member.memberId} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="relative">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage
-                                src={
-                                  member.profilePictureUrl || "/placeholder.svg"
-                                }
-                              />
-                              <AvatarFallback>
-                                {member.username.charAt(0).toUpperCase()}
-                              </AvatarFallback>
+                              <AvatarImage src={member.profilePictureUrl || "/placeholder.svg"} />
+                              <AvatarFallback>{member.username.charAt(0).toUpperCase()}</AvatarFallback>
                             </Avatar>
                             <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-green-500" />
                           </div>
                           <div>
-                            <h4 className="text-medium font-semibold text-gray-900">
-                              {member.username}
-                            </h4>
-                            <p className="text-small text-gray-600">
-                              {member.email}
-                            </p>
+                            <h4 className="text-medium font-semibold text-gray-900">{member.username}</h4>
+                            <p className="text-small text-gray-600">{member.email}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
                             <div className="flex items-center space-x-2">
-                              {member.role === "Owner" && (
-                                <Crown size={14} className="text-yellow-500" />
-                              )}
-                              {member.role === "Admin" && (
-                                <Shield size={14} className="text-blue-500" />
-                              )}
-                              {(!member.role || member.role === "Member") && (
-                                <User size={14} className="text-gray-400" />
-                              )}
-                              <Badge
-                                variant={
-                                  member.role === "Owner"
-                                    ? "default"
-                                    : "secondary"
-                                }
-                                className={
-                                  member.role === "Owner"
-                                    ? "bg-yellow-100 text-yellow-700"
-                                    : member.role === "Admin"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-gray-100 text-gray-700"
-                                }
-                              >
+                              {getRoleIcon(member.role)}
+                              <Badge variant="secondary" className={getRoleBadgeClass(member.role)}>
                                 {member.role || "Member"}
                               </Badge>
                             </div>
                             <p className="text-small text-gray-500 mt-1">
-                              Joined{" "}
-                              {new Date(member.createdAt).toLocaleDateString()}
+                              Joined {new Date(member.joinedAt).toLocaleDateString()}
                             </p>
                           </div>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal size={16} />
-                          </Button>
+
+                          {/* Member Actions Dropdown */}
+                          <MemberActionsDropdown
+                            member={member}
+                            currentUserRole={currentUserRole}
+                            currentUserId={user?.id || ""}
+                            onUpdateRole={handleUpdateRole}
+                            onRemoveMember={handleRemoveMember}
+                          />
                         </div>
                       </div>
                     </div>
@@ -419,17 +492,10 @@ const handleSaveSettings = async () => {
                   <div className="px-6 py-12 text-center">
                     <Users size={48} className="mx-auto text-gray-300 mb-4" />
                     <h3 className="header-small mb-2">No members found</h3>
-                    <p className="text-description mb-4">
-                      Invite people to join your workspace.
-                    </p>
-                    <Button
-                      className="bg-blue-600 hover:bg-blue-700"
-                      onClick={() => setIsInviteModalOpen(true)}
-                    >
+                    <p className="text-description mb-4">Invite people to join your workspace.</p>
+                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsInviteModalOpen(true)}>
                       <Mail size={16} className="mr-2" />
-                      <span className="text-medium text-white">
-                        Invite Members
-                      </span>
+                      <span className="text-medium text-white">Invite Members</span>
                     </Button>
                   </div>
                 )}
@@ -448,7 +514,7 @@ const handleSaveSettings = async () => {
                   <Input
                     value={workspaceSettings.workspaceName}
                     onChange={(e) =>
-                      setWorkspaceSettings((prev:any) => ({
+                      setWorkspaceSettings((prev: any) => ({
                         ...prev,
                         workspaceName: e.target.value,
                       }))
@@ -457,13 +523,11 @@ const handleSaveSettings = async () => {
                   />
                 </div>
                 <div>
-                  <h4 className="text-label mb-2">
-                    Default Role for New Members
-                  </h4>
+                  <h4 className="text-label mb-2">Default Role for New Members</h4>
                   <Select
                     value={workspaceSettings.defaultRole}
                     onValueChange={(value) =>
-                      setWorkspaceSettings((prev:any) => ({
+                      setWorkspaceSettings((prev: any) => ({
                         ...prev,
                         defaultRole: value,
                       }))
@@ -481,19 +545,15 @@ const handleSaveSettings = async () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="text-label">
-                      Allow members to invite others
-                    </h4>
-                    <p className="text-description-small">
-                      Members can send invitations to join the workspace
-                    </p>
+                    <h4 className="text-label">Allow members to invite others</h4>
+                    <p className="text-description-small">Members can send invitations to join the workspace</p>
                   </div>
                   <input
                     type="checkbox"
                     className="rounded"
                     checked={workspaceSettings.allowMemberInvites}
                     onChange={(e) =>
-                      setWorkspaceSettings((prev:any) => ({
+                      setWorkspaceSettings((prev: any) => ({
                         ...prev,
                         allowMemberInvites: e.target.checked,
                       }))
@@ -514,6 +574,139 @@ const handleSaveSettings = async () => {
         </Tabs>
       </div>
 
+      {/* Update Role Dialog */}
+      <Dialog open={isUpdateRoleDialogOpen} onOpenChange={setIsUpdateRoleDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Member Role</DialogTitle>
+            <DialogDescription>Change the role for {selectedMember?.username}</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-4 py-4">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={ "/placeholder.svg"} />
+              <AvatarFallback>{selectedMember?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{selectedMember?.username}</p>
+              <p className="text-sm text-gray-500">{selectedMember?.email}</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Role</label>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {currentUserRole === "Owner" && (
+                    <SelectItem value="Owner" className="flex items-center">
+                      <div className="flex items-center">
+                        <Crown className="mr-2 h-4 w-4 text-yellow-500" />
+                        <span>Owner</span>
+                      </div>
+                    </SelectItem>
+                  )}
+                  <SelectItem value="Admin">
+                    <div className="flex items-center">
+                      <Shield className="mr-2 h-4 w-4 text-blue-500" />
+                      <span>Admin</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Member">
+                    <div className="flex items-center">
+                      <User className="mr-2 h-4 w-4 text-gray-500" />
+                      <span>Member</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="bg-amber-50 p-3 rounded-md border border-amber-200">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800">Role permissions:</p>
+                  <ul className="text-xs text-amber-700 mt-1 space-y-1">
+                    <li>
+                      <strong>Owner:</strong> Full control over workspace, can delete workspace
+                    </li>
+                    <li>
+                      <strong>Admin:</strong> Can manage members and projects
+                    </li>
+                    <li>
+                      <strong>Member:</strong> Can view and contribute to projects
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUpdateRoleDialogOpen(false)} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveRoleUpdate}
+              disabled={isLoading || (selectedMember && selectedRole === selectedMember.role)}
+            >
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  <span>Updating...</span>
+                </div>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  <span>Update Role</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Remove Member</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove {selectedMember?.username} from this workspace?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-red-50 p-4 rounded-md border border-red-200 my-4">
+            <div className="flex items-start space-x-3">
+              <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-red-800">This action cannot be undone</p>
+                <p className="text-xs text-red-700 mt-1">
+                  The member will lose access to all projects and resources in this workspace.
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmRemoveMember} disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  <span>Removing...</span>
+                </div>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Remove Member</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <InviteModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
@@ -532,5 +725,5 @@ const handleSaveSettings = async () => {
         onDelete={handleTeamDeleted}
       />
     </>
-  );
+  )
 }

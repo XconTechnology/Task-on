@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { UserProvider } from "@/lib/user-context";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { TaskProvider } from "@/lib/contexts/task-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,10 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <TaskProvider>
         <UserProvider>
           {children}
           <Toaster />
         </UserProvider>
+        </TaskProvider>
       </body>
     </html>
   );

@@ -165,20 +165,37 @@ export const userApi = {
   },
 }
 
+
+// Workspace API Functions
 export const workspaceApi = {
   // Get workspace members
-  getMembers: async () => {
-    return apiCall("/workspace/members")
+  getMembers: async (): Promise<ApiResponse<any[]>> => {
+    return apiCall<any[]>("/workspace/members")
+  },
+
+  // Update member role
+  updateMemberRole: async (memberId: string, role: string): Promise<ApiResponse<any>> => {
+    return apiCall<any>(`/workspace/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    })
+  },
+
+  // Remove member from workspace
+  removeMember: async (memberId: string): Promise<ApiResponse<any>> => {
+    return apiCall<any>(`/workspace/members/${memberId}`, {
+      method: "DELETE",
+    })
   },
 
   // Get workspace settings
-  getSettings: async () => {
-    return apiCall("/workspace/settings")
+  getSettings: async (): Promise<ApiResponse<any>> => {
+    return apiCall<any>("/workspace/settings")
   },
 
   // Update workspace settings
-  updateSettings: async (settings: any) => {
-    return apiCall("/workspace/settings", {
+  updateSettings: async (settings: any): Promise<ApiResponse<any>> => {
+    return apiCall<any>("/workspace/settings", {
       method: "PUT",
       body: JSON.stringify(settings),
     })
@@ -229,6 +246,7 @@ export const workspaceApi = {
     })
   },
 }
+
 
 // Teams API - Import from the working teams API
 export { teamApi } from "./api/teams"

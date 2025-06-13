@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import StatusDropdown from "./status-dropdown"
 import { format } from "date-fns"
+import TaskComments from "./tasks/task-comments"
+import { useUser } from "@/lib/user-context"
 
 type TaskDetailModalProps = {
   task: Task | null
@@ -20,9 +22,9 @@ type TaskDetailModalProps = {
 }
 
 export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }: TaskDetailModalProps) {
+  const { user, currentWorkspace } = useUser()
   const [isEditing, setIsEditing] = useState(false)
   const [editedTask, setEditedTask] = useState<Partial<Task>>({})
-  const [newComment, setNewComment] = useState("")
 
   if (!task) return null
 
@@ -64,7 +66,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
           {/* Main Content */}
           <div className="flex-1 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-muted">Task</span>
@@ -150,7 +152,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                     <Calendar size={16} className="text-gray-400" />
                     <span className="text-label">Dates</span>
                   </div>
-                 {/*
+
                   <div className="flex items-center space-x-2">
                     {task.startDate && (
                       <span className="text-medium">Start: {format(new Date(task.startDate), "MMM dd, yyyy")}</span>
@@ -160,7 +162,6 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                     )}
                     {!task.startDate && !task.dueDate && <span className="text-muted">Empty</span>}
                   </div>
-                 */}
                 </div>
 
                 {/* Priority */}
@@ -220,86 +221,24 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                   </div>
                 )}
               </div>
-
-              {/* Comments Section */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-label mb-4">Comments</h3>
-                <div className="space-y-4">
-                  {/* Add Comment */}
-                  <div className="flex space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                      <AvatarFallback>JD</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <Textarea
-                        placeholder="Write a comment..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        rows={2}
-                        className="w-full"
-                      />
-                      <div className="flex justify-end mt-2">
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                          <span className="text-small text-white">Send</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Existing Comments */}
-                {/*
-                  {task.comments?.map((comment) => (
-                    <div key={comment.id} className="flex space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={comment.user?.profilePictureUrl || "/placeholder.svg"} />
-                        <AvatarFallback className="text-small">
-                          {comment.user?.username.charAt(0).toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-medium font-medium">{comment.user?.username || "Unknown"}</span>
-                          <span className="text-muted-small">
-                            {format(new Date(comment.createdAt), "MMM dd, yyyy 'at' h:mm a")}
-                          </span>
-                        </div>
-                        <p className="text-medium text-gray-700">{comment.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                */}
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Activity Sidebar */}
-          <div className="w-80 border-l border-gray-200 bg-gray-50">
+          {/* Activity Sidebar with Comments */}
+          <div className="w-96 border-l border-gray-200 bg-gray-50 flex flex-col">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-label">Activity</h3>
+                <h3 className="text-label">Activity & Comments</h3>
                 <Button variant="ghost" size="sm">
                   <Activity size={16} />
                 </Button>
               </div>
             </div>
-            <div className="p-4 custom-scrollbar overflow-y-auto h-full">
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" />
-                    <AvatarFallback className="text-extra-small">JD</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-small">
-                      <span className="font-medium">John Doe</span> created this task
-                    </p>
-                    <p className="text-muted-small">{format(new Date(task.createdAt), "MMM dd, yyyy 'at' h:mm a")}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+
+            {/* Comments Section */}
+            {user && currentWorkspace && (
+              <TaskComments taskId={task.id} workspaceId={task.workspaceId || currentWorkspace.id} />
+            )}
           </div>
         </div>
       </DialogContent>

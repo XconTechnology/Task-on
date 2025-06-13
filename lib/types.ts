@@ -1,41 +1,41 @@
 export interface User {
-  id: string
-  username: string
-  email: string
-  password: string
-  workspaceIds: string[] // Changed from workspaceId to array
-  teamIds?: string[]
-  profilePictureUrl?: string
-  isInvited?: boolean
-  tempPassword?: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  workspaceIds: string[]; // Changed from workspaceId to array
+  teamIds?: string[];
+  profilePictureUrl?: string;
+  isInvited?: boolean;
+  tempPassword?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Team {
-  id: string
-  teamName: string
-  description?: string
-  workspaceId: string
-  createdBy: string
-  memberCount?: number
-  members: any[]
-  createdAt: string
-  updatedAt: string
+  id: string;
+  teamName: string;
+  description?: string;
+  workspaceId: string;
+  createdBy: string;
+  memberCount?: number;
+  members: any[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Project {
-  id: string
-  name: string
-  description?: string
-  workspaceId: string
-  createdBy: string
-  teamId?: string
-  startDate?: string
-  endDate?: string
-  status: "active" | "completed" | "archived"
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  description?: string;
+  workspaceId: string;
+  createdBy: string;
+  teamId?: string;
+  startDate?: string;
+  endDate?: string;
+  status: "active" | "completed" | "archived";
+  createdAt: string;
+  updatedAt: string;
 }
 
 export enum Priority {
@@ -54,220 +54,220 @@ export enum Status {
 }
 
 export interface DashboardPageStats {
-  totalTasks: number
-  completedTasks: number
-  inProgressTasks: number
-  todoTasks: number
-  todayCompletedTasks: number
-  weekCompletedTasks: number
-  monthCompletedTasks: number
-  projectsCount: number
-  completionRate: number
-  todayCompletionRate:number
-  weeklyActivity: Array<{ date: string; tasks: number; day: string }>
-  monthlyActivity: Array<{ date: string; tasks: number }>
+  totalTasks: number;
+  completedTasks: number;
+  inProgressTasks: number;
+  todoTasks: number;
+  todayCompletedTasks: number;
+  weekCompletedTasks: number;
+  monthCompletedTasks: number;
+  projectsCount: number;
+  completionRate: number;
+  todayCompletionRate: number;
+  weeklyActivity: Array<{ date: string; tasks: number; day: string }>;
+  monthlyActivity: Array<{ date: string; tasks: number }>;
   priorityStats: {
-    urgent: number
-    high: number
-    medium: number
-    low: number
-    backlog: number
-  }
+    urgent: number;
+    high: number;
+    medium: number;
+    low: number;
+    backlog: number;
+  };
 }
 
 export interface SearchResults {
-  tasks?: any[]
-  projects?: any[]
-  users?: any[]
+  tasks?: any[];
+  projects?: any[];
+  users?: any[];
 }
 
 export interface Task {
-  id: string
-  title: string
-  description?: string
-  status: Status
-  priority: Priority
-  projectId: string
-  workspaceId: string
-  createdBy: string
-  assignedTo?: string
-  dueDate?: string
-  createdAt: string
-  updatedAt: string
-
+  id: string;
+  title: string;
+  description?: string;
+  status: Status;
+  priority: Priority;
+  projectId: string;
+  workspaceId: string;
+  createdBy: string;
+  assignedTo?: string;
+  startDate: string;
+  dueDate?: string;
+  createdAt: string;
+  updatedAt: string;
   author?: {
-    id: string
-    username: string
-    email: string
-  }
+    id: string;
+    username: string;
+    email: string;
+  };
   assignee?: {
-    id: string
-    username: string
-    email: string
-    profilePictureUrl: string
-  }
+    id: string;
+    username: string;
+    email: string;
+    profilePictureUrl: string;
+  };
 }
 
 export interface ProjectStats {
-  totalTasks: number
-  completedTasks: number
-  inProgressTasks: number
-  todoTasks: number
-  progress: number
-  teamMembers: number
-  assignedMembers: User[]
+  totalTasks: number;
+  completedTasks: number;
+  inProgressTasks: number;
+  todoTasks: number;
+  progress: number;
+  teamMembers: number;
+  assignedMembers: User[];
 }
 
 export interface OnboardingData {
-  usageType: string
-  managementType: string[]
-  features: string[]
-  workspaceName: string
-  teamInvites: string[]
-  referralSource: string
+  usageType: string;
+  managementType: string[];
+  features: string[];
+  workspaceName: string;
+  teamInvites: string[];
+  referralSource: string;
 }
 
 export interface DashboardStats {
-  totalTasks: number
-  completedTasks: number
-  inProgressTasks: number
-  totalProjects: number
-  activeProjects: number
-  completedProjects: number
-  teamMembers: number
-  recentActivity: any[]
+  totalTasks: number;
+  completedTasks: number;
+  inProgressTasks: number;
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  teamMembers: number;
+  recentActivity: any[];
 }
 
 export interface Workspace {
-  id: string
-  name: string
-  ownerId: string
-  defaultRole: "Admin" | "Member"
-  allowMemberInvites: boolean
-  usageType:string
-  members: WorkspaceMember[]
-  pendingInvites: PendingInvite[] // New field for email invitations
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  ownerId: string;
+  defaultRole: "Admin" | "Member";
+  allowMemberInvites: boolean;
+  usageType: string;
+  members: WorkspaceMember[];
+  pendingInvites: PendingInvite[]; // New field for email invitations
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type WorkspaceMember = {
-  memberId: string
-  username: string
-  email: string
-  role: "Owner" | "Admin" | "Member" // Moved role here from User
-  joinedAt: string
-}
+  memberId: string;
+  username: string;
+  email: string;
+  role: "Owner" | "Admin" | "Member"; // Moved role here from User
+  joinedAt: string;
+};
 
 export type PendingInvite = {
-  id: string
-  email: string
-  role: "Admin" | "Member"
-  invitedBy: string
-  invitedAt: string
-  token: string
-  expiresAt: string
-}
+  id: string;
+  email: string;
+  role: "Admin" | "Member";
+  invitedBy: string;
+  invitedAt: string;
+  token: string;
+  expiresAt: string;
+};
 
 export interface AnalyticsData {
   keyMetrics: {
-    totalTasks: number
-    completionRate: number
-    teamEfficiency: number
-    activeProjects: number
-    tasksChange: string
-    completionChange: string
-    efficiencyChange: string
-    projectsChange: string
-  }
+    totalTasks: number;
+    completionRate: number;
+    teamEfficiency: number;
+    activeProjects: number;
+    tasksChange: string;
+    completionChange: string;
+    efficiencyChange: string;
+    projectsChange: string;
+  };
   productivity: {
-    daily: Array<{ date: string; completed: number; created: number }>
-    weekly: Array<{ week: string; productivity: number }>
-    monthly: Array<{ month: string; tasks: number; hours: number }>
-  }
+    daily: Array<{ date: string; completed: number; created: number }>;
+    weekly: Array<{ week: string; productivity: number }>;
+    monthly: Array<{ month: string; tasks: number; hours: number }>;
+  };
   projects: {
-    timeline: Array<{ project: string; planned: number; actual: number }>
-  }
+    timeline: Array<{ project: string; planned: number; actual: number }>;
+  };
   team: {
-    performance: Array<{ member: string; tasks: number; efficiency: number }>
-    workload: Array<{ member: string; assigned: number; completed: number }>
-  }
+    performance: Array<{ member: string; tasks: number; efficiency: number }>;
+    workload: Array<{ member: string; assigned: number; completed: number }>;
+  };
   trends: {
-    taskTypes: Array<{ type: string; count: number; color: string }>
-    priorities: Array<{ priority: string; count: number; color: string }>
-    statuses: Array<{ status: string; count: number; color: string }>
-  }
+    taskTypes: Array<{ type: string; count: number; color: string }>;
+    priorities: Array<{ priority: string; count: number; color: string }>;
+    statuses: Array<{ status: string; count: number; color: string }>;
+  };
 }
 
 export interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: string
-  message?: string
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
 }
 
 export interface PaginatedResponse<T> {
-  success: boolean
-  data: T[]
+  success: boolean;
+  data: T[];
   pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface ChatMessage {
-  id: string
-  teamId: string
-  userId: string
-  username: string
-  userEmail: string
-  profilePictureUrl?: string
-  message: string
-  timestamp: number
-  createdAt: string
-  edited?: boolean
-  editedAt?: string
+  id: string;
+  teamId: string;
+  userId: string;
+  username: string;
+  userEmail: string;
+  profilePictureUrl?: string;
+  message: string;
+  timestamp: number;
+  createdAt: string;
+  edited?: boolean;
+  editedAt?: string;
 }
 
 export interface TeamChatRoom {
-  id: string // same as teamId
-  teamId: string
-  teamName: string
-  workspaceId: string
-  members: string[] // array of user IDs
+  id: string; // same as teamId
+  teamId: string;
+  teamName: string;
+  workspaceId: string;
+  members: string[]; // array of user IDs
   lastMessage?: {
-    message: string
-    timestamp: number
-    userId: string
-    username: string
-  }
-  createdAt: string
-  updatedAt: string
+    message: string;
+    timestamp: number;
+    userId: string;
+    username: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ChatUser {
-  id: string
-  username: string
-  email: string
-  profilePictureUrl?: string
-  isOnline: boolean
-  lastSeen?: number
+  id: string;
+  username: string;
+  email: string;
+  profilePictureUrl?: string;
+  isOnline: boolean;
+  lastSeen?: number;
 }
 
 // Updated Notification Types
 export interface Notification {
-  id: string
-  userId: string
-  workspaceId: string
-  type: NotificationType
-  title: string
-  message: string
-  data?: NotificationData
-  isRead: boolean
-  createdAt: string
-  updatedAt: string
+  id: string;
+  userId: string;
+  workspaceId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  data?: NotificationData;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export enum NotificationType {
@@ -281,26 +281,25 @@ export enum NotificationType {
 }
 
 export interface NotificationData {
-  taskId?: string
-  taskTitle?: string
-  projectId?: string
-  projectName?: string
-  teamId?: string
-  teamName?: string
-  workspaceId?: string
-  workspaceName?: string
-  assignedBy?: string
-  assignedByName?: string
-  newMemberName?: string
-  newMemberEmail?: string
-  inviteToken?: string // NEW
-  invitedByName?: string // NEW
-  requiresAction?: boolean // NEW
-  rejected?: boolean // NEW
-  rejectedAt?: string // NEW
-  [key: string]: any
+  taskId?: string;
+  taskTitle?: string;
+  projectId?: string;
+  projectName?: string;
+  teamId?: string;
+  teamName?: string;
+  workspaceId?: string;
+  workspaceName?: string;
+  assignedBy?: string;
+  assignedByName?: string;
+  newMemberName?: string;
+  newMemberEmail?: string;
+  inviteToken?: string; // NEW
+  invitedByName?: string; // NEW
+  requiresAction?: boolean; // NEW
+  rejected?: boolean; // NEW
+  rejectedAt?: string; // NEW
+  [key: string]: any;
 }
-
 
 {
   /*
@@ -569,9 +568,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   */
 }
 
-
-
-{/*
+{
+  /*
 
   api calls in lib/api
   
@@ -613,4 +611,5 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
   }
   
-  */}
+  */
+}
