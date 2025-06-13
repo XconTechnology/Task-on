@@ -1,26 +1,20 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAppStore } from "@/lib/store"
-import { useUser } from "@/lib/user-context"
 import { Home, FolderOpen, Users, Plus, Calendar, BarChart3, Clock, PanelRight, PanelLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
 import InviteModal from "./modals/invite-modal"
 import CreateTeamModal from "./modals/create-team-modal"
 import CreateProjectModal from "./modals/create-project-modal"
 import Link from "next/link"
 import WorkspaceSwitcher from "./workspace-switcher"
-import { projectApi, teamApi } from "@/lib/api"
-import type { Project, ProjectStats } from "@/lib/types"
 import RecentProjectsSection from "./sidebar/RecentProjectsSection"
 import TeamsSection from "./sidebar/TeamsSection"
 
 export default function Sidebar() {
   const router = useRouter()
   const pathname = usePathname()
-  const { user } = useUser()
   const { isSidebarCollapsed, setSidebarCollapsed } = useAppStore()
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)

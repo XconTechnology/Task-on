@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 import { chatService } from "@/lib/services/chat-service"
 
-export async function POST(request: NextRequest, { params }: { params: { teamId: string } }) {
+export async function POST(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest, { params }: { params: { teamId:
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: { teamId: string } }) {
+export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 

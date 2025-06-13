@@ -15,6 +15,7 @@ import type { ChatMessage, ChatUser } from "@/lib/types"
 import { apiCall } from "@/lib/api_call"
 import ChatSidebar from "@/components/chat/chat-sidebar"
 import EmojiPicker from "@/components/chat/emoji-picker"
+import { chatAPi } from "@/lib/api"
 
 interface TeamData {
   id: string
@@ -42,7 +43,7 @@ export default function TeamChatPage() {
   const [newMessage, setNewMessage] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
-  const [teamData, setTeamData] = useState<TeamData | null>(null)
+  const [teamData, setTeamData] = useState<TeamData>()
   const [userData, setUserData] = useState<UserData | null>(null)
   const [teamMembers, setTeamMembers] = useState<UserData[]>([])
   const [onlineUsers, setOnlineUsers] = useState<ChatUser[]>([])
@@ -71,10 +72,11 @@ export default function TeamChatPage() {
         setIsLoading(true)
         setError(null)
 
-        const response = await apiCall(`/chat/teams/${teamId}/access`)
+             const response = await chatAPi.getAcess(teamId)
+       
 
         if (response.success && response.data) {
-          setTeamData(response.data.team)
+          setTeamData(response.data.team as TeamData)
           setUserData(response.data.user)
           setTeamMembers(response.data.teamMembers)
 

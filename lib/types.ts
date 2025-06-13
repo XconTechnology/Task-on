@@ -230,7 +230,11 @@ export interface ChatMessage {
   edited?: boolean;
   editedAt?: string;
 }
-
+export interface ChatAccessResponse  {
+  team: Team;
+  user: User;
+  teamMembers: User[];
+};
 export interface TeamChatRoom {
   id: string; // same as teamId
   teamId: string;

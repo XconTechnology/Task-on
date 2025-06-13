@@ -14,7 +14,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Priority, Status, type Task } from "@/lib/types"
 import { taskApi, workspaceApi } from "@/lib/api"
 import { successToast, errorToast } from "@/lib/toast-utils"
-import { useUser } from "@/lib/user-context"
 import { useTasks } from "@/lib/contexts/task-context"
 
 type UpdateTaskModalProps = {
@@ -25,7 +24,6 @@ type UpdateTaskModalProps = {
 }
 
 export default function UpdateTaskModal({ task, isOpen, onClose, onTaskUpdated }: UpdateTaskModalProps) {
-  const { user } = useUser()
   const { updateTask } = useTasks() // Get updateTask from context
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMembers, setIsLoadingMembers] = useState(false)
@@ -135,7 +133,8 @@ export default function UpdateTaskModal({ task, isOpen, onClose, onTaskUpdated }
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const toggleMember = (memberId: string) => {
+ {/*
+   const toggleMember = (memberId: string) => {
     setSelectedMembers((prev) => {
       if (prev.includes(memberId)) {
         return prev.filter((id) => id !== memberId)
@@ -144,6 +143,7 @@ export default function UpdateTaskModal({ task, isOpen, onClose, onTaskUpdated }
       }
     })
   }
+  */}
 
   const removeMember = (memberId: string) => {
     setSelectedMembers((prev) => prev.filter((id) => id !== memberId))

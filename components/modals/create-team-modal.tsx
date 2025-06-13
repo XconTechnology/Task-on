@@ -59,11 +59,11 @@ export default function CreateTeamModal({ isOpen, onClose, onSuccess }: CreateTe
     try {
       const response = await teamApi.createTeam(formData)
 
-      if (response.success) {
+      if (response.success && response.data) {
         // If members were selected, add them to the team
         if (selectedMembers.length > 0) {
           try {
-            await teamApi.addTeamMembers(response.data?.id, selectedMembers)
+            await teamApi.addTeamMembers(response.data.id, selectedMembers)
           } catch (memberError) {
             console.error("Failed to add members:", memberError)
             // Continue with success flow even if adding members fails

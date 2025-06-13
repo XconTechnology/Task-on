@@ -28,7 +28,7 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
     description: "",
   })
   const [members, setMembers] = useState<any>([])
-  const [availableUsers, setAvailableUsers] = useState([])
+  const [availableUsers, setAvailableUsers] = useState<any>([])
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMembers, setIsLoadingMembers] = useState(false)
@@ -65,7 +65,7 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
     try {
       // Using workspaceApi from lib/api instead of direct fetch
       const response = await workspaceApi.getMembers()
-      if (response.success) {
+      if (response.success && response.data) {
         // Filter out users who are already in the team
         const available = response.data.filter(
           (user: any) => !members.some((member: any) => member.id === user.memberId),

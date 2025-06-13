@@ -52,7 +52,7 @@ export default function TeamsContent() {
 
   // Member role update state
   const [isUpdateRoleDialogOpen, setIsUpdateRoleDialogOpen] = useState(false)
-  const [selectedMember, setSelectedMember] = useState<WorkspaceMember | null>(null)
+  const [selectedMember, setSelectedMember] = useState<WorkspaceMember>()
   const [selectedRole, setSelectedRole] = useState<string>("Member")
   const [isLoading, setIsLoading] = useState(false)
 

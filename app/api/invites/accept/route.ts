@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
     await workspacesCollection.updateOne(
       { id: workspace.id },
       {
-        $push: { members: newMember },
-        $pull: { pendingInvites: { token } },
+        $push: { members: newMember } as any,
+        $pull: { pendingInvites: { token } } as any,
         $set: { updatedAt: new Date().toISOString() },
       },
     )
@@ -87,8 +87,8 @@ export async function POST(request: NextRequest) {
     // Create notifications for existing workspace members
     try {
       const existingMemberIds = workspace.members
-        .filter((member) => member.memberId !== userId)
-        .map((member) => member.memberId)
+        .filter((member:any) => member.memberId !== userId)
+        .map((member:any) => member.memberId)
 
       if (existingMemberIds.length > 0) {
         await notificationService.notifyWorkspaceMemberJoined(

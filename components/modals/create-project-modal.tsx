@@ -9,8 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { projectApi, teamApi } from "@/lib/api" // Import from lib/api
+import { projectApi } from "@/lib/api" // Import from lib/api
 import { successToast, errorToast } from "@/lib/toast-utils"
+import { Team } from "@/lib/types"
+import { teamApi } from "@/lib/api/teams"
 
 type CreateProjectModalProps = {
   isOpen: boolean
@@ -26,7 +28,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
     endDate: "",
     teamId: "none", // Updated default value to be a non-empty string
   })
-  const [teams, setTeams] = useState([])
+  const [teams, setTeams] = useState<Team[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingTeams, setIsLoadingTeams] = useState(false)
 

@@ -145,15 +145,6 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const toggleMember = (memberId: string) => {
-    setSelectedMembers((prev) => {
-      if (prev.includes(memberId)) {
-        return prev.filter((id) => id !== memberId)
-      } else {
-        return [memberId] // For single assignment
-      }
-    })
-  }
 
   const removeMember = (memberId: string) => {
     setSelectedMembers((prev) => prev.filter((id) => id !== memberId))

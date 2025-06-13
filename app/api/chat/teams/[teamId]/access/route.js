@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
-export async function GET(request: NextRequest, { params }: { params: { teamId: string } }) {
+export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 

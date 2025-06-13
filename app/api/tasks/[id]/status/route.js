@@ -1,15 +1,15 @@
-import { type NextRequest, NextResponse } from "next/server"
+import {  NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { canUserPerformAction, getUserRole } from "@/lib/permissions"
 
-function getIdFromRequest(request: NextRequest) {
+function getIdFromRequest(request) {
   const segments = request.nextUrl.pathname.split("/")
   return segments[segments.length - 2] // because the last one is "status"
 }
 
 // PATCH /api/tasks/[id]/status
-export async function PATCH(request: NextRequest) {
+export async function PATCH(request) {
   try {
     const user = await getUserFromRequest(request)
     if (!user) {

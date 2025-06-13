@@ -164,7 +164,7 @@ export default function InvitePage() {
         <CardHeader>
           <CardTitle className="text-center">Accept Invitation</CardTitle>
           <CardDescription className="text-center">
-            You've been invited to join {inviteData?.workspace?.name || "a workspace"} as a{" "}
+            You&apos;ve been invited to join {inviteData?.workspace?.name || "a workspace"} as a{" "}
             {inviteData?.invite?.role || "member"}
           </CardDescription>
         </CardHeader>

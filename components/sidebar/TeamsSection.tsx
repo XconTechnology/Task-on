@@ -1,11 +1,11 @@
 'use client'
-import { teamApi } from '@/lib/api'
 import React, { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
 import { Plus } from 'lucide-react'
 import { Skeleton } from '../ui/skeleton'
 import { Team } from '@/lib/types'
 import Link from 'next/link'
+import { teamApi } from '@/lib/api/teams'
 
 const TeamsSection = ({ onCreateTeam }: { onCreateTeam: () => void }) => {
   const [teams, setTeams] = useState<Team[]>([])

@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { apiCall } from "@/lib/api_call"
-import type { Notification } from "@/lib/types"
+import  { Notification } from "@/lib/types"
 import InboxContent from "@/components/InboxContent"
 
 export default function InboxPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [unreadCount, setUnreadCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
@@ -36,7 +36,7 @@ export default function InboxPage() {
   }, [activeTab])
 
   // Mark notification as read
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = async (notificationId) => {
     try {
       const response = await apiCall(`/notifications/${notificationId}/read`, {
         method: "PATCH",
@@ -72,7 +72,7 @@ export default function InboxPage() {
   }
 
   // Accept workspace invitation
-  const acceptWorkspaceInvitation = async (notificationId: string) => {
+  const acceptWorkspaceInvitation = async (notificationId) => {
     if (processingInvites.has(notificationId)) return
 
     try {
@@ -115,7 +115,7 @@ export default function InboxPage() {
   }
 
   // Reject workspace invitation
-  const rejectWorkspaceInvitation = async (notificationId: string) => {
+  const rejectWorkspaceInvitation = async (notificationId) => {
     if (processingInvites.has(notificationId)) return
 
     try {

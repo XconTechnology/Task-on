@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
       await workspacesCollection.updateOne(
         { id: workspace.id },
         {
-          $push: { members: newMember },
-          $pull: { pendingInvites: { token } },
+          $push: { members: newMember }  as any,
+          $pull: { pendingInvites: { token } } as any,
           $set: { updatedAt: new Date().toISOString() },
         },
       )
@@ -146,8 +146,8 @@ export async function POST(request: NextRequest) {
     await workspacesCollection.updateOne(
       { id: workspace.id },
       {
-        $push: { members: newMember },
-        $pull: { pendingInvites: { token } },
+        $push: { members: newMember }  as any,
+        $pull: { pendingInvites: { token } } as any,
         $set: { updatedAt: new Date().toISOString() },
       },
     )

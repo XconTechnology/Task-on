@@ -28,7 +28,7 @@ export default function NotificationDropdown({ onTaskClick }: NotificationDropdo
       const response = await apiCall("/notifications?limit=20")
 
       if (response.success && response.data) {
-        setNotifications(response.data)
+        setNotifications(response.data as any)
         setUnreadCount(response.unreadCount || 0)
       }
     } catch (error) {

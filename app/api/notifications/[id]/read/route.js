@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getUserFromRequest } from "@/lib/auth"
 import { notificationService } from "@/lib/services/notification-service"
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 

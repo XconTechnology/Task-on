@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import {  ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"

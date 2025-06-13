@@ -1,10 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getUserFromRequest } from "@/lib/auth"
 import { getDatabase } from "@/lib/mongodb"
 import { notificationService } from "@/lib/services/notification-service"
-import type { WorkspaceMember } from "@/lib/types"
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Find the specific invite
-    const invite = workspace.pendingInvites.find((inv: any) => inv.token === result.inviteToken)
+    const invite = workspace.pendingInvites.find((inv) => inv.token === result.inviteToken)
 
     if (!invite) {
       return NextResponse.json({ success: false, error: "Invalid invitation" }, { status: 404 })
@@ -54,14 +53,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Check if user is already a member
-    const isAlreadyMember = workspace.members.some((member: WorkspaceMember) => member.memberId === user.userId)
+    const isAlreadyMember = workspace.members.some((member) => member.memberId === user.userId)
 
     if (isAlreadyMember) {
       return NextResponse.json({ success: false, error: "You are already a member of this workspace" }, { status: 409 })
     }
 
     // Create workspace member
-    const newMember: WorkspaceMember = {
+    const newMember = {
       memberId: user.userId,
       username: userData.username,
       email: userData.email,
@@ -74,8 +73,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       workspacesCollection.updateOne(
         { id: workspace.id },
         {
-          $push: { members: newMember },
-          $pull: { pendingInvites: { token: result.inviteToken } },
+          $push: { members: newMember } ,
+          $pull: { pendingInvites: { token: result.inviteToken } } ,
           $set: { updatedAt: new Date().toISOString() },
         },
       ),
@@ -91,8 +90,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Notify existing workspace members
     try {
       const existingMemberIds = workspace.members
-        .filter((member: WorkspaceMember) => member.memberId !== user.userId)
-        .map((member: WorkspaceMember) => member.memberId)
+        .filter((member) => member.memberId !== user.userId)
+        .map((member) => member.memberId)
 
       if (existingMemberIds.length > 0) {
         await notificationService.notifyWorkspaceMemberJoined(

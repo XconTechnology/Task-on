@@ -24,7 +24,7 @@ import {
 import MetricCard from "./MetricCard"
 import { AnalyticsData } from "@/lib/types"
 import { monthlyOverviewConfig, productivityChartConfig, taskDistributionConfig } from "@/lib/constants"
-import { analyticsApi, taskApi } from "@/lib/api"
+import { analyticsApi } from "@/lib/api"
 
 
 
@@ -42,7 +42,7 @@ export default function AnalyticsContent() {
     try {
       const response = await analyticsApi.getAnalytics(timeRange)
 
-      if (response.success) {
+      if (response.success && response.data) {
         // Ensure we have data for task types
         if (!response.data.trends.taskTypes || response.data.trends.taskTypes.length === 0) {
           response.data.trends.taskTypes = [

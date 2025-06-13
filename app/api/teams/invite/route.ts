@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
             await workspacesCollection.updateOne(
               { id: targetWorkspaceId },
               {
-                $push: { pendingInvites: pendingInvite },
+                $push: { pendingInvites: pendingInvite } as any,
                 $set: { updatedAt: new Date().toISOString() },
               },
             )
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
           await workspacesCollection.updateOne(
             { id: targetWorkspaceId },
             {
-              $push: { pendingInvites: pendingInvite },
+              $push: { pendingInvites: pendingInvite } as any,
               $set: { updatedAt: new Date().toISOString() },
             },
           )

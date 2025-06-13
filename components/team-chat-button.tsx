@@ -10,7 +10,7 @@ interface TeamChatButtonProps {
   teamName: string
 }
 
-export default function TeamChatButton({ teamId, teamName }: TeamChatButtonProps) {
+export default function TeamChatButton({ teamId }: TeamChatButtonProps) {
   const router = useRouter()
 
   const handleOpenChat = () => {
