@@ -9,9 +9,8 @@ import UsageTypeStep from "./steps/usage-type-step"
 import ManagementTypeStep from "./steps/management-type-step"
 import FeaturesStep from "./steps/features-step"
 import WorkspaceNameStep from "./steps/workspace-name-step"
-import InviteTeamStep from "./steps/invite-team-step"
 
-const TOTAL_STEPS = 5
+const TOTAL_STEPS = 4
 
 export default function OnboardingFlow() {
   const router = useRouter()
@@ -120,7 +119,6 @@ export default function OnboardingFlow() {
               {currentStep === 2 && <ManagementTypeStep data={onboardingData} updateData={updateData} />}
               {currentStep === 3 && <FeaturesStep data={onboardingData} updateData={updateData} />}
               {currentStep === 4 && <WorkspaceNameStep data={onboardingData} updateData={updateData} />}
-              {currentStep === 5 && <InviteTeamStep data={onboardingData} updateData={updateData} />}
             </div>
           </div>
 
