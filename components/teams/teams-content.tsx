@@ -450,6 +450,7 @@ export default function TeamsContent() {
                   filteredMembers.map((member: any) => (
                     <div key={member.memberId} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center justify-between">
+                       <Link href={`/profile/${member.memberId}`}>
                         <div className="flex items-center space-x-4">
                           <div className="relative">
                             <Avatar className="h-10 w-10">
@@ -463,6 +464,7 @@ export default function TeamsContent() {
                             <p className="text-small text-gray-600">{member.email}</p>
                           </div>
                         </div>
+                       </Link>
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
                             <div className="flex items-center space-x-2">

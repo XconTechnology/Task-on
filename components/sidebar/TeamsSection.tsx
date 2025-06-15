@@ -32,7 +32,7 @@ const TeamsSection = ({ onCreateTeam }: { onCreateTeam: () => void }) => {
   return (
     <div className="p-4 border-t border-gray-100">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-label">Teams</h3>
+        <h3 className="text-label">Team Chat</h3>
         <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={onCreateTeam}>
           <Plus size={12} />
         </Button>

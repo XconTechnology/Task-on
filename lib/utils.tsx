@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Priority, Status, Task } from "./types";
+import { Activity, CheckCircle2, Play, Target, Timer } from "lucide-react";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -487,4 +488,93 @@ export function getProgressBgColor(progress: number): string {
     return "bg-green-50" // Excellent progress - green
   }
 }
+
+
+{/* time  tracking */}
+
+// Format time in seconds to HH:MM:SS format
+export function formatTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  } else {
+    return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
+}
+
+// Format time in seconds to human readable format (e.g., "2h 30m", "45m", "30s")
+export function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds}s`
+  } else if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`
+  } else {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`
+  }
+}
+
+// Format time in seconds to decimal hours (e.g., 1.5h)
+export function formatHours(seconds: number): string {
+  const hours = seconds / 3600
+  return `${hours.toFixed(1)}h`
+}
+
+
+ export const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+  }
+
+ export const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "task_completed":
+        return <CheckCircle2 className="w-4 h-4 text-green-500" />
+      case "task_created":
+        return <Target className="w-4 h-4 text-blue-500" />
+      case "time_tracked":
+        return <Timer className="w-4 h-4 text-purple-500" />
+      case "task_started":
+        return <Play className="w-4 h-4 text-orange-500" />
+      default:
+        return <Activity className="w-4 h-4 text-gray-500" />
+    }
+  }
+
+   export const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "bg-green-100 text-green-700 border-green-200"
+      case "In Progress":
+        return "bg-blue-100 text-blue-700 border-blue-200"
+      case "Under Review":
+        return "bg-yellow-100 text-yellow-700 border-yellow-200"
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200"
+    }
+  }
+
+  export const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "Urgent":
+        return "bg-red-500"
+      case "High":
+        return "bg-orange-500"
+      case "Medium":
+        return "bg-yellow-500"
+      case "Low":
+        return "bg-green-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
 

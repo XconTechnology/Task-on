@@ -7,6 +7,9 @@ import type {
   ProjectStats,
   AnalyticsData,
   ChatAccessResponse,
+  TimeTrackingStats,
+  TimeEntry,
+  ActiveTimer,
 } from "./types";
 import { apiCall } from "./api_call"; // Import the working apiCall function
 
@@ -193,8 +196,6 @@ export const userApi = {
   },
 };
 
-
-
 // Workspace API Functions
 export const workspaceApi = {
   // Get workspace members
@@ -291,7 +292,6 @@ export const workspaceApi = {
   },
 };
 
-
 // Search API Functions
 export const searchApi = {
   search: async (query: string) => {
@@ -337,13 +337,125 @@ export const analyticsApi = {
   },
 };
 
-export const chatAPi ={
-    getAcess: async (teamId : string): Promise<ApiResponse<ChatAccessResponse>> => {
+export const chatAPi = {
+  getAcess: async (
+    teamId: string
+  ): Promise<ApiResponse<ChatAccessResponse>> => {
     return apiCall<ChatAccessResponse>(`/chat/teams/${teamId}/access`);
   },
-}
+};
 
+// Time Tracking API Functions
+export const timeTrackingApi = {
+  // Start timer for a task
+  startTimer: async (
+    taskId: string,
+    description?: string
+  ): Promise<ApiResponse<ActiveTimer>> => {
+    return apiCall<ActiveTimer>("/time-tracking/start", {
+      method: "POST",
+      body: JSON.stringify({ taskId, description }),
+    });
+  },
 
+  getUserTimeEntries: async (
+    userId: string,
+    page = 1,
+    limit = 10
+  ): Promise<ApiResponse<TimeEntry[]>> => {
+    return apiCall<TimeEntry[]>(
+      `/time-tracking/user/${userId}?page=${page}&limit=${limit}`
+    );
+  },
+  // Stop timer
+  stopTimer: async (timerId: string): Promise<ApiResponse<TimeEntry>> => {
+    return apiCall<TimeEntry>(`/time-tracking/stop/${timerId}`, {
+      method: "POST",
+    });
+  },
+
+  // Get active timer for current user
+  getActiveTimer: async (): Promise<ApiResponse<ActiveTimer | null>> => {
+    return apiCall<ActiveTimer | null>("/time-tracking/active");
+  },
+
+  // Get time entries for current user
+  getTimeEntries: async (filters?: {
+    taskId?: string;
+    projectId?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+  }): Promise<ApiResponse<TimeEntry[]>> => {
+    const params = new URLSearchParams();
+    if (filters?.taskId) params.append("taskId", filters.taskId);
+    if (filters?.projectId) params.append("projectId", filters.projectId);
+    if (filters?.startDate) params.append("startDate", filters.startDate);
+    if (filters?.endDate) params.append("endDate", filters.endDate);
+    if (filters?.limit) params.append("limit", filters.limit.toString());
+
+    const endpoint = `/time-tracking/entries${params.toString() ? `?${params.toString()}` : ""}`;
+    return apiCall<TimeEntry[]>(endpoint);
+  },
+
+  // Delete time entry
+  deleteTimeEntry: async (entryId: string): Promise<ApiResponse<void>> => {
+    return apiCall<void>(`/time-tracking/entries/${entryId}`, {
+      method: "DELETE",
+    });
+  },
+
+  // Update time entry
+  updateTimeEntry: async (
+    entryId: string,
+    updates: Partial<TimeEntry>
+  ): Promise<ApiResponse<TimeEntry>> => {
+    return apiCall<TimeEntry>(`/time-tracking/entries/${entryId}`, {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    });
+  },
+
+  // Get time tracking statistics
+  getStats: async (
+    timeframe?: "today" | "week" | "month"
+  ): Promise<ApiResponse<TimeTrackingStats>> => {
+    const endpoint = `/time-tracking/stats${timeframe ? `?timeframe=${timeframe}` : ""}`;
+    return apiCall<TimeTrackingStats>(endpoint);
+  },
+
+  // Get task total time
+  getTaskTime: async (
+    taskId: string
+  ): Promise<ApiResponse<{ totalTime: number; isRunning: boolean }>> => {
+    return apiCall<{ totalTime: number; isRunning: boolean }>(
+      `/time-tracking/task/${taskId}/total`
+    );
+  },
+
+  // Resume a specific time entry
+  resumeTimeEntry: async (
+    entryId: string
+  ): Promise<ApiResponse<ActiveTimer>> => {
+    return apiCall<ActiveTimer>(`/time-tracking/resume/${entryId}`, {
+      method: "POST",
+    });
+  },
+
+  // Get time entries with pagination
+  getTimeEntriesPaginated: async (
+    page = 1,
+    limit = 10
+  ): Promise<
+    ApiResponse<{
+      entries: TimeEntry[];
+      hasMore: boolean;
+      total: number;
+    }>
+  > => {
+    return apiCall(`/time-tracking/entries?page=${page}&limit=${limit}`);
+  },
+};
 // Export all APIs as a single object for easy importing
 export const api = {
   projects: projectApi,

@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { type Task, Status, Priority } from "@/lib/types"
-import { X, Calendar, User, Flag, Clock, Activity, MoreHorizontal, Star, Share } from "lucide-react"
+import { X, Calendar, User, Flag, Clock, Activity, MoreHorizontal, Star, Share, Play, Square } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,6 +13,9 @@ import StatusDropdown from "./status-dropdown"
 import { format } from "date-fns"
 import TaskComments from "./tasks/task-comments"
 import { useUser } from "@/lib/user-context"
+import { useTimeTracking } from "@/lib/contexts/time-tracking-context"
+import { timeTrackingApi } from "@/lib/api"
+import { formatTime, formatDuration } from "@/lib/utils"
 
 type TaskDetailModalProps = {
   task: Task | null
@@ -23,8 +26,66 @@ type TaskDetailModalProps = {
 
 export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }: TaskDetailModalProps) {
   const { user, currentWorkspace } = useUser()
+  const { activeTimer,elapsedTime, startTimer, stopTimer, isLoading: timerLoading } = useTimeTracking()
   const [isEditing, setIsEditing] = useState(false)
   const [editedTask, setEditedTask] = useState<Partial<Task>>({})
+  const [taskTime, setTaskTime] = useState({ totalTime: 0, isRunning: false })
+  const [loadingTaskTime, setLoadingTaskTime] = useState(false)
+
+  useEffect(() => {
+    if (task && isOpen) {
+      fetchTaskTime()
+    }
+  }, [task, isOpen])
+
+  // Add this useEffect after the existing useEffect
+  useEffect(() => {
+    // Update timer display when activeTimer changes
+    if (activeTimer?.taskId === task?.id) {
+      // Force re-render to show updated timer
+      setTaskTime((prev) => ({ ...prev, isRunning: true }))
+    } else {
+      setTaskTime((prev) => ({ ...prev, isRunning: false }))
+    }
+  }, [activeTimer, task?.id])
+
+  const fetchTaskTime = async () => {
+    if (!task) return
+
+    setLoadingTaskTime(true)
+    try {
+      const response = await timeTrackingApi.getTaskTime(task.id)
+      if (response.success && response.data) {
+        setTaskTime(response.data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch task time:", error)
+    } finally {
+      setLoadingTaskTime(false)
+    }
+  }
+
+  const handleStartTimer = async () => {
+    if (!task) return
+
+    try {
+      await startTimer(task.id)
+      await fetchTaskTime() // Refresh task time
+    } catch (error) {
+      console.error("Failed to start timer:", error)
+    }
+  }
+
+  const handleStopTimer = async () => {
+    if (!activeTimer) return
+
+    try {
+      await stopTimer()
+      await fetchTaskTime() // Refresh task time
+    } catch (error) {
+      console.error("Failed to stop timer:", error)
+    }
+  }
 
   if (!task) return null
 
@@ -56,6 +117,9 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
     [Priority.Backlog]: { label: "Backlog", color: "bg-gray-100 text-gray-700" },
   }
 
+  const isTimerActive = activeTimer?.taskId === task.id
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl h-[90vh] p-0 bg-white overflow-hidden">
@@ -66,7 +130,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
           {/* Main Content */}
           <div className="flex-1 flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-muted">Task</span>
@@ -144,6 +208,56 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                   ) : (
                     <span className="text-muted">Empty</span>
                   )}
+                </div>
+
+                {/* Track Time */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2 w-24">
+                    <Clock size={16} className="text-gray-400" />
+                    <span className="text-label">Track Time</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    {loadingTaskTime ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+                    ) : (
+                      <>
+                        {isTimerActive ? (
+                          <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                              <span className="text-sm font-mono font-semibold text-red-600">
+                                {formatTime(elapsedTime)}
+                              </span>
+                            </div>
+                            <Button
+                              onClick={handleStopTimer}
+                              disabled={timerLoading}
+                              variant="ghost"
+                              size="sm"
+                              className="w-6 h-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Square size={12} />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            {taskTime.totalTime > 0 && (
+                              <span className="text-sm text-gray-600">{formatDuration(taskTime.totalTime)}</span>
+                            )}
+                            <Button
+                              onClick={handleStartTimer}
+                              disabled={timerLoading}
+                              variant="ghost"
+                              size="sm"
+                              className="w-6 h-6 p-0 text-green-500 hover:text-green-600 hover:bg-green-50"
+                            >
+                              <Play size={12} />
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Dates */}
@@ -225,7 +339,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
           </div>
 
           {/* Activity Sidebar with Comments */}
-          <div className="w-96 border-l border-gray-200 bg-gray-50 flex flex-col">
+          <div className="w-80 border-l border-gray-200 bg-gray-50 flex flex-col">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-label">Activity & Comments</h3>

@@ -4,7 +4,7 @@ import { getDatabase } from "@/lib/mongodb"
  * Get user's current workspace ID - with fallback to first workspace if no specific workspace is provided
  * This is the ORIGINAL function that your app depends on
  */
-export async function getCurrentWorkspaceId(userId: string, preferredWorkspaceId?: string): Promise<string | null> {
+export async function getCurrentWorkspaceId(userId: string, headerWorkspaceId?: string): Promise<string | null> {
   try {
     const db = await getDatabase()
     const usersCollection = db.collection("users")
@@ -16,8 +16,8 @@ export async function getCurrentWorkspaceId(userId: string, preferredWorkspaceId
     }
 
     // If a preferred workspace ID is provided and user has access to it, use it
-    if (preferredWorkspaceId && userData.workspaceIds.includes(preferredWorkspaceId)) {
-      return preferredWorkspaceId
+    if (headerWorkspaceId && userData.workspaceIds.includes(headerWorkspaceId)) {
+      return headerWorkspaceId
     }
 
     // Otherwise, return the first workspace ID as fallback

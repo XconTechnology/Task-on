@@ -48,7 +48,7 @@ const  InboxContent =({
           <div className="flex items-center space-x-3">
             <Bell size={20} className="text-gray-700" />
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">Inbox</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Notifications</h1>
               <p className="text-xs text-gray-500">
                 {unreadCount > 0
                   ? `${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`
