@@ -19,6 +19,8 @@ import NotificationDropdown from "./notifications/notification-dropdown"
 import { taskApi } from "@/lib/api"
 import type { Task } from "@/lib/types"
 import Image from "next/image"
+import TimerDropdown from "./time-tracking/timer-dropdown"
+import Link from "next/link"
 
 export default function TopNavigation() {
   const { user, signOut } = useUser()
@@ -44,6 +46,19 @@ export default function TopNavigation() {
     }
   }
 
+  // Handle timer task click
+  const handleTimerTaskClick = async (taskId: string) => {
+    try {
+      const response = await taskApi.getTask(taskId)
+      if (response.success && response.data) {
+        setSelectedTask(response.data)
+        setIsTaskDetailOpen(true)
+      }
+    } catch (error) {
+      console.error("Failed to fetch task:", error)
+    }
+  }
+
   return (
     <>
       <div className="bg-white border-b border-gray-200 px-4 py-2 shadow-sm">
@@ -53,9 +68,13 @@ export default function TopNavigation() {
             <Image src={"/images/logo-dark.png"} width={74} height={74} alt="Taskon" />
           </div>
 
-          {/* Center Section - Search */}
-          <div className="flex-1 max-w-md mx-4">
-            <GlobalSearch onTaskClick={handleTaskClick} />
+          {/* Center Section - Search and Timer */}
+          <div className="flex-1 flex items-center justify-center space-x-4 max-w-2xl mx-4">
+            <div className="flex-1 max-w-md">
+              <GlobalSearch onTaskClick={handleTaskClick} />
+            </div>
+            {/* Active Timer Display */}
+            <TimerDropdown onTaskClick={handleTimerTaskClick} />
           </div>
 
           {/* Right Section */}
@@ -107,8 +126,13 @@ export default function TopNavigation() {
                   <p className="text-small text-gray-600">{user?.email || "user@example.com"}</p>
                 </div>
                 <DropdownMenuItem className="cursor-pointer">
-                  <User size={16} className="mr-2" />
-                  <span className="text-medium">Profile</span>
+              <Link
+                href={`/profile/${user?.id}`}
+                className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              >
+                <User className="mr-3 h-5 w-5" />
+                My Profile
+              </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer">
                   <Settings size={16} className="mr-2" />

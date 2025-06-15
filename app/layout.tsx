@@ -5,6 +5,7 @@ import { UserProvider } from "@/lib/user-context";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { TaskProvider } from "@/lib/contexts/task-context";
+import { TimeTrackingProvider } from "@/lib/contexts/time-tracking-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,12 +24,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <UserProvider>
-
-        <TaskProvider>
-          {children}
-          <Toaster />
-        </TaskProvider>
-
+          <TaskProvider>
+            <TimeTrackingProvider>
+              {children}
+              <Toaster />
+            </TimeTrackingProvider>
+          </TaskProvider>
         </UserProvider>
       </body>
     </html>
