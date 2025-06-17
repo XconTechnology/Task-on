@@ -1,11 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import { getUserFromRequest } from "@/lib/auth";
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils";
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { entryId: string } }
+  request,
+  { params }
 ) {
   try {
     const user = getUserFromRequest(request);

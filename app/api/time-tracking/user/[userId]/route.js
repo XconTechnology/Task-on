@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
-export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
       return NextResponse.json({ success: false, error: "Workspace not found" }, { status: 404 })
     }
 
-    const isUserInWorkspace = workspace.members?.some((member: any) => member.memberId === userId)
+    const isUserInWorkspace = workspace.members?.some((member) => member.memberId === userId)
     if (!isUserInWorkspace) {
       return NextResponse.json({ success: false, error: "User not found in workspace" }, { status: 404 })
     }

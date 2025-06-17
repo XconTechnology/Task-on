@@ -1,11 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 import { readFile } from "fs/promises"
 import { join } from "path"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -35,16 +35,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const filePath = join(process.cwd(), "public", document.fileUrl)
     const fileBuffer = await readFile(filePath)
 
-    // Return file for preview (inline display)
+    // Return file with appropriate headers
     return new NextResponse(fileBuffer, {
       headers: {
         "Content-Type": document.fileType || "application/octet-stream",
-        "Content-Disposition": `inline; filename="${document.fileName}"`,
-        "Cache-Control": "public, max-age=3600",
+        "Content-Disposition": `attachment; filename="${document.fileName}"`,
+        "Content-Length": document.fileSize.toString(),
       },
     })
   } catch (error) {
-    console.error("Preview document error:", error)
+    console.error("Download document error:", error)
     return NextResponse.json({ success: false, error: "File not found or internal server error" }, { status: 500 })
   }
 }

@@ -10,6 +10,9 @@ import type {
   TimeTrackingStats,
   TimeEntry,
   ActiveTimer,
+  PaginatedDocuments,
+  DocumentFilters,
+  Document,
 } from "./types";
 import { apiCall } from "./api_call"; // Import the working apiCall function
 
@@ -436,12 +439,8 @@ export const documentApi = {
   getDocuments: async (
     page = 1,
     limit = 10,
-    filters?: {
-      search?: string
-      projectId?: string
-      taskId?: string
-    },
-  ) => {
+    filters?: DocumentFilters
+  ): Promise<ApiResponse<PaginatedDocuments>> => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -451,50 +450,53 @@ export const documentApi = {
     if (filters?.projectId) params.append("projectId", filters.projectId)
     if (filters?.taskId) params.append("taskId", filters.taskId)
 
-    return apiCall(`/documents?${params.toString()}`)
+    return apiCall<PaginatedDocuments>(`/documents?${params.toString()}`)
   },
 
-  // Get document by ID
-  getDocument: async (id: string) => {
-    return apiCall(`/documents/${id}`)
+  // Get single document by ID
+  getDocument: async (id: string): Promise<ApiResponse<Document>> => {
+    return apiCall<Document>(`/documents/${id}`)
   },
 
-  // Create new document
-  createDocument: async (formData: FormData) => {
-    return apiCall("/documents", {
+  // Create a new document (FormData for file upload)
+  createDocument: async (
+    formData: FormData
+  ): Promise<ApiResponse<Document>> => {
+    return apiCall<Document>("/documents", {
       method: "POST",
       body: formData,
     })
   },
 
-  // Update document
-  updateDocument: async (id: string, updates: any) => {
-    return apiCall(`/documents/${id}`, {
+  // Update existing document by ID
+  updateDocument: async (
+    id: string,
+    updates: Partial<Document>
+  ): Promise<ApiResponse<Document>> => {
+    return apiCall<Document>(`/documents/${id}`, {
       method: "PUT",
       body: JSON.stringify(updates),
     })
   },
 
-  // Delete document
-  deleteDocument: async (id: string) => {
-    return apiCall(`/documents/${id}`, {
+  // Delete a document by ID
+  deleteDocument: async (id: string): Promise<ApiResponse<null>> => {
+    return apiCall<null>(`/documents/${id}`, {
       method: "DELETE",
     })
   },
 
-  // Download document
-  downloadDocument: async (id: string, filename: string) => {
+  // Download a document file
+  downloadDocument: async (id: string, filename: string): Promise<void> => {
     try {
-      const currentWorkspaceId = localStorage.getItem("currentWorkspaceId")
+      const currentWorkspaceId = localStorage.getItem("currentWorkspaceId") || ""
       const response = await fetch(`/api/documents/${id}/download`, {
         headers: {
-          "x-workspace-id": currentWorkspaceId || "",
+          "x-workspace-id": currentWorkspaceId,
         },
       })
 
-      if (!response.ok) {
-        throw new Error("Download failed")
-      }
+      if (!response.ok) throw new Error("Download failed")
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -511,9 +513,9 @@ export const documentApi = {
     }
   },
 
-  // Get document preview URL
-  getPreviewUrl: (id: string) => {
-    const currentWorkspaceId = localStorage.getItem("currentWorkspaceId")
+  // Get preview URL of a document
+  getPreviewUrl: (id: string): string => {
+    const currentWorkspaceId = localStorage.getItem("currentWorkspaceId") || ""
     return `/api/documents/${id}/preview?workspaceId=${currentWorkspaceId}`
   },
 }

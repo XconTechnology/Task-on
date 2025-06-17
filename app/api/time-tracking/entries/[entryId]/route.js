@@ -1,8 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 
-export async function DELETE(request: NextRequest, { params }: { params: { entryId: string } }) {
+export async function DELETE(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 
@@ -32,7 +32,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { entry
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { entryId: string } }) {
+export async function PUT(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 

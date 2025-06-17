@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
-export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
     }
 
     // Check if the target user is a member of the current workspace
-    const isUserInWorkspace = workspace.members?.some((member: any) => member.memberId === userId)
+    const isUserInWorkspace = workspace.members?.some((member) => member.memberId === userId)
 
     if (!isUserInWorkspace) {
       return NextResponse.json({ success: false, error: "User not found in current workspace" }, { status: 404 })

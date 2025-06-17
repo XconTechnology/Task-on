@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
@@ -6,7 +6,7 @@ import { unlink } from "fs/promises"
 import { join } from "path"
 
 // GET /api/documents/[id] - Get document by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT /api/documents/[id] - Update document
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request, { params }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -72,7 +72,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ success: false, error: "Document not found" }, { status: 404 })
     }
 
-    const updates: any = {
+    const updates = {
       updatedAt: new Date().toISOString(),
     }
 
@@ -97,7 +97,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/documents/[id] - Delete document
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request, { params }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
