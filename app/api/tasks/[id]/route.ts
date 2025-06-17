@@ -128,7 +128,6 @@ export async function PUT(request: NextRequest) {
 
     const db = await getDatabase();
     const tasksCollection = db.collection("tasks");
-    const usersCollection = db.collection("users");
 
     // Get user's role in the workspace
     const workspaceMember = await getWorkspaceMember(

@@ -318,7 +318,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                   <div className="text-center py-12">
                     <Target className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
-                    <p className="text-gray-500">This user hasn't been assigned any tasks yet.</p>
+                    <p className="text-gray-500">This user hasn&apos;t been assigned any tasks yet.</p>
                   </div>
                 ) : (
                   <div className="max-h-96 overflow-y-auto space-y-4">
@@ -365,7 +365,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                   <div className="text-center py-12">
                     <Briefcase className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
-                    <p className="text-gray-500">This user isn't working on any projects yet.</p>
+                    <p className="text-gray-500">This user isn&apos;t working on any projects yet.</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -418,7 +418,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                   <div className="text-center py-12">
                     <Activity className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
-                    <p className="text-gray-500">This user hasn't performed any tracked activities.</p>
+                    <p className="text-gray-500">This user hasn&apos;t performed any tracked activities.</p>
                   </div>
                 ) : (
                   <div className="max-h-96 overflow-y-auto space-y-6">

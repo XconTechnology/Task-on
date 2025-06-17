@@ -128,10 +128,10 @@ export default function TopNavigation() {
                 <DropdownMenuItem className="cursor-pointer">
               <Link
                 href={`/profile/${user?.id}`}
-                className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                className="flex"
               >
-                <User className="mr-3 h-5 w-5" />
-                My Profile
+                <User size={16} className="mr-2 items-center" />
+                 <span className="text-medium">My Profile</span>
               </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer">

@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate")
     const limit = Number.parseInt(searchParams.get("limit") || "50")
 
-    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId)
+    const headerWorkspaceId = request.headers.get("x-workspace-id")
+    const currentWorkspaceId = await getCurrentWorkspaceId(user.userId , headerWorkspaceId || undefined)
 
     if (!currentWorkspaceId) {
       return NextResponse.json({ success: false, error: "No workspace found for user" }, { status: 404 })

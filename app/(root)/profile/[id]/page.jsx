@@ -2,44 +2,50 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
+import Link from "next/link"
 import {
   ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { formatTime} from "@/lib/utils"
+import { formatTime } from "@/lib/utils"
 import { taskApi, projectApi, timeTrackingApi, workspaceApi } from "@/lib/api"
-import type { Task, Project, TimeEntry, User as UserType, PaginatedData, ProfileStats, RecentActivity } from "@/lib/types"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
-import Link from "next/link"
 import ProfileContent from "@/components/profile/profile-page"
-
 
 export default function ProfilePage() {
   const params = useParams()
-  const userId = params.id as string
+  const userId = params.id
 
-  const [user, setUser] = useState<UserType | null>(null)
-  const [stats, setStats] = useState<ProfileStats | null>(null)
-  const [activeProjects, setActiveProjects] = useState<Project[]>([])
+  const [user, setUser] = useState(null)
+  const [stats, setStats] = useState({
+    totalTasks: 0,
+    completedTasks: 0,
+    inProgressTasks: 0,
+    completionRate: 0,
+    totalProjects: 0,
+    activeProjects: 0,
+    totalTimeTracked: 0,
+    thisWeekTime: 0,
+  })
+  const [activeProjects, setActiveProjects] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState(null)
 
-  // Paginated data states
-  const [tasks, setTasks] = useState<PaginatedData<Task>>({
+  const [tasks, setTasks] = useState({
     data: [],
     hasMore: true,
     loading: false,
     page: 1,
   })
 
-  const [activities, setActivities] = useState<PaginatedData<RecentActivity>>({
+  const [activities, setActivities] = useState({
     data: [],
     hasMore: true,
     loading: false,
     page: 1,
   })
 
-  const [timeEntries, setTimeEntries] = useState<PaginatedData<TimeEntry>>({
+  const [timeEntries, setTimeEntries] = useState({
     data: [],
     hasMore: true,
     loading: false,
@@ -57,15 +63,13 @@ export default function ProfilePage() {
       setLoading(true)
       setError(null)
 
-      // Get workspace members to find the user
       const membersRes = await workspaceApi.getMembers()
       if (!membersRes.success || !membersRes.data) {
         setError("Failed to load workspace members")
         return
       }
 
-      // Find the user in workspace members
-      const foundUser = membersRes.data.find((member: any) => member.memberId === userId)
+      const foundUser = membersRes.data.find((member) => member.memberId === userId)
       if (!foundUser) {
         setError("User not found in workspace")
         return
@@ -81,25 +85,26 @@ export default function ProfilePage() {
         updatedAt: new Date().toISOString(),
       })
 
-      // Load initial paginated data
-      await Promise.all([loadTasks(1, true), loadTimeEntries(1, true), loadProjects()])
-    } catch (error) {
-      console.error("Failed to load profile data:", error)
+      await Promise.all([
+        loadTasks(1, true),
+        loadTimeEntries(1, true),
+        loadProjects(),
+      ])
+    } catch (err) {
+      console.error("Failed to load profile data:", err)
       setError("Failed to load profile data")
     } finally {
       setLoading(false)
     }
   }
 
-  const loadTasks = async (page: number, reset = false) => {
+  const loadTasks = async (page, reset = false) => {
     if (tasks.loading) return
-
     setTasks((prev) => ({ ...prev, loading: true }))
 
     try {
       const tasksRes = await taskApi.getTasksByUser(userId)
       if (tasksRes.success && tasksRes.data) {
-        // Simulate pagination (since your API doesn't have pagination yet)
         const limit = 10
         const start = (page - 1) * limit
         const end = start + limit
@@ -113,33 +118,32 @@ export default function ProfilePage() {
           page: hasMore ? page + 1 : page,
         }))
 
-        // Calculate stats on first load
         if (reset) {
-          const completedTasks = tasksRes.data.filter((t) => t.status === "Completed").length
-          const inProgressTasks = tasksRes.data.filter((t) => t.status === "In Progress").length
+          const completed = tasksRes.data.filter((t) => t.status === "Completed").length
+          const inProgress = tasksRes.data.filter((t) => t.status === "In Progress").length
 
           setStats((prev) => ({
             ...prev,
             totalTasks: tasksRes.data.length,
-            completedTasks,
-            inProgressTasks,
-            completionRate: tasksRes.data.length > 0 ? Math.round((completedTasks / tasksRes.data.length) * 100) : 0,
+            completedTasks: completed,
+            inProgressTasks: inProgress,
+            completionRate: tasksRes.data.length > 0
+              ? Math.round((completed / tasksRes.data.length) * 100)
+              : 0,
           }))
 
-          // Generate activities from tasks
           generateActivitiesFromTasks(tasksRes.data)
         }
       }
-    } catch (error) {
-      console.error("Failed to load tasks:", error)
+    } catch (err) {
+      console.error("Failed to load tasks:", err)
     }
 
     setTasks((prev) => ({ ...prev, loading: false }))
   }
 
-  const loadTimeEntries = async (page: number, reset = false) => {
+  const loadTimeEntries = async (page, reset = false) => {
     if (timeEntries.loading) return
-
     setTimeEntries((prev) => ({ ...prev, loading: true }))
 
     try {
@@ -152,30 +156,28 @@ export default function ProfilePage() {
           page: timeRes.pagination?.hasMore ? page + 1 : page,
         }))
 
-        // Calculate time stats on first load
         if (reset) {
-          const totalTime = timeRes.data.reduce((sum, entry) => sum + entry.duration, 0)
-          const thisWeekTime = timeRes.data
+          const total = timeRes.data.reduce((sum, e) => sum + e.duration, 0)
+          const thisWeek = timeRes.data
             .filter((entry) => {
               const entryDate = new Date(entry.startTime)
               const weekAgo = new Date()
               weekAgo.setDate(weekAgo.getDate() - 7)
               return entryDate >= weekAgo
             })
-            .reduce((sum, entry) => sum + entry.duration, 0)
+            .reduce((sum, e) => sum + e.duration, 0)
 
           setStats((prev) => ({
             ...prev,
-            totalTimeTracked: totalTime,
-            thisWeekTime,
+            totalTimeTracked: total,
+            thisWeekTime: thisWeek,
           }))
 
-          // Generate activities from time entries
           generateActivitiesFromTimeEntries(timeRes.data)
         }
       }
-    } catch (error) {
-      console.error("Failed to load time entries:", error)
+    } catch (err) {
+      console.error("Failed to load time entries:", err)
     }
 
     setTimeEntries((prev) => ({ ...prev, loading: false }))
@@ -185,29 +187,27 @@ export default function ProfilePage() {
     try {
       const projectsRes = await projectApi.getProjects()
       if (projectsRes.success && projectsRes.data) {
-        // Filter projects where user has involvement
-        const userProjects = projectsRes.data.filter((project) => project.createdBy === userId)
+        const userProjects = projectsRes.data.filter((p) => p.createdBy === userId)
+        const active = userProjects.filter((p) => p.status === "active")
 
-        setActiveProjects(userProjects.filter((p) => p.status === "active"))
-
+        setActiveProjects(active)
         setStats((prev) => ({
           ...prev,
           totalProjects: userProjects.length,
-          activeProjects: userProjects.filter((p) => p.status === "active").length,
+          activeProjects: active.length,
         }))
       }
-    } catch (error) {
-      console.error("Failed to load projects:", error)
+    } catch (err) {
+      console.error("Failed to load projects:", err)
     }
   }
 
-  const generateActivitiesFromTasks = (taskList: Task[]) => {
-    const taskActivities: RecentActivity[] = []
+  const generateActivitiesFromTasks = (taskList) => {
+    const taskActivities = []
 
-    // Add completed tasks
     const completedTasks = taskList
       .filter((task) => task.status === "Completed")
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
       .slice(0, 5)
 
     completedTasks.forEach((task) => {
@@ -223,10 +223,9 @@ export default function ProfilePage() {
       })
     })
 
-    // Add created tasks
     const createdTasks = taskList
       .filter((task) => task.createdBy === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 3)
 
     createdTasks.forEach((task) => {
@@ -244,14 +243,12 @@ export default function ProfilePage() {
 
     setActivities((prev) => ({
       ...prev,
-      data: [...prev.data, ...taskActivities].sort(
-        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-      ),
+      data: [...prev.data, ...taskActivities].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
     }))
   }
 
-  const generateActivitiesFromTimeEntries = (entries: TimeEntry[]) => {
-    const timeActivities: RecentActivity[] = entries.slice(0, 10).map((entry) => ({
+  const generateActivitiesFromTimeEntries = (entries) => {
+    const timeActivities = entries.slice(0, 10).map((entry) => ({
       id: `time-tracked-${entry.id}`,
       type: "time_tracked",
       title: `Tracked ${formatTime(entry.duration)} on "${entry.taskTitle}"`,
@@ -266,13 +263,10 @@ export default function ProfilePage() {
 
     setActivities((prev) => ({
       ...prev,
-      data: [...prev.data, ...timeActivities].sort(
-        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-      ),
+      data: [...prev.data, ...timeActivities].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
     }))
   }
 
-  // Infinite scroll callbacks
   const loadMoreTasks = useCallback(() => {
     if (!tasks.loading && tasks.hasMore) {
       loadTasks(tasks.page)
@@ -285,20 +279,14 @@ export default function ProfilePage() {
     }
   }, [timeEntries.loading, timeEntries.hasMore, timeEntries.page])
 
-  // Infinite scroll hooks
   const { targetRef: tasksTargetRef } = useInfiniteScroll(loadMoreTasks, tasks.hasMore, tasks.loading)
-  const { targetRef: timeEntriesTargetRef } = useInfiniteScroll(
-    loadMoreTimeEntries,
-    timeEntries.hasMore,
-    timeEntries.loading,
-  )
+  useInfiniteScroll(loadMoreTimeEntries, timeEntries.hasMore, timeEntries.loading)
 
- 
-  const getProjectProgress = (projectId: string) => {
+  const getProjectProgress = (projectId) => {
     const projectTasks = tasks.data.filter((task) => task.projectId === projectId)
     if (projectTasks.length === 0) return 0
-    const completedTasks = projectTasks.filter((task) => task.status === "Completed").length
-    return Math.round((completedTasks / projectTasks.length) * 100)
+    const completed = projectTasks.filter((task) => task.status === "Completed").length
+    return Math.round((completed / projectTasks.length) * 100)
   }
 
   if (loading) {
@@ -327,7 +315,7 @@ export default function ProfilePage() {
   }
 
   return (
-   <ProfileContent
+    <ProfileContent
       user={user}
       stats={stats}
       tasks={tasks}

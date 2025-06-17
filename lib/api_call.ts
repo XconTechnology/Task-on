@@ -73,8 +73,11 @@ export async function apiCall<T>(
       }
     }
 
-    const defaultHeaders: HeadersInit = {
-      "Content-Type": "application/json",
+    const defaultHeaders: HeadersInit = {}
+
+    // Only set Content-Type for non-FormData requests
+    if (!(fetchOptions.body instanceof FormData)) {
+      defaultHeaders["Content-Type"] = "application/json"
     }
 
     // Add workspace ID to headers if available
@@ -125,6 +128,7 @@ export async function apiCall<T>(
     }
   }
 }
+
 
 // Clear cache function for when data changes
 export function clearApiCache(pattern?: string) {
