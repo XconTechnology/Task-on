@@ -178,7 +178,7 @@ export const ListPriorityConfig = {
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.API_BASE_URL || "/api",
+  BASE_URL:"/api",
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
 }

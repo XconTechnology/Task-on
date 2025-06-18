@@ -29,6 +29,7 @@ export default function Sidebar() {
     { id: "teams", label: "Teams", icon: Users, path: "/teams" },
     { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
     { id: "inbox", label: "Notifications", icon: FolderOpen, path: "/inbox" },
+    { id: "documents", label: "Documents", icon: FolderOpen, path: "/documents" },
     {
       id: "analytics",
       label: "Analytics",
