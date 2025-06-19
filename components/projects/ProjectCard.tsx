@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { Project } from "@/lib/types"
 import { getProgressColor, getProgressTextColor } from "@/lib/utils"
 import Link from "next/link"
+import { projectApi } from "@/lib/api"
 
 const ProjectCard = ({
   project,
@@ -24,14 +25,13 @@ const ProjectCard = ({
 
   const fetchProjectStats = async () => {
     try {
-      const response = await fetch(`/api/projects/${project.id}/stats`)
-      const data = await response.json()
-      if (data.success) {
+      const response = await projectApi.getProjectStats(project.id);
+      if (response.success && response.data) {
         setStats({
-          progress: data.data.progress,
-          teamMembers: data.data.teamMembers,
-          totalTasks: data.data.totalTasks,
-          completedTasks: data.data.completedTasks,
+          progress: response.data.progress,
+          teamMembers: response.data.teamMembers,
+          totalTasks: response.data.totalTasks,
+          completedTasks: response.data.completedTasks,
         })
       }
     } catch (error) {
@@ -115,14 +115,14 @@ const ProjectCard = ({
               <Badge
                 variant="secondary"
                 className={
-                  project.status === "active"
+                  project.status === "ongoing"
                     ? "bg-blue-100 text-blue-700"
                     : project.status === "completed"
                     ? "bg-green-100 text-green-700"
                     : "bg-gray-100 text-gray-700"
                 }
               >
-                {project.status === "active" ? "Active" : project.status === "completed" ? "Completed" : "Archived"}
+                {project.status === "ongoing" ? "Active" : project.status === "completed" ? "Completed" : "Archived"}
               </Badge>
               
               <div className="flex items-center">

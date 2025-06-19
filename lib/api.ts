@@ -13,6 +13,7 @@ import type {
   PaginatedDocuments,
   DocumentFilters,
   Document,
+  DashboardStats,
 } from "./types";
 import { apiCall } from "./api_call"; // Import the working apiCall function
 
@@ -517,6 +518,12 @@ export const documentApi = {
   getPreviewUrl: (id: string): string => {
     const currentWorkspaceId = localStorage.getItem("currentWorkspaceId") || ""
     return `/api/documents/${id}/preview?workspaceId=${currentWorkspaceId}`
+  },
+}
+export const dashboardApi = {
+  // Get dashboard stats and data
+  getDashboardData: async (tasksPage = 1, tasksLimit = 10): Promise<ApiResponse<DashboardStats>> => {
+    return apiCall<DashboardStats>(`/dashboard?tasksPage=${tasksPage}&tasksLimit=${tasksLimit}`)
   },
 }
 

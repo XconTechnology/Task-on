@@ -77,19 +77,27 @@ export interface Team {
 }
 
 export interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  workspaceId: string;
-  createdBy: string;
-  teamId?: string;
-  startDate?: string;
-  endDate?: string;
-  status: "active" | "completed" | "archived";
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string
+  description?: string
+  workspaceId: string
+  createdBy: string
+  teamId?: string
+  startDate?: string
+  endDate?: string
+  status: "ongoing" | "completed" | "delayed" | "archived" // Updated status options
+  createdAt: string
+  updatedAt: string
+  // Add completion rate calculation fields
+  totalTasks?: number
+  completedTasks?: number
+  completionRate?: number
+  projectManager?: {
+    id: string
+    username: string
+    email: string
+  }
 }
-
 export enum Priority {
   Urgent = "Urgent",
   High = "High",
@@ -125,6 +133,37 @@ export interface DashboardPageStats {
     low: number;
     backlog: number;
   };
+}
+
+// Add new dashboard stats interface
+export interface DashboardStats {
+  totalTasks: number
+  completedTasks: number
+  inProgressTasks: number
+  todoTasks: number
+  totalProjects: number
+  completedProjects: number
+  ongoingProjects: number
+  delayedProjects: number
+  projectsCompletionRate: number
+  todayTasks: Task[]
+  hasMoreTasks: boolean
+  projectsSummary: ProjectSummary[]
+}
+
+export interface ProjectSummary {
+  id: string
+  name: string
+  projectManager: {
+    id: string
+    username: string
+    email: string
+  }
+  dueDate?: string
+  status: "ongoing" | "completed" | "delayed"
+  completionRate: number
+  totalTasks: number
+  completedTasks: number
 }
 
 export interface SearchResults {

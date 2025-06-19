@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { projectApi } from "@/lib/api" // Import from lib/api
 import { successToast, errorToast } from "@/lib/toast-utils"
-import { Team } from "@/lib/types"
+import type { Team } from "@/lib/types"
 import { teamApi } from "@/lib/api/teams"
 
 type EditProjectModalProps = {
@@ -28,6 +28,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
     startDate: "",
     endDate: "",
     teamId: "none",
+    status: "ongoing", // Added status field
   })
   const [teams, setTeams] = useState<Team[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -42,6 +43,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
         startDate: project.startDate || "",
         endDate: project.endDate || "",
         teamId: project.teamId || "none",
+        status: project.status || "ongoing", // Set status from project
       })
       fetchTeams()
     }
@@ -134,6 +136,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
       startDate: "",
       endDate: "",
       teamId: "none",
+      status: "ongoing",
     })
     setShowDeleteConfirm(false)
     onClose()
@@ -141,6 +144,21 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "text-green-600"
+      case "ongoing":
+        return "text-blue-600"
+      case "delayed":
+        return "text-red-600"
+      case "archived":
+        return "text-gray-600"
+      default:
+        return "text-gray-600"
+    }
   }
 
   if (!project) return null
@@ -222,6 +240,42 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
                 className="w-full resize-none"
                 disabled={isLoading}
               />
+            </div>
+
+            {/* Project Status */}
+            <div className="space-y-2">
+              <label className="text-medium font-medium text-gray-900">Project Status</label>
+              <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                <SelectTrigger className="w-full" disabled={isLoading}>
+                  <SelectValue placeholder="Select project status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ongoing">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      <span>Ongoing</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span>Completed</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="delayed">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <span>Delayed</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="archived">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                      <span>Archived</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Team Assignment */}

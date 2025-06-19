@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, startDate, endDate, teamId } = body
+    const { name, description, startDate, endDate, teamId, status } = body // Added status here
 
     if (!name?.trim()) {
       return NextResponse.json({ success: false, error: "Project name is required" }, { status: 400 })
@@ -74,6 +74,11 @@ export async function PUT(request: NextRequest) {
 
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
       return NextResponse.json({ success: false, error: "End date must be after start date" }, { status: 400 })
+    }
+
+    // Validate status if provided
+    if (status && !["ongoing", "completed", "delayed", "archived"].includes(status)) {
+      return NextResponse.json({ success: false, error: "Invalid project status" }, { status: 400 })
     }
 
     // Get current workspace ID from header or fallback to user's first workspace
@@ -98,20 +103,28 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
+    // Build update object
+    const updateData: any = {
+      name: name.trim(),
+      description: description?.trim() || "",
+      teamId: teamId && teamId !== "none" ? teamId : undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      updatedAt: new Date().toISOString(),
+    }
+
+    // Add status to update if provided
+    if (status) {
+      updateData.status = status
+    }
+
     const updatedProject = await projectsCollection.findOneAndUpdate(
       {
         id: projectId,
         workspaceId: currentWorkspaceId,
       },
       {
-        $set: {
-          name: name.trim(),
-          description: description?.trim() || "",
-          teamId: teamId && teamId !== "none" ? teamId : undefined,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
-          updatedAt: new Date().toISOString(),
-        },
+        $set: updateData,
       },
       { returnDocument: "after" },
     )

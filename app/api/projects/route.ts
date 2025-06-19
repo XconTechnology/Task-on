@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
-    // Create project
+    // Create project using your existing ID generation pattern
     const projectId = `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const newProject: Project = {
       id: projectId,
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       teamId: teamId && teamId !== "none" ? teamId : undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      status: "active",
+      status: "ongoing", // Changed from "active" to "ongoing"
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }

@@ -188,7 +188,7 @@ export default function ProfilePage() {
       const projectsRes = await projectApi.getProjects()
       if (projectsRes.success && projectsRes.data) {
         const userProjects = projectsRes.data.filter((p) => p.createdBy === userId)
-        const active = userProjects.filter((p) => p.status === "active")
+        const active = userProjects.filter((p) => p.status === "ongoing")
 
         setActiveProjects(active)
         setStats((prev) => ({
