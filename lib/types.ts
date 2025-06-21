@@ -59,6 +59,7 @@ export interface TimeTrackingStats {
   monthHours: number;
   avgDailyHours: number;
   productivity: number;
+  totalTimeYear: number;
   weeklyData: Array<{ day: string; hours: number }>;
   projectData: Array<{ project: string; projectId: string; hours: number }>;
   recentEntries: TimeEntry[];
@@ -77,26 +78,26 @@ export interface Team {
 }
 
 export interface Project {
-  id: string
-  name: string
-  description?: string
-  workspaceId: string
-  createdBy: string
-  teamId?: string
-  startDate?: string
-  endDate?: string
-  status: "ongoing" | "completed" | "delayed" | "archived" // Updated status options
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  description?: string;
+  workspaceId: string;
+  createdBy: string;
+  teamId?: string;
+  startDate?: string;
+  endDate?: string;
+  status: "ongoing" | "completed" | "delayed" | "archived"; // Updated status options
+  createdAt: string;
+  updatedAt: string;
   // Add completion rate calculation fields
-  totalTasks?: number
-  completedTasks?: number
-  completionRate?: number
+  totalTasks?: number;
+  completedTasks?: number;
+  completionRate?: number;
   projectManager?: {
-    id: string
-    username: string
-    email: string
-  }
+    id: string;
+    username: string;
+    email: string;
+  };
 }
 export enum Priority {
   Urgent = "Urgent",
@@ -137,33 +138,33 @@ export interface DashboardPageStats {
 
 // Add new dashboard stats interface
 export interface DashboardStats {
-  totalTasks: number
-  completedTasks: number
-  inProgressTasks: number
-  todoTasks: number
-  totalProjects: number
-  completedProjects: number
-  ongoingProjects: number
-  delayedProjects: number
-  projectsCompletionRate: number
-  todayTasks: Task[]
-  hasMoreTasks: boolean
-  projectsSummary: ProjectSummary[]
+  totalTasks: number;
+  completedTasks: number;
+  inProgressTasks: number;
+  todoTasks: number;
+  totalProjects: number;
+  completedProjects: number;
+  ongoingProjects: number;
+  delayedProjects: number;
+  projectsCompletionRate: number;
+  todayTasks: Task[];
+  hasMoreTasks: boolean;
+  projectsSummary: ProjectSummary[];
 }
 
 export interface ProjectSummary {
-  id: string
-  name: string
+  id: string;
+  name: string;
   projectManager: {
-    id: string
-    username: string
-    email: string
-  }
-  dueDate?: string
-  status: "ongoing" | "completed" | "delayed"
-  completionRate: number
-  totalTasks: number
-  completedTasks: number
+    id: string;
+    username: string;
+    email: string;
+  };
+  dueDate?: string;
+  status: "ongoing" | "completed" | "delayed";
+  completionRate: number;
+  totalTasks: number;
+  completedTasks: number;
 }
 
 export interface SearchResults {
@@ -491,63 +492,62 @@ export interface PaginatedDocuments {
 }
 // Attendance-specific types
 export interface AttendanceRecord {
-  id: string
-  userId: string
-  workspaceId: string
-  date: string // YYYY-MM-DD format
-  isPresent: boolean
-  totalTimeWorked: number // in seconds
-  timeEntries: string[] // array of time entry IDs
-  createdAt: string
-  updatedAt: string
+  id: string;
+  userId: string;
+  workspaceId: string;
+  date: string; // YYYY-MM-DD format
+  isPresent: boolean;
+  totalTimeWorked: number; // in seconds
+  timeEntries: string[]; // array of time entry IDs
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AttendanceStats {
-  totalDays: number
-  presentDays: number
-  absentDays: number
-  attendanceRate: number
-  averageHoursPerDay: number
+  totalDays: number;
+  presentDays: number;
+  absentDays: number;
+  attendanceRate: number;
+  averageHoursPerDay: number;
 }
 
 export interface DailyAttendance {
-  date: string
+  date: string;
   users: {
-    userId: string
-    username: string
-    email: string
-    profilePictureUrl?: string
-    isPresent: boolean
-    totalTimeWorked: number
-    timeEntries: number
-  }[]
-  presentCount: number
-  absentCount: number
-  totalUsers: number
+    userId: string;
+    username: string;
+    email: string;
+    profilePictureUrl?: string;
+    isPresent: boolean;
+    totalTimeWorked: number;
+    timeEntries: number;
+  }[];
+  presentCount: number;
+  absentCount: number;
+  totalUsers: number;
 }
 
 export interface AttendanceFilters {
-  startDate?: string
-  endDate?: string
-  userId?: string
-  isPresent?: boolean
+  startDate?: string;
+  endDate?: string;
+  userId?: string;
+  isPresent?: boolean;
 }
 
 export interface MonthlyAttendance {
-  month: string // YYYY-MM format
-  year: number
-  monthName: string
+  month: string; // YYYY-MM format
+  year: number;
+  monthName: string;
   days: {
-    date: string
-    dayName: string
-    presentCount: number
-    absentCount: number
-    totalUsers: number
-    attendanceRate: number
-  }[]
-  stats: AttendanceStats
+    date: string;
+    dayName: string;
+    presentCount: number;
+    absentCount: number;
+    totalUsers: number;
+    attendanceRate: number;
+  }[];
+  stats: AttendanceStats;
 }
-
 
 {
   /*

@@ -124,41 +124,7 @@ export const taskApi = {
     });
   },
 
-  // Get tasks with time-based filtering
-  getTasksByTimeframe: async (timeframe: "today" | "week" | "month") => {
-    try {
-      const now = new Date();
-      let startDate: Date;
-
-      switch (timeframe) {
-        case "today":
-          startDate = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate()
-          );
-          break;
-        case "week":
-          // Start of week (Sunday)
-          const day = now.getDay();
-          startDate = new Date(now);
-          startDate.setDate(now.getDate() - day);
-          break;
-        case "month":
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        default:
-          startDate = new Date(0); // Beginning of time
-      }
-
-      return apiCall<Task[]>(
-        `/tasks?startDate=${startDate.toISOString()}&status=done`
-      );
-    } catch (error) {
-      console.error(`Failed to fetch ${timeframe} tasks:`, error);
-      return { success: false, error: `Failed to fetch ${timeframe} tasks` };
-    }
-  },
+ 
 };
 
 // User API Functions
@@ -427,6 +393,34 @@ export const timeTrackingApi = {
     return apiCall<ActiveTimer>(`/time-tracking/resume/${entryId}`, {
       method: "POST",
     })
+  },
+  // Get time tracking statistics with timeframe and user filtering
+  getStatsWithTimeframe: async (
+    timeframe?: "today" | "week" | "month" | "year" | "all",
+    userId?: string,
+  ): Promise<ApiResponse<TimeTrackingStats>> => {
+    const params = new URLSearchParams()
+    if (timeframe) params.append("timeframe", timeframe)
+    if (userId) params.append("userId", userId)
+
+    const endpoint = `/time-tracking/stats${params.toString() ? `?${params.toString()}` : ""}`
+    return apiCall<TimeTrackingStats>(endpoint)
+  },
+
+  // Get filtered user time entries with pagination
+  getFilteredUserTimeEntries: async (
+    userId: string,
+    timeframe: "today" | "week" | "month" | "year" | "all" = "all",
+    page = 1,
+    limit = 10,
+  ): Promise<ApiResponse<TimeEntry[]>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      timeframe,
+    })
+
+    return apiCall<TimeEntry[]>(`/time-tracking/user/${userId}/filtered?${params.toString()}`)
   },
 }
 

@@ -1,3 +1,7 @@
+"use client"
+
+import type React from "react"
+
 import {
   User,
   Calendar,
@@ -17,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatTime, getActivityIcon, getInitials, getPriorityColor, getStatusColor } from "@/lib/utils"
+import { TimeframeFilter } from "./timeframe-filter"
 import Link from "next/link"
 
 interface ProfileContentProps {
@@ -32,6 +37,12 @@ interface ProfileContentProps {
     thisWeekTime: number
     activeProjects: number
     completionRate: number
+    // New filtered stats
+    filteredTasks?: number
+    filteredProjects?: number
+    filteredHours?: number
+    filteredEntries?: number
+    allTimeHours?: number
   }
   tasks: {
     data: any[]
@@ -43,7 +54,14 @@ interface ProfileContentProps {
   }
   activeProjects: any[]
   tasksTargetRef: React.RefObject<HTMLDivElement>
- getProjectProgress: (projectId: string) => number
+  getProjectProgress: (projectId: string) => number
+  timeframe: string
+  onTimeframeChange: (timeframe: string) => void
+  timeEntries?: {
+    data: any[]
+    loading: boolean
+    hasMore: boolean
+  }
 }
 
 const ProfileContent: React.FC<ProfileContentProps> = ({
@@ -54,9 +72,38 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   activeProjects,
   getProjectProgress,
   tasksTargetRef,
+  timeframe,
+  onTimeframeChange,
 }) => {
+  // Helper function to get the right time value based on timeframe
+  const getTimeValue = () => {
+    if (timeframe === "all") {
+      return stats?.allTimeHours ? `${stats.allTimeHours.toFixed(1)}h` : "0h"
+    } else {
+      return stats?.filteredHours ? `${stats.filteredHours.toFixed(1)}h` : "0h"
+    }
+  }
+
+  // Helper function to get the right time description
+  const getTimeDescription = () => {
+    switch (timeframe) {
+      case "today":
+        return "Today"
+      case "week":
+        return "This week"
+      case "month":
+        return "This month"
+      case "year":
+        return "This year"
+      case "all":
+        return "All time"
+      default:
+        return "This week"
+    }
+  }
+
   return (
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
@@ -83,7 +130,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <div className="w-full justify-between flex gap-4 text-sm text-gray-600 mb-4">
                 <div className="flex items-center space-x-2">
                   <User className="w-4 h-4" />
                   <span>{user.email}</span>
@@ -95,13 +142,20 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               </div>
             </div>
 
-            {/* Back Button */}
-            <Link href="/dashboard">
-              <Button variant="outline">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            </Link>
+          </div>
+        </div>
+      </div>
+
+
+      {/* Timeframe Filter Section */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Activity Overview</h2>
+              <p className="text-sm text-gray-600">Filter activities by time period</p>
+            </div>
+            <TimeframeFilter value={timeframe} onValueChange={onTimeframeChange} />
           </div>
         </div>
       </div>
@@ -113,9 +167,15 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600 mb-1">Total Tasks</p>
-                  <p className="text-3xl font-bold text-blue-900">{stats?.totalTasks || 0}</p>
-                  <p className="text-xs text-blue-600 mt-1">{stats?.completionRate || 0}% completion rate</p>
+                  <p className="text-sm font-medium text-blue-600 mb-1">
+                    Total tasks
+                  </p>
+                  <p className="text-3xl font-bold text-blue-900">
+                    {timeframe === "all" ? stats?.totalTasks || 0 : stats?.filteredTasks || 0}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    {stats?.completionRate || 0}% completion rate
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
                   <Target className="w-6 h-6 text-white" />
@@ -128,9 +188,15 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 mb-1">Completed</p>
-                  <p className="text-3xl font-bold text-green-900">{stats?.completedTasks || 0}</p>
-                  <p className="text-xs text-green-600 mt-1">Tasks finished</p>
+                  <p className="text-sm font-medium text-green-600 mb-1">
+                   Completed
+                  </p>
+                  <p className="text-3xl font-bold text-green-900">
+                    {timeframe === "all" ? stats?.completedTasks || 0 : stats?.filteredProjects || 0}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                   Tasks finished
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
                   <Trophy className="w-6 h-6 text-white" />
@@ -144,12 +210,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-purple-600 mb-1">Time Tracked</p>
-                  <p className="text-3xl font-bold text-purple-900">
-                    {stats?.thisWeekTime
-                      ? formatTime(stats.thisWeekTime).split(":").slice(0, 2).join("h ") + "m"
-                      : "0h"}
-                  </p>
-                  <p className="text-xs text-purple-600 mt-1">This week</p>
+                  <p className="text-3xl font-bold text-purple-900">{getTimeValue()}</p>
+                  <p className="text-xs text-purple-600 mt-1">{getTimeDescription()}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
                   <Clock className="w-6 h-6 text-white" />
@@ -162,9 +224,15 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-orange-600 mb-1">Active Projects</p>
-                  <p className="text-3xl font-bold text-orange-900">{stats?.activeProjects || 0}</p>
-                  <p className="text-xs text-orange-600 mt-1">Currently working on</p>
+                  <p className="text-sm font-medium text-orange-600 mb-1">
+                    Active Projects
+                  </p>
+                  <p className="text-3xl font-bold text-orange-900">
+                    {timeframe === "all" ? stats?.activeProjects || 0 : stats?.filteredProjects || 0}
+                  </p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    Currently working on
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
                   <Briefcase className="w-6 h-6 text-white" />

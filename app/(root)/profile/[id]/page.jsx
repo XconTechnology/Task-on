@@ -3,20 +3,19 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import {
-  ArrowLeft,
-} from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatTime } from "@/lib/utils"
 import { taskApi, projectApi, timeTrackingApi, workspaceApi } from "@/lib/api"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
-import ProfileContent from "@/components/profile/profile-page"
+import ProfileContent from "@/components/profile/profile-content"
 
 export default function ProfilePage() {
   const params = useParams()
   const userId = params.id
 
   const [user, setUser] = useState(null)
+  const [timeframe, setTimeframe] = useState("all")
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -26,6 +25,12 @@ export default function ProfilePage() {
     activeProjects: 0,
     totalTimeTracked: 0,
     thisWeekTime: 0,
+    // New filtered stats
+    filteredTasks: 0,
+    filteredProjects: 0,
+    filteredHours: 0,
+    filteredEntries: 0,
+    allTimeHours: 0,
   })
   const [activeProjects, setActiveProjects] = useState([])
   const [loading, setLoading] = useState(true)
@@ -58,6 +63,13 @@ export default function ProfilePage() {
     }
   }, [userId])
 
+  // Reload data when timeframe changes
+  useEffect(() => {
+    if (userId && user) {
+      loadFilteredData()
+    }
+  }, [timeframe, userId, user])
+
   const loadInitialData = async () => {
     try {
       setLoading(true)
@@ -85,16 +97,46 @@ export default function ProfilePage() {
         updatedAt: new Date().toISOString(),
       })
 
-      await Promise.all([
-        loadTasks(1, true),
-        loadTimeEntries(1, true),
-        loadProjects(),
-      ])
+      await Promise.all([loadProjects(), loadFilteredData()])
     } catch (err) {
       console.error("Failed to load profile data:", err)
       setError("Failed to load profile data")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadFilteredData = async () => {
+    try {
+      // Load time tracking stats with timeframe
+      const timeStatsRes = await timeTrackingApi.getStatsWithTimeframe(timeframe, userId)
+      if (timeStatsRes.success && timeStatsRes.data) {
+        const timeStats = timeStatsRes.data
+
+        setStats((prev) => ({
+          ...prev,
+          totalTimeTracked: timeStats.monthHours * 3600, // Convert to seconds for compatibility
+          thisWeekTime: timeStats.weekHours * 3600,
+          filteredHours: timeStats.filteredHours,
+          filteredProjects: timeStats.filteredProjects,
+          filteredTasks: timeStats.filteredTasks,
+          filteredEntries: timeStats.filteredEntries,
+          allTimeHours: timeStats.allTimeHours,
+        }))
+
+        // Set initial time entries from stats
+        setTimeEntries({
+          data: timeStats.recentEntries || [],
+          hasMore: timeStats.totalFilteredEntries > 10,
+          loading: false,
+          page: timeStats.totalFilteredEntries > 10 ? 2 : 1,
+        })
+      }
+
+      // Load tasks (always load all tasks for user, then filter in UI)
+      await loadTasks(1, true)
+    } catch (err) {
+      console.error("Failed to load filtered data:", err)
     }
   }
 
@@ -105,11 +147,14 @@ export default function ProfilePage() {
     try {
       const tasksRes = await taskApi.getTasksByUser(userId)
       if (tasksRes.success && tasksRes.data) {
+        // Filter tasks based on timeframe
+        const filteredTasks = filterTasksByTimeframe(tasksRes.data, timeframe)
+
         const limit = 10
         const start = (page - 1) * limit
         const end = start + limit
-        const paginatedTasks = tasksRes.data.slice(start, end)
-        const hasMore = end < tasksRes.data.length
+        const paginatedTasks = filteredTasks.slice(start, end)
+        const hasMore = end < filteredTasks.length
 
         setTasks((prev) => ({
           data: reset ? paginatedTasks : [...prev.data, ...paginatedTasks],
@@ -119,20 +164,25 @@ export default function ProfilePage() {
         }))
 
         if (reset) {
-          const completed = tasksRes.data.filter((t) => t.status === "Completed").length
-          const inProgress = tasksRes.data.filter((t) => t.status === "In Progress").length
+          const completed = filteredTasks.filter((t) => t.status === "Completed").length
+          const inProgress = filteredTasks.filter((t) => t.status === "In Progress").length
 
           setStats((prev) => ({
             ...prev,
-            totalTasks: tasksRes.data.length,
-            completedTasks: completed,
-            inProgressTasks: inProgress,
-            completionRate: tasksRes.data.length > 0
-              ? Math.round((completed / tasksRes.data.length) * 100)
-              : 0,
+            totalTasks: tasksRes.data.length, // All tasks
+            completedTasks: tasksRes.data.filter((t) => t.status === "Completed").length,
+            inProgressTasks: tasksRes.data.filter((t) => t.status === "In Progress").length,
+            completionRate:
+              tasksRes.data.length > 0
+                ? Math.round(
+                    (tasksRes.data.filter((t) => t.status === "Completed").length / tasksRes.data.length) * 100,
+                  )
+                : 0,
+            filteredTasks: filteredTasks.length, // Filtered tasks
           }))
 
-          generateActivitiesFromTasks(tasksRes.data)
+          // Generate activities from both tasks and time entries
+          generateCombinedActivities(filteredTasks, timeEntries.data)
         }
       }
     } catch (err) {
@@ -147,7 +197,7 @@ export default function ProfilePage() {
     setTimeEntries((prev) => ({ ...prev, loading: true }))
 
     try {
-      const timeRes = await timeTrackingApi.getUserTimeEntries(userId, page, 10)
+      const timeRes = await timeTrackingApi.getFilteredUserTimeEntries(userId, timeframe, page, 10)
       if (timeRes.success && timeRes.data) {
         setTimeEntries((prev) => ({
           data: reset ? timeRes.data : [...prev.data, ...timeRes.data],
@@ -157,23 +207,8 @@ export default function ProfilePage() {
         }))
 
         if (reset) {
-          const total = timeRes.data.reduce((sum, e) => sum + e.duration, 0)
-          const thisWeek = timeRes.data
-            .filter((entry) => {
-              const entryDate = new Date(entry.startTime)
-              const weekAgo = new Date()
-              weekAgo.setDate(weekAgo.getDate() - 7)
-              return entryDate >= weekAgo
-            })
-            .reduce((sum, e) => sum + e.duration, 0)
-
-          setStats((prev) => ({
-            ...prev,
-            totalTimeTracked: total,
-            thisWeekTime: thisWeek,
-          }))
-
-          generateActivitiesFromTimeEntries(timeRes.data)
+          // Regenerate activities when time entries are reset
+          generateCombinedActivities(tasks.data, timeRes.data)
         }
       }
     } catch (err) {
@@ -202,16 +237,50 @@ export default function ProfilePage() {
     }
   }
 
-  const generateActivitiesFromTasks = (taskList) => {
-    const taskActivities = []
+  // Filter tasks by timeframe
+  const filterTasksByTimeframe = (taskList, timeframe) => {
+    if (timeframe === "all") return taskList
 
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    let startDate
+
+    switch (timeframe) {
+      case "today":
+        startDate = today
+        break
+      case "week":
+        startDate = new Date(today)
+        startDate.setDate(today.getDate() - today.getDay())
+        break
+      case "month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      case "year":
+        startDate = new Date(now.getFullYear(), 0, 1)
+        break
+      default:
+        return taskList
+    }
+
+    return taskList.filter((task) => {
+      const taskDate = new Date(task.updatedAt)
+      return taskDate >= startDate
+    })
+  }
+
+  // Generate combined activities from both tasks and time entries
+  const generateCombinedActivities = (taskList, timeEntriesList) => {
+    const allActivities = []
+
+    // Generate task activities
     const completedTasks = taskList
       .filter((task) => task.status === "Completed")
       .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
       .slice(0, 5)
 
     completedTasks.forEach((task) => {
-      taskActivities.push({
+      allActivities.push({
         id: `task-completed-${task.id}`,
         type: "task_completed",
         title: `Completed "${task.title}"`,
@@ -229,7 +298,7 @@ export default function ProfilePage() {
       .slice(0, 3)
 
     createdTasks.forEach((task) => {
-      taskActivities.push({
+      allActivities.push({
         id: `task-created-${task.id}`,
         type: "task_created",
         title: `Created "${task.title}"`,
@@ -241,18 +310,12 @@ export default function ProfilePage() {
       })
     })
 
-    setActivities((prev) => ({
-      ...prev,
-      data: [...prev.data, ...taskActivities].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
-    }))
-  }
-
-  const generateActivitiesFromTimeEntries = (entries) => {
-    const timeActivities = entries.slice(0, 10).map((entry) => ({
+    // Generate time tracking activities
+    const timeActivities = timeEntriesList.slice(0, 10).map((entry) => ({
       id: `time-tracked-${entry.id}`,
       type: "time_tracked",
-      title: `Tracked ${formatTime(entry.duration)} on "${entry.taskTitle}"`,
-      description: `Worked on ${entry.taskTitle} for ${formatTime(entry.duration)}`,
+      title: `Tracked ${formatTime(entry.duration)} on "${entry.taskTitle || "Unknown Task"}"`,
+      description: `Worked on ${entry.taskTitle || "Unknown Task"} for ${formatTime(entry.duration)}`,
       timestamp: entry.endTime || entry.startTime,
       taskId: entry.taskId,
       projectId: entry.projectId,
@@ -261,9 +324,13 @@ export default function ProfilePage() {
       projectName: entry.projectName,
     }))
 
+    // Combine and sort all activities
+    allActivities.push(...timeActivities)
+    const sortedActivities = allActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+
     setActivities((prev) => ({
       ...prev,
-      data: [...prev.data, ...timeActivities].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
+      data: sortedActivities,
     }))
   }
 
@@ -323,7 +390,9 @@ export default function ProfilePage() {
       activeProjects={activeProjects}
       tasksTargetRef={tasksTargetRef}
       getProjectProgress={getProjectProgress}
-      formatTime={formatTime}
+      timeframe={timeframe}
+      onTimeframeChange={setTimeframe}
+      timeEntries={timeEntries}
     />
   )
 }
