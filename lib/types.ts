@@ -1,4 +1,4 @@
-// Add this interface to your types.ts file
+// lib/types.ts
 export interface User {
   id: string;
   username: string;
@@ -489,6 +489,65 @@ export interface PaginatedDocuments {
   total: number;
   page: number;
 }
+// Attendance-specific types
+export interface AttendanceRecord {
+  id: string
+  userId: string
+  workspaceId: string
+  date: string // YYYY-MM-DD format
+  isPresent: boolean
+  totalTimeWorked: number // in seconds
+  timeEntries: string[] // array of time entry IDs
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AttendanceStats {
+  totalDays: number
+  presentDays: number
+  absentDays: number
+  attendanceRate: number
+  averageHoursPerDay: number
+}
+
+export interface DailyAttendance {
+  date: string
+  users: {
+    userId: string
+    username: string
+    email: string
+    profilePictureUrl?: string
+    isPresent: boolean
+    totalTimeWorked: number
+    timeEntries: number
+  }[]
+  presentCount: number
+  absentCount: number
+  totalUsers: number
+}
+
+export interface AttendanceFilters {
+  startDate?: string
+  endDate?: string
+  userId?: string
+  isPresent?: boolean
+}
+
+export interface MonthlyAttendance {
+  month: string // YYYY-MM format
+  year: number
+  monthName: string
+  days: {
+    date: string
+    dayName: string
+    presentCount: number
+    absentCount: number
+    totalUsers: number
+    attendanceRate: number
+  }[]
+  stats: AttendanceStats
+}
+
 
 {
   /*
