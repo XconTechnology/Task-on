@@ -25,7 +25,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: Home, path: "/dashboard" },
-    { id: "projects", label: "Projects", icon: FolderOpen, path: "/projects" },
+    { id: "projects", label: "Project", icon: FolderOpen, path: "/projects" },
     { id: "teams", label: "Teams", icon: Users, path: "/teams" },
     { id: "inbox", label: "Notifications", icon: FolderOpen, path: "/inbox" },
     { id: "documents", label: "Documents", icon: FolderOpen, path: "/documents" },
