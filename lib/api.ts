@@ -25,6 +25,10 @@ export const projectApi = {
   getProjects: async (): Promise<ApiResponse<Project[]>> => {
     return apiCall<Project[]>("/projects");
   },
+  // Get projects by user ID
+  getProjectsByUser: async (userId: string): Promise<ApiResponse<Project[]>> => {
+    return apiCall<Project[]>(`/projects/user/${userId}`)
+  },
 
   // Get project by ID
   getProject: async (id: string): Promise<ApiResponse<Project>> => {

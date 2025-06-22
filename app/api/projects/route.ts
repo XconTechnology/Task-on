@@ -24,11 +24,27 @@ export async function GET(request: NextRequest) {
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
 
-    // Get all projects in the workspace
-    const projects = await projectsCollection
-      .find({ workspaceId: currentWorkspaceId })
-      .sort({ createdAt: -1 })
-      .toArray()
+    // Get user's role in the workspace
+    const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
+    if (!workspaceMember) {
+      return NextResponse.json({ success: false, error: "Not a member of current workspace" }, { status: 403 })
+    }
+
+    const userRole = getUserRole(workspaceMember.role)
+
+    let projectsQuery: any = { workspaceId: currentWorkspaceId }
+
+    // Filter projects based on user role
+    if (userRole === "Member") {
+      // Members can only see projects they are assigned to
+      projectsQuery = {
+        workspaceId: currentWorkspaceId,
+        $or: [{ assignedMembers: user.userId }, { createdBy: user.userId }],
+      }
+    }
+    // Owners and Admins can see all projects (no additional filter needed)
+
+    const projects = await projectsCollection.find(projectsQuery).sort({ createdAt: -1 }).toArray()
 
     return NextResponse.json({
       success: true,
@@ -75,6 +91,7 @@ export async function POST(request: NextRequest) {
 
     const db = await getDatabase()
     const projectsCollection = db.collection("projects")
+    const teamsCollection = db.collection("teams")
 
     // Get user's role in the workspace
     const workspaceMember = await getWorkspaceMember(user.userId, currentWorkspaceId)
@@ -87,6 +104,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Insufficient permissions" }, { status: 403 })
     }
 
+    // Handle team assignment and auto-populate assignedMembers
+    let finalAssignedMembers = assignedMembers || []
+
+    if (teamId && teamId !== "none") {
+      // Get team members from the team
+      const team = await teamsCollection.findOne({
+        id: teamId,
+        workspaceId: currentWorkspaceId,
+      })
+
+      if (team && team.members && Array.isArray(team.members)) {
+        // Extract member IDs from team members
+        const teamMemberIds = team.members.map((member: any) => member.memberId || member.userId || member.id)
+
+        // Combine existing assigned members with team members (remove duplicates)
+        const combinedMembers = [...new Set([...finalAssignedMembers, ...teamMemberIds])]
+        finalAssignedMembers = combinedMembers
+      }
+    }
+
     // Create project using your existing ID generation pattern
     const projectId = `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const newProject: Project = {
@@ -96,10 +133,10 @@ export async function POST(request: NextRequest) {
       workspaceId: currentWorkspaceId,
       createdBy: user.userId,
       teamId: teamId && teamId !== "none" ? teamId : undefined,
-      assignedMembers: assignedMembers && assignedMembers.length > 0 ? assignedMembers : undefined,
+      assignedMembers: finalAssignedMembers.length > 0 ? finalAssignedMembers : undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      status: "ongoing", // Changed from "active" to "ongoing"
+      status: "ongoing",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
