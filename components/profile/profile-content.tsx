@@ -11,7 +11,6 @@ import {
   Briefcase,
   Activity,
   ChevronRight,
-  ArrowLeft,
   Loader2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +21,6 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatTime, getActivityIcon, getInitials, getPriorityColor, getStatusColor } from "@/lib/utils"
 import { TimeframeFilter } from "./timeframe-filter"
-import Link from "next/link"
 
 interface ProfileContentProps {
   user: {

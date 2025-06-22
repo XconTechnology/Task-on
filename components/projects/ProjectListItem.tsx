@@ -71,7 +71,7 @@ const  ProjectListItem =({
                   variant="secondary"
                   className="bg-green-100 text-green-700"
                 >
-                  {project.status === "active"
+                  {project.status === "ongoing"
                     ? "Active"
                     : project.status === "completed"
                     ? "Completed"

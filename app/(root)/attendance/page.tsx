@@ -108,7 +108,7 @@ export default function AttendancePage() {
         </div>
         <Button onClick={calculateTodayAttendance} disabled={loading} className="shadow-sm">
           <Sparkles className="w-4 h-4 mr-2" />
-          Calculate Today's Attendance
+          Calculate Today&apos;s Attendance
         </Button>
       </div>
 

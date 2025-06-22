@@ -3,15 +3,19 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { X, FolderOpen, Calendar } from "lucide-react"
+import { X, FolderOpen, Calendar, Users, User, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { projectApi } from "@/lib/api" // Import from lib/api
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { projectApi, workspaceApi } from "@/lib/api"
 import { successToast, errorToast } from "@/lib/toast-utils"
-import { Team } from "@/lib/types"
+import type { Team } from "@/lib/types"
 import { teamApi } from "@/lib/api/teams"
 
 type CreateProjectModalProps = {
@@ -26,22 +30,26 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
     description: "",
     startDate: "",
     endDate: "",
-    teamId: "none", // Updated default value to be a non-empty string
+    teamId: "none",
+    assignedMembers: [] as string[],
   })
   const [teams, setTeams] = useState<Team[]>([])
+  const [members, setMembers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingTeams, setIsLoadingTeams] = useState(false)
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false)
+  const [assignmentType, setAssignmentType] = useState<"team" | "members">("team")
 
   useEffect(() => {
     if (isOpen) {
       fetchTeams()
+      fetchMembers()
     }
   }, [isOpen])
 
   const fetchTeams = async () => {
     setIsLoadingTeams(true)
     try {
-      // Using teamApi from lib/api instead of direct fetch
       const response = await teamApi.getTeams()
       if (response.success) {
         setTeams(response.data || [])
@@ -53,14 +61,35 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
     }
   }
 
+  const fetchMembers = async () => {
+    setIsLoadingMembers(true)
+    try {
+      const response = await workspaceApi.getMembers()
+      if (response.success) {
+        setMembers(response.data || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch members:", error)
+    } finally {
+      setIsLoadingMembers(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name.trim()) return
 
     setIsLoading(true)
     try {
-      // Using projectApi from lib/api instead of direct fetch
-      const response = await projectApi.createProject(formData)
+      const projectData = {
+        ...formData,
+        // Only include teamId if assignment type is team
+        teamId: assignmentType === "team" ? formData.teamId : "none",
+        // Only include assignedMembers if assignment type is members and there are selected members
+        assignedMembers: assignmentType === "members" ? formData.assignedMembers : [],
+      }
+
+      const response = await projectApi.createProject(projectData)
 
       if (response.success) {
         successToast({
@@ -92,8 +121,10 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
       description: "",
       startDate: "",
       endDate: "",
-      teamId: "none", // Updated default value to be a non-empty string
+      teamId: "none",
+      assignedMembers: [],
     })
+    setAssignmentType("team")
     onClose()
   }
 
@@ -101,9 +132,32 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const toggleMemberAssignment = (memberId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      assignedMembers: prev.assignedMembers.includes(memberId)
+        ? prev.assignedMembers.filter((id) => id !== memberId)
+        : [...prev.assignedMembers, memberId],
+    }))
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  const getSelectedMembersInfo = () => {
+    const selectedMembers = members.filter((member) => formData.assignedMembers.includes(member.memberId))
+    return selectedMembers
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-white">
+      <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold text-gray-900">Create New Project</DialogTitle>
@@ -113,7 +167,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
           {/* Project Name */}
           <div className="space-y-2">
             <label htmlFor="name" className="text-medium font-medium text-gray-900">
@@ -146,22 +200,110 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
             />
           </div>
 
-          {/* Team Assignment */}
-          <div className="space-y-2">
-            <label className="text-medium font-medium text-gray-900">Assign to Team (Optional)</label>
-            <Select value={formData.teamId} onValueChange={(value) => handleInputChange("teamId", value)}>
-              <SelectTrigger className="w-full" disabled={isLoadingTeams || isLoading}>
-                <SelectValue placeholder={isLoadingTeams ? "Loading teams..." : "Select a team"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No team</SelectItem> {/* Updated value prop to be a non-empty string */}
-                {teams.map((team: any) => (
-                  <SelectItem key={team.id} value={team.id}>
-                    {team.teamName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Assignment Type Selection */}
+          <div className="space-y-4">
+            <label className="text-medium font-medium text-gray-900">Assignment</label>
+            <Tabs value={assignmentType} onValueChange={(value) => setAssignmentType(value as "team" | "members")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="team" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Assign to Team
+                </TabsTrigger>
+                <TabsTrigger value="members" className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Assign to Members
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="team" className="space-y-2 mt-4">
+                <Select value={formData.teamId} onValueChange={(value) => handleInputChange("teamId", value)}>
+                  <SelectTrigger className="w-full" disabled={isLoadingTeams || isLoading}>
+                    <SelectValue placeholder={isLoadingTeams ? "Loading teams..." : "Select a team"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No team</SelectItem>
+                    {teams.map((team: any) => (
+                      <SelectItem key={team.id} value={team.id}>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          {team.teamName}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TabsContent>
+
+              <TabsContent value="members" className="space-y-4 mt-4">
+                {/* Selected Members Summary */}
+                {formData.assignedMembers.length > 0 && (
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-900">
+                        {formData.assignedMembers.length} member(s) selected
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {getSelectedMembersInfo().map((member) => (
+                        <Badge key={member.memberId} variant="secondary" className="bg-blue-100 text-blue-800">
+                          {member.username}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Members List */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Select Members</label>
+                  <ScrollArea className="h-48 border rounded-lg p-2">
+                    {isLoadingMembers ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      </div>
+                    ) : members.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No members found</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {members.map((member) => (
+                          <div
+                            key={member.memberId}
+                            onClick={() => toggleMemberAssignment(member.memberId)}
+                            className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                              formData.assignedMembers.includes(member.memberId)
+                                ? "bg-blue-50 border-2 border-blue-200 shadow-sm"
+                                : "bg-gray-50 border-2 border-transparent hover:bg-gray-100 hover:border-gray-200"
+                            }`}
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={member.profilePictureUrl || "/placeholder.svg"} />
+                              <AvatarFallback className="text-xs font-medium bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                                {getInitials(member.username)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{member.username}</p>
+                              <p className="text-xs text-gray-500 truncate">{member.email}</p>
+                            </div>
+                            {formData.assignedMembers.includes(member.memberId) && (
+                              <div className="flex-shrink-0">
+                                <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                                  <Check className="w-3 h-3 text-white" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Dates */}

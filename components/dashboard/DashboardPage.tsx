@@ -48,13 +48,12 @@ const TIME_STATS_DATA = [
 interface DashboardPageProps {
   user: UserType
   dashboardData: DashboardStats
-  taskStats: DashboardPageStats
+  taskStats: any
   onLoadMoreTasks: () => void
   loadingMoreTasks: boolean
 }
 
 export default function DashboardPage({
-  user,
   dashboardData,
   taskStats,
   onLoadMoreTasks,
@@ -86,15 +85,6 @@ export default function DashboardPage({
       ? dashboardData.todayTasks
       : dashboardData.todayTasks.filter((task) => task.status === taskStatusFilter)
 
-  // Time-based stats data
-  const timeBasedData = [
-    { name: "Jan", tasks: 65, projects: 8 },
-    { name: "Feb", tasks: 78, projects: 12 },
-    { name: "Mar", tasks: 90, projects: 15 },
-    { name: "Apr", tasks: 81, projects: 18 },
-    { name: "May", tasks: 95, projects: 22 },
-    { name: "Jun", tasks: 88, projects: 20 },
-  ]
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -502,7 +492,7 @@ export default function DashboardPage({
         {/* Today Tasks - Made Scrollable */}
         <Card className="bg-white shadow-lg border-0 rounded-xl overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl font-bold text-gray-900">Today's Tasks</CardTitle>
+            <CardTitle className="text-xl font-bold text-gray-900">Today&apos;s Tasks</CardTitle>
             <div className="flex items-center gap-3">
               <Filter className="h-4 w-4 text-gray-400" />
               <Select value={taskStatusFilter} onValueChange={setTaskStatusFilter}>

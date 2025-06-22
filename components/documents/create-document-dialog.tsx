@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Upload, X } from "lucide-react"
 import { documentApi, projectApi, taskApi } from "@/lib/api"
 import type { Project, Task } from "@/lib/types"
@@ -154,7 +155,7 @@ export function CreateDocumentDialog({ open, onOpenChange, onSuccess }: CreateDo
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
           <DialogDescription>
@@ -162,108 +163,110 @@ export function CreateDocumentDialog({ open, onOpenChange, onSuccess }: CreateDo
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label>File *</Label>
-            {!selectedFile ? (
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm text-gray-600">Click to upload or drag and drop</p>
-                <p className="text-xs text-gray-500 mt-1">Max file size: 50MB</p>
-              </div>
-            ) : (
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">{selectedFile.name}</p>
-                    <p className="text-xs text-gray-500">{formatFileSize(selectedFile.size)}</p>
-                  </div>
-                  <Button type="button" variant="ghost" size="sm" onClick={handleRemoveFile}>
-                    <X className="h-4 w-4" />
-                  </Button>
+        <ScrollArea className="max-h-[calc(90vh-200px)] overflow-y-auto pr-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label>File *</Label>
+              {!selectedFile ? (
+                <div
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600">Click to upload or drag and drop</p>
+                  <p className="text-xs text-gray-500 mt-1">Max file size: 50MB</p>
                 </div>
-              </div>
-            )}
-            <input ref={fileInputRef} type="file" onChange={handleFileSelect} className="hidden" accept="*/*" />
-          </div>
+              ) : (
+                <div className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{selectedFile.name}</p>
+                      <p className="text-xs text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" onClick={handleRemoveFile}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              <input ref={fileInputRef} type="file" onChange={handleFileSelect} className="hidden" accept="*/*" />
+            </div>
 
-          {/* Document Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Document Name *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter document name"
-              required
-            />
-          </div>
+            {/* Document Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Document Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter document name"
+                required
+              />
+            </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter document description (optional)"
-              rows={3}
-            />
-          </div>
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter document description (optional)"
+                rows={3}
+              />
+            </div>
 
-          {/* Project Selection */}
-          <div className="space-y-2">
-            <Label>Project (Optional)</Label>
-            <Select value={selectedProject} onValueChange={setSelectedProject}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Project</SelectItem>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Project Selection */}
+            <div className="space-y-2">
+              <Label>Project (Optional)</Label>
+              <Select value={selectedProject} onValueChange={setSelectedProject}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Project</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Task Selection */}
-          <div className="space-y-2">
-            <Label>Task (Optional)</Label>
-            <Select value={selectedTask} onValueChange={setSelectedTask}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a task" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Task</SelectItem>
-                {tasks.map((task) => (
-                  <SelectItem key={task.id} value={task.id}>
-                    {task.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Task Selection */}
+            <div className="space-y-2">
+              <Label>Task (Optional)</Label>
+              <Select value={selectedTask} onValueChange={setSelectedTask}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a task" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Task</SelectItem>
+                  {tasks.map((task) => (
+                    <SelectItem key={task.id} value={task.id}>
+                      {task.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </form>
+        </ScrollArea>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!selectedFile || !formData.name.trim() || loading}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              {loading ? "Uploading..." : "Upload Document"}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter className="border-t pt-4">
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!selectedFile || !formData.name.trim() || loading}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
+            {loading ? "Uploading..." : "Upload Document"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

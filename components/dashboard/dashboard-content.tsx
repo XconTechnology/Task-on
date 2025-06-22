@@ -3,10 +3,14 @@
 import { useEffect, useState } from "react";
 import { useUser } from "@/lib/user-context";
 import { dashboardApi, taskApi } from "@/lib/api";
-import { Status, type DashboardPageStats, type DashboardStats } from "@/lib/types";
+import { Status,  type DashboardStats } from "@/lib/types";
 import DashboardSkeleton from "./DashboardSkeleton";
 import DashboardPage from "./DashboardPage";
-
+interface TaskCompletionStats {
+  todayCompletedTasks: number;
+  weekCompletedTasks: number;
+  monthCompletedTasks: number;
+}
 export default function DashboardContent() {
   const { user } = useUser();
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(
@@ -16,7 +20,7 @@ export default function DashboardContent() {
   const [tasksPage, setTasksPage] = useState(1);
   const [loadingMoreTasks, setLoadingMoreTasks] = useState(false);
 
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState<TaskCompletionStats>();
   const fetchData = async () => {
     try {
       const response = await taskApi.getALLTasks();

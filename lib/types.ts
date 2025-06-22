@@ -78,27 +78,30 @@ export interface Team {
 }
 
 export interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  workspaceId: string;
-  createdBy: string;
-  teamId?: string;
-  startDate?: string;
-  endDate?: string;
-  status: "ongoing" | "completed" | "delayed" | "archived"; // Updated status options
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string
+  description?: string
+  workspaceId: string
+  createdBy: string
+  teamId?: string
+  // NEW: Add member assignments
+  assignedMembers?: string[] // Array of user IDs assigned to this project
+  startDate?: string
+  endDate?: string
+  status: "ongoing" | "completed" | "delayed" | "archived" // Updated status options
+  createdAt: string
+  updatedAt: string
   // Add completion rate calculation fields
-  totalTasks?: number;
-  completedTasks?: number;
-  completionRate?: number;
+  totalTasks?: number
+  completedTasks?: number
+  completionRate?: number
   projectManager?: {
-    id: string;
-    username: string;
-    email: string;
-  };
+    id: string
+    username: string
+    email: string
+  }
 }
+
 export enum Priority {
   Urgent = "Urgent",
   High = "High",

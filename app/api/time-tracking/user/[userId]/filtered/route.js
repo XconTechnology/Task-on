@@ -3,7 +3,7 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
-export async function GET(request: Request, { params }: { params: { userId: string } }) {
+export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
 
@@ -31,8 +31,8 @@ export async function GET(request: Request, { params }: { params: { userId: stri
     // Calculate date range based on timeframe
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    let startDate: Date | null = null
-    let endDate: Date | null = null
+    let startDate = null
+    let endDate = null
 
     switch (timeframe) {
       case "today":
@@ -60,7 +60,7 @@ export async function GET(request: Request, { params }: { params: { userId: stri
     }
 
     // Build query
-    const query: any = {
+    const query = {
       userId: userId,
       workspaceId: currentWorkspaceId,
       isRunning: false, // Only completed time entries

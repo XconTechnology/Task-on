@@ -3,7 +3,7 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
-export async function GET(request: Request, { params }: { params: { userId: string } }) {
+export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -27,7 +27,7 @@ export async function GET(request: Request, { params }: { params: { userId: stri
     const usersCollection = db.collection("users")
 
     // Build query
-    const query: any = {
+    const query = {
       userId,
       workspaceId: currentWorkspaceId,
     }

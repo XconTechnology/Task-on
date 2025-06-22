@@ -4,9 +4,8 @@ import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, FileText, Filter } from "lucide-react"
+import { Plus, Search, FileText } from "lucide-react"
 import { documentApi, projectApi, taskApi } from "@/lib/api"
-import { useUser } from "@/lib/user-context"
 import { DocumentCard } from "@/components/documents/document-card"
 import { DocumentSkeletonGrid } from "@/components/documents/document-skeleton"
 import { CreateDocumentDialog } from "@/components/documents/create-document-dialog"
@@ -14,7 +13,6 @@ import { EditDocumentDialog } from "@/components/documents/edit-document-dialog"
 import type { Document, Project, Task } from "@/lib/types"
 
 export default function DocumentsPage() {
-  const { currentWorkspace } = useUser()
   const [allDocuments, setAllDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)

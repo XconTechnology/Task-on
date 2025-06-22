@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, startDate, endDate, teamId } = body
+    const { name, description, startDate, endDate, teamId, assignedMembers } = body
 
     // Validation
     if (!name?.trim()) {
@@ -58,6 +58,11 @@ export async function POST(request: NextRequest) {
 
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
       return NextResponse.json({ success: false, error: "End date must be after start date" }, { status: 400 })
+    }
+
+    // Validate assignedMembers if provided
+    if (assignedMembers && !Array.isArray(assignedMembers)) {
+      return NextResponse.json({ success: false, error: "Assigned members must be an array" }, { status: 400 })
     }
 
     // Try to get workspace ID from header first, then fallback to user's workspace
@@ -91,6 +96,7 @@ export async function POST(request: NextRequest) {
       workspaceId: currentWorkspaceId,
       createdBy: user.userId,
       teamId: teamId && teamId !== "none" ? teamId : undefined,
+      assignedMembers: assignedMembers && assignedMembers.length > 0 ? assignedMembers : undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       status: "ongoing", // Changed from "active" to "ongoing"

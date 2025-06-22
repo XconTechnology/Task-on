@@ -1,10 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
+import {  NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
-import type { DashboardStats, ProjectSummary } from "@/lib/types"
 
-export async function GET(request: NextRequest) {
+export async function GET(request) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -111,7 +110,7 @@ export async function GET(request: NextRequest) {
         acc[user.id] = user
         return acc
       },
-      {} as Record<string, any>,
+      {},
     )
 
     // Populate tasks with user data
@@ -134,15 +133,15 @@ export async function GET(request: NextRequest) {
         acc[manager.id] = manager
         return acc
       },
-      {} as Record<string, any>,
+      {} ,
     )
 
-    const projectsSummary: ProjectSummary[] = projectsWithTasks.map((project) => ({
+    const projectsSummary = projectsWithTasks.map((project) => ({
       id: project.id,
       name: project.name,
       projectManager: managerMap[project.createdBy] || { id: project.createdBy, username: "Unknown", email: "" },
       dueDate: project.endDate,
-      status: project.status as "ongoing" | "completed" | "delayed",
+      status: project.status ,
       completionRate: project.completionRate,
       totalTasks: project.totalTasks,
       completedTasks: project.completedTasks,
@@ -150,7 +149,7 @@ export async function GET(request: NextRequest) {
 
     const hasMoreTasks = totalUserTasks > tasksPage * tasksLimit
 
-    const dashboardStats: DashboardStats = {
+    const dashboardStats= {
       totalTasks,
       completedTasks,
       inProgressTasks,

@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Calendar, Clock, Users, TrendingUp, TrendingDown } from "lucide-react"
 import { attendanceApi } from "@/lib/attendance-api"
-import type { DailyAttendance } from "@/lib/attendance-types"
+import { DailyAttendance } from "@/lib/types"
 
 interface AttendanceDetailsDialogProps {
   date: string

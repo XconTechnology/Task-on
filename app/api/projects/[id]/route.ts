@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, startDate, endDate, teamId, status } = body // Added status here
+    const { name, description, startDate, endDate, teamId, assignedMembers, status } = body
 
     if (!name?.trim()) {
       return NextResponse.json({ success: false, error: "Project name is required" }, { status: 400 })
@@ -79,6 +79,11 @@ export async function PUT(request: NextRequest) {
     // Validate status if provided
     if (status && !["ongoing", "completed", "delayed", "archived"].includes(status)) {
       return NextResponse.json({ success: false, error: "Invalid project status" }, { status: 400 })
+    }
+
+    // Validate assignedMembers if provided
+    if (assignedMembers && !Array.isArray(assignedMembers)) {
+      return NextResponse.json({ success: false, error: "Assigned members must be an array" }, { status: 400 })
     }
 
     // Get current workspace ID from header or fallback to user's first workspace
@@ -108,6 +113,7 @@ export async function PUT(request: NextRequest) {
       name: name.trim(),
       description: description?.trim() || "",
       teamId: teamId && teamId !== "none" ? teamId : undefined,
+      assignedMembers: assignedMembers && assignedMembers.length > 0 ? assignedMembers : undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       updatedAt: new Date().toISOString(),
