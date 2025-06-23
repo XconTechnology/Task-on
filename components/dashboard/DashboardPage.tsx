@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import { useState } from "react"
-import type { DashboardPageStats, DashboardStats, User as UserType } from "@/lib/types"
+import type {  DashboardStats, User as UserType } from "@/lib/types"
 import { getProgressColor, getProgressTextColor } from "../../lib/utils"
 
 // Time-based stats data

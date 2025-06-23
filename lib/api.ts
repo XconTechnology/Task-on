@@ -14,6 +14,9 @@ import type {
   DocumentFilters,
   Document,
   DashboardStats,
+  Target,
+  PaginatedTargets,
+  TargetStats,
 } from "./types";
 import { apiCall } from "./api_call"; // Import the working apiCall function
 
@@ -522,6 +525,95 @@ export const dashboardApi = {
   // Get dashboard stats and data
   getDashboardData: async (tasksPage = 1, tasksLimit = 10): Promise<ApiResponse<DashboardStats>> => {
     return apiCall<DashboardStats>(`/dashboard?tasksPage=${tasksPage}&tasksLimit=${tasksLimit}`)
+  },
+}
+
+
+
+// Target API Functions
+
+// Target API Functions
+export const targetApi = {
+  // Get targets with pagination and filtering
+  getTargets: async (
+    page = 1,
+    limit = 10,
+    filters?: {
+      status?: string
+      search?: string
+      assignedTo?: string
+      projectId?: string
+    },
+  ): Promise<ApiResponse<PaginatedTargets>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    })
+
+    if (filters?.status) params.append("status", filters.status)
+    if (filters?.search) params.append("search", filters.search)
+    if (filters?.assignedTo) params.append("assignedTo", filters.assignedTo)
+    if (filters?.projectId) params.append("projectId", filters.projectId)
+
+    return apiCall<PaginatedTargets>(`/targets?${params.toString()}`)
+  },
+
+  // Get target by ID
+  getTarget: async (id: string): Promise<ApiResponse<Target>> => {
+    return apiCall<Target>(`/targets/${id}`)
+  },
+
+  // Create new target
+  createTarget: async (target: Partial<Target>): Promise<ApiResponse<Target>> => {
+    return apiCall<Target>("/targets", {
+      method: "POST",
+      body: JSON.stringify(target),
+    })
+  },
+
+  // Update target
+  updateTarget: async (id: string, target: Partial<Target>): Promise<ApiResponse<Target>> => {
+    return apiCall<Target>(`/targets/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(target),
+    })
+  },
+
+  // Delete target
+  deleteTarget: async (id: string): Promise<ApiResponse<void>> => {
+    return apiCall<void>(`/targets/${id}`, {
+      method: "DELETE",
+    })
+  },
+
+  // Get target statistics
+  getTargetStats: async (): Promise<ApiResponse<TargetStats>> => {
+    return apiCall<TargetStats>("/targets/stats")
+  },
+  // Get targets assigned to a specific user (for user's profile page)
+  getUserTargets: async (
+    userId: string,
+    timeframe = "all",
+    status = "all",
+  ): Promise<ApiResponse<{ targets: Target[]; stats: any }>> => {
+    const params = new URLSearchParams()
+    if (timeframe !== "all") params.append("timeframe", timeframe)
+    if (status !== "all") params.append("status", status)
+
+    const endpoint = `/targets/user/${userId}${params.toString() ? `?${params.toString()}` : ""}`
+    return apiCall<{ targets: Target[]; stats: any }>(endpoint)
+  },
+
+  // Update user's own target progress
+  updateUserTargetProgress: async (
+    userId: string,
+    targetId: string,
+    currentValue: number,
+  ): Promise<ApiResponse<Target>> => {
+    return apiCall<Target>(`/targets/user/${userId}/${targetId}`, {
+      method: "PUT",
+      body: JSON.stringify({ currentValue }),
+    })
   },
 }
 

@@ -552,6 +552,65 @@ export interface MonthlyAttendance {
   stats: AttendanceStats;
 }
 
+// Add these Target interfaces to your existing types.ts file
+
+export interface Target {
+  id: string
+  title: string
+  description: string
+  workspaceId: string
+  assignedTo: string // User ID
+  projectId?: string // Optional project relation
+  targetValue: number // The goal to reach (e.g., 10000 followers, 10 tasks)
+  currentValue: number // Current progress
+  unit: string // e.g., "followers", "tasks", "sales", etc.
+  deadline: string // ISO date string
+  status: "active" | "completed" | "failed" | "cancelled"
+  createdBy: string // Admin/Owner who created the target
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
+  // Populated fields for display
+  assignee?: {
+    id: string
+    username: string
+    email: string
+    profilePictureUrl?: string
+  }
+  project?: {
+    id: string
+    name: string
+  }
+  creator?: {
+    id: string
+    username: string
+    email: string
+  }
+}
+
+export interface TargetFilters {
+  status?: "active" | "completed" | "failed" | "cancelled" | "all"
+  search?: string
+  assignedTo?: string
+  projectId?: string
+}
+
+export interface PaginatedTargets {
+  targets: Target[]
+  hasMore: boolean
+  total: number
+  page: number
+}
+
+export interface TargetStats {
+  totalTargets: number
+  activeTargets: number
+  completedTargets: number
+  failedTargets: number
+  completionRate: number
+}
+
+
 {
   /*
 

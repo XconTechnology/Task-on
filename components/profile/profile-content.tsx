@@ -2,17 +2,7 @@
 
 import type React from "react"
 
-import {
-  User,
-  Calendar,
-  Clock,
-  Trophy,
-  Target,
-  Briefcase,
-  Activity,
-  ChevronRight,
-  Loader2,
-} from "lucide-react"
+import { User, Calendar, Clock, Trophy, Target, Briefcase, Activity, ChevronRight, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,9 +11,11 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatTime, getActivityIcon, getInitials, getPriorityColor, getStatusColor } from "@/lib/utils"
 import { TimeframeFilter } from "./timeframe-filter"
+import UserTargets from "./user-targets"
 
 interface ProfileContentProps {
   user: {
+    id?: string
     username: string
     email: string
     profilePictureUrl?: string
@@ -139,11 +131,9 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
-
 
       {/* Timeframe Filter Section */}
       <div className="bg-white border-b border-gray-200">
@@ -165,15 +155,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-600 mb-1">
-                    Total tasks
-                  </p>
+                  <p className="text-sm font-medium text-blue-600 mb-1">Total tasks</p>
                   <p className="text-3xl font-bold text-blue-900">
                     {timeframe === "all" ? stats?.totalTasks || 0 : stats?.filteredTasks || 0}
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    {stats?.completionRate || 0}% completion rate
-                  </p>
+                  <p className="text-xs text-blue-600 mt-1">{stats?.completionRate || 0}% completion rate</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
                   <Target className="w-6 h-6 text-white" />
@@ -186,15 +172,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 mb-1">
-                   Completed
-                  </p>
+                  <p className="text-sm font-medium text-green-600 mb-1">Completed</p>
                   <p className="text-3xl font-bold text-green-900">
                     {timeframe === "all" ? stats?.completedTasks || 0 : stats?.filteredProjects || 0}
                   </p>
-                  <p className="text-xs text-green-600 mt-1">
-                   Tasks finished
-                  </p>
+                  <p className="text-xs text-green-600 mt-1">Tasks finished</p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
                   <Trophy className="w-6 h-6 text-white" />
@@ -222,15 +204,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-orange-600 mb-1">
-                    Active Projects
-                  </p>
+                  <p className="text-sm font-medium text-orange-600 mb-1">Active Projects</p>
                   <p className="text-3xl font-bold text-orange-900">
                     {timeframe === "all" ? stats?.activeProjects || 0 : stats?.filteredProjects || 0}
                   </p>
-                  <p className="text-xs text-orange-600 mt-1">
-                    Currently working on
-                  </p>
+                  <p className="text-xs text-orange-600 mt-1">Currently working on</p>
                 </div>
                 <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
                   <Briefcase className="w-6 h-6 text-white" />
@@ -242,10 +220,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[500px]">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="targets">Targets</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
 
@@ -303,7 +282,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     </Button>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 max-h-96 overflow-y-auto">
                   {activeProjects.length === 0 ? (
                     <div className="text-center py-8">
                       <Briefcase className="w-12 h-12 mx-auto text-gray-300 mb-4" />
@@ -473,6 +452,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="targets">{user.id && <UserTargets userId={user.id} timeframe={timeframe} />}</TabsContent>
 
           <TabsContent value="activity">
             <Card>

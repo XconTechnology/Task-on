@@ -2,7 +2,19 @@
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAppStore } from "@/lib/store"
-import { Home, FolderOpen, Users, Plus, Calendar, BarChart3, Clock, PanelRight, PanelLeft } from "lucide-react"
+import {
+  Home,
+  FolderOpen,
+  Users,
+  Plus,
+  Calendar,
+  BarChart3,
+  Clock,
+  PanelRight,
+  PanelLeft,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import InviteModal from "./modals/invite-modal"
 import CreateTeamModal from "./modals/create-team-modal"
@@ -19,6 +31,7 @@ export default function Sidebar() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false)
+  const [showAllMenuItems, setShowAllMenuItems] = useState(false)
   const [activeItem, setActiveItem] = useState(() => {
     return pathname.split("/")[1] || "dashboard"
   })
@@ -31,7 +44,7 @@ export default function Sidebar() {
     { id: "documents", label: "Documents", icon: FolderOpen, path: "/documents" },
     { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
     { id: "attendance", label: "Attendance", icon: Users, path: "/attendance" },
-
+    { id: "targets", label: "Targets", icon: Users, path: "/targets" },
     {
       id: "analytics",
       label: "Analytics",
@@ -46,6 +59,10 @@ export default function Sidebar() {
     },
   ]
 
+  // Show first 5 items by default, or all if expanded
+  const visibleMenuItems = showAllMenuItems ? menuItems : menuItems.slice(0, 5)
+  const hasMoreItems = menuItems.length > 5
+
   const handleNavigation = (item: (typeof menuItems)[0]) => {
     setActiveItem(item.id)
   }
@@ -53,6 +70,10 @@ export default function Sidebar() {
   const handleProjectCreated = (newProject: any) => {
     // Refresh projects or navigate to new project
     router.push(`/projects/${newProject.id}`)
+  }
+
+  const toggleMenuExpansion = () => {
+    setShowAllMenuItems(!showAllMenuItems)
   }
 
   return (
@@ -81,10 +102,19 @@ export default function Sidebar() {
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <nav className="p-2">
             <ul className="space-y-1">
-              {menuItems.map((item) => {
+              {visibleMenuItems.map((item, index) => {
                 const Icon = item.icon
+                const isVisible = showAllMenuItems || index < 5
                 return (
-                  <li key={item.id}>
+                  <li
+                    key={item.id}
+                    className={`transition-all duration-300 ease-in-out ${
+                      isVisible ? "opacity-100 transform translate-y-0" : "opacity-0 transform -translate-y-2"
+                    }`}
+                    style={{
+                      transitionDelay: isVisible ? `${index * 50}ms` : "0ms",
+                    }}
+                  >
                     <Link
                       href={item.path}
                       onClick={() => handleNavigation(item)}
@@ -100,6 +130,30 @@ export default function Sidebar() {
                   </li>
                 )
               })}
+
+              {/* More/Less Button */}
+              {hasMoreItems && !isSidebarCollapsed && (
+                <li className="transition-all duration-300 ease-in-out">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleMenuExpansion}
+                    className="w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+                  >
+                    {showAllMenuItems ? (
+                      <>
+                        <ChevronUp size={16} className="mr-2" />
+                        <span>Show Less</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={16} className="mr-2" />
+                        <span>Show More</span>
+                      </>
+                    )}
+                  </Button>
+                </li>
+              )}
             </ul>
           </nav>
 
@@ -140,6 +194,3 @@ export default function Sidebar() {
     </>
   )
 }
-
-
-
