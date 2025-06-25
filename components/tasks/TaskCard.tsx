@@ -53,7 +53,7 @@ const TaskCard = ({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               {task.priority && (
-                <Badge variant="outline" className={`text-small ${priorityConfig[task.priority]}`}>
+                <Badge variant="outline" className={`text-xs ${priorityConfig[task.priority]}`}>
                   {task.priority}
                 </Badge>
               )}
@@ -63,7 +63,7 @@ const TaskCard = ({ task, onTaskClick, onEditTask, onDeleteTask }: TaskCardProps
           </div>
 
           {/* Task Title */}
-          <h4 className="text-medium font-semibold mb-2 line-clamp-2">{task.title}</h4>
+          <h4 className="text-large font-semibold mb-2 line-clamp-2">{task.title}</h4>
 
           {/* Task Description */}
           {task.description && <p className="text-description mb-3 line-clamp-2">{task.description}</p>}

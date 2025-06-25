@@ -8,42 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import { useState } from "react"
-import type {  DashboardStats, User as UserType } from "@/lib/types"
+import type {  AnalyticsData, DashboardStats, User as UserType } from "@/lib/types"
 import { getProgressColor, getProgressTextColor } from "../../lib/utils"
 
-// Time-based stats data
-const TIME_STATS_DATA = [
-  {
-    id: "today",
-    label: "TODAY",
-    subtitle: "Tasks completed today",
-    color: "from-blue-500 to-blue-600",
-    iconBg: "bg-blue-400",
-    icon: Clock,
-    footerIcon: Clock,
-    footerText: "Updated just now",
-  },
-  {
-    id: "week",
-    label: "THIS WEEK",
-    subtitle: "Tasks completed this week",
-    color: "from-purple-500 to-purple-600",
-    iconBg: "bg-purple-400",
-    icon: Activity,
-    footerIcon: Activity,
-    footerText: "Weekly performance",
-  },
-  {
-    id: "month",
-    label: "THIS MONTH",
-    subtitle: "Tasks completed this month",
-    color: "from-emerald-500 to-emerald-600",
-    iconBg: "bg-emerald-400",
-    icon: Target,
-    footerIcon: Target,
-    footerText: "Monthly performance",
-  },
-]
+
 
 interface DashboardPageProps {
   user: UserType
@@ -51,6 +19,7 @@ interface DashboardPageProps {
   taskStats: any
   onLoadMoreTasks: () => void
   loadingMoreTasks: boolean
+  analyticsData: AnalyticsData | null
 }
 
 export default function DashboardPage({
@@ -58,10 +27,12 @@ export default function DashboardPage({
   taskStats,
   onLoadMoreTasks,
   loadingMoreTasks,
+  analyticsData
 }: DashboardPageProps) {
   const [projectStatusFilter, setProjectStatusFilter] = useState("all")
   const [taskStatusFilter, setTaskStatusFilter] = useState("all")
 
+  
   // Project status distribution data
   const projectStatusData = [
     {
@@ -155,13 +126,13 @@ export default function DashboardPage({
               <div className="flex flex-col h-full">
                 <div className="p-5 pb-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">TOTAL TASKS</h3>
+                    <h3 className="text-medium font-medium text-gray-500 uppercase tracking-wide">TOTAL TASKS</h3>
                     <div className="bg-blue-100 p-2 rounded-full">
                       <Activity className="w-4 h-4 text-blue-600" />
                     </div>
                   </div>
                   <div className="mt-3 flex items-baseline">
-                    <p className="text-4xl font-bold text-gray-900">{stats.totalTasks}</p>
+                    <p className="text-3xl font-bold text-gray-900">{stats.totalTasks}</p>
                     <div className="ml-3 flex items-center text-xs font-medium text-green-600">
                       <ArrowUp className="w-3 h-3 mr-0.5" />
                       <span>All time</span>
@@ -171,7 +142,7 @@ export default function DashboardPage({
 
                 <div className="mt-auto p-5 pt-3">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-gray-500">Project completion</span>
+                    <span className="text-medium font-medium text-gray-500">Project completion</span>
                     <span className={`text-xs font-bold ${getProgressTextColor(stats.completionRate)}`}>
                       {stats.completionRate}%
                     </span>
@@ -203,13 +174,13 @@ export default function DashboardPage({
               <div className="flex flex-col space-y-3 h-full">
                 <div className="p-5 pb-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">COMPLETED</h3>
+                    <h3 className="text-medium font-medium text-gray-500 uppercase tracking-wide">COMPLETED</h3>
                     <div className="bg-green-100 p-2 rounded-full">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
                   </div>
                   <div className="mt-3 flex items-baseline">
-                    <p className="text-4xl font-bold text-gray-900">{stats.completedTasks}</p>
+                    <p className="text-3xl font-bold text-gray-900">{stats.completedTasks}</p>
                     <div className="ml-3 flex items-center text-xs font-medium text-green-600">
                       <span className="flex items-center">
                         <CheckCircle className="w-3 h-3 mr-0.5" />
@@ -224,7 +195,7 @@ export default function DashboardPage({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <Award className="w-4 h-4 text-green-600 mr-1.5" />
-                        <span className="text-xs font-medium text-green-700">completed!</span>
+                        <span className="text-small font-medium text-green-700">completed!</span>
                       </div>
                       <div className="flex items-center">
                         <span className="text-xs text-gray-600 mr-1">Today:</span>
@@ -252,13 +223,13 @@ export default function DashboardPage({
               <div className="flex flex-col h-full">
                 <div className="p-5 pb-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">TOTAL PROJECTS</h3>
+                    <h3 className="text-medium font-medium text-gray-500 uppercase tracking-wide">TOTAL PROJECTS</h3>
                     <div className="bg-purple-100 p-2 rounded-full">
                       <FolderOpen className="w-4 h-4 text-purple-600" />
                     </div>
                   </div>
                   <div className="mt-3 flex items-baseline">
-                    <p className="text-4xl font-bold text-gray-900">{stats.projectsCount}</p>
+                    <p className="text-3xl font-bold text-gray-900">{stats.projectsCount}</p>
                     <div className="ml-3 flex items-center text-xs font-medium text-purple-600">
                       <span className="flex items-center">
                         <ArrowUp className="w-3 h-3 mr-0.5" />
@@ -294,13 +265,13 @@ export default function DashboardPage({
               <div className="flex flex-col h-full">
                 <div className="p-5 pb-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">IN PROGRESS</h3>
+                    <h3 className="text-medium font-medium text-gray-500 uppercase tracking-wide">IN PROGRESS</h3>
                     <div className="bg-amber-100 p-2 rounded-full">
                       <Clock className="w-4 h-4 text-amber-600" />
                     </div>
                   </div>
                   <div className="mt-3 flex items-baseline">
-                    <p className="text-4xl font-bold text-gray-900">{stats.inProgressTasks}</p>
+                    <p className="text-3xl font-bold text-gray-900">{stats.inProgressTasks}</p>
                     <div className="ml-3 flex items-center text-xs font-medium text-amber-600">
                       <span className="flex items-center">
                         <Zap className="w-3 h-3 mr-0.5" />
@@ -348,9 +319,9 @@ export default function DashboardPage({
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Project Summary - Made Scrollable */}
-          <Card className="lg:col-span-2 bg-white shadow-lg border-0 rounded-xl overflow-hidden">
+          <Card className="lg:col-span-2 bg-white border-0 rounded-xl overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
-              <CardTitle className="text-xl font-bold text-gray-900">Project Summary</CardTitle>
+              <CardTitle className="text-lg font-bold text-gray-900">Project Summary</CardTitle>
               <div className="flex items-center gap-3">
                 <Filter className="h-4 w-4 text-gray-400" />
                 <Select value={projectStatusFilter} onValueChange={setProjectStatusFilter}>
@@ -358,11 +329,11 @@ export default function DashboardPage({
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="ongoing">Ongoing</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="delayed">Delayed</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem className="text-xs" value="all">All Status</SelectItem>
+                    <SelectItem className="text-xs" value="ongoing">Ongoing</SelectItem>
+                    <SelectItem className="text-xs" value="completed">Completed</SelectItem>
+                    <SelectItem className="text-xs" value="delayed">Delayed</SelectItem>
+                    <SelectItem className="text-xs" value="archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -371,7 +342,7 @@ export default function DashboardPage({
               <div className="max-h-96 overflow-y-auto">
                 <div className="p-6 space-y-4">
                   {/* Table Header */}
-                  <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-gray-600 border-b border-gray-100 pb-3">
+                  <div className="grid grid-cols-12 gap-4 text-medium font-semibold text-gray-600 border-b border-gray-100 pb-3">
                     <div className="col-span-3">Project Name</div>
                     <div className="col-span-2">Manager</div>
                     <div className="col-span-2">Due Date</div>
@@ -386,7 +357,7 @@ export default function DashboardPage({
                       className="grid grid-cols-12 gap-4 items-center py-4 border-b border-gray-50 last:border-b-0 hover:bg-gray-50 rounded-lg transition-colors"
                     >
                       <div className="col-span-3">
-                        <p className="font-semibold text-gray-900 truncate">{project.name}</p>
+                        <p className="font-semibold text-medium text-gray-900 truncate">{project.name}</p>
                       </div>
                       <div className="col-span-2">
                         <div className="flex items-center gap-2">
@@ -395,11 +366,11 @@ export default function DashboardPage({
                               {project.projectManager.username.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm text-gray-700 truncate">{project.projectManager.username}</span>
+                          <span className="text-medium text-gray-700 truncate">{project.projectManager.username}</span>
                         </div>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-sm text-gray-600">{formatDate(project.dueDate)}</span>
+                        <span className="text-medium text-gray-600">{formatDate(project.dueDate)}</span>
                       </div>
                       <div className="col-span-2">
                         <Badge className={`text-xs font-medium ${getStatusColor(project.status)}`}>
@@ -411,7 +382,7 @@ export default function DashboardPage({
                           <div className="flex-1">
                             <Progress value={project.completionRate} className="h-2" />
                           </div>
-                          <span className="text-sm font-semibold text-gray-700 min-w-[3rem]">
+                          <span className="text-medium font-semibold text-gray-700 min-w-[3rem]">
                             {project.completionRate}%
                           </span>
                         </div>
@@ -430,9 +401,9 @@ export default function DashboardPage({
           </Card>
 
           {/* Overall Progress */}
-          <Card className="bg-white shadow-lg border-0 rounded-xl overflow-hidden">
+          <Card className="bg-white  border-0 rounded-xl overflow-hidden">
             <CardHeader className="border-b border-gray-100">
-              <CardTitle className="text-xl font-bold text-gray-900">Overall Progress</CardTitle>
+              <CardTitle className="text-lg font-bold text-gray-900">Overall Progress</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-6">
@@ -459,8 +430,8 @@ export default function DashboardPage({
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-gray-900">{dashboardData.projectsCompletionRate}%</p>
-                      <p className="text-sm text-gray-500">Completed</p>
+                      <p className="text-2xl font-bold text-gray-900">{dashboardData.projectsCompletionRate}%</p>
+                      <p className="text-medium text-gray-500">Completed</p>
                     </div>
                   </div>
                 </div>
@@ -468,20 +439,20 @@ export default function DashboardPage({
                 {/* Stats Grid */}
                 <div className="flex flex-wrap gap-4 justify-center">
                   <div className=" ">
-                    <p className="text-2xl font-bold text-gray-900">{dashboardData.totalProjects}</p>
-                    <p className="text-xs text-gray-600">Total Projects</p>
+                    <p className="text-xl font-bold text-gray-900">{dashboardData.totalProjects}</p>
+                    <p className="text-medium text-gray-600">Total Projects</p>
                   </div>
                   <div className="  ">
-                    <p className="text-2xl font-bold text-green-600">{dashboardData.completedProjects}</p>
-                    <p className="text-xs text-gray-600">Completed</p>
+                    <p className="text-xl font-bold text-green-600">{dashboardData.completedProjects}</p>
+                    <p className="text-medium text-gray-600">Completed</p>
                   </div>
                   <div className="  ">
-                    <p className="text-2xl font-bold text-red-600">{dashboardData.delayedProjects}</p>
-                    <p className="text-xs text-gray-600">Delayed</p>
+                    <p className="text-xl font-bold text-red-600">{dashboardData.delayedProjects}</p>
+                    <p className="text-medium text-gray-600">Delayed</p>
                   </div>
                   <div className=" ">
-                    <p className="text-2xl font-bold text-blue-600">{dashboardData.ongoingProjects}</p>
-                    <p className="text-xs text-gray-600">Ongoing</p>
+                    <p className="text-xl font-bold text-blue-600">{dashboardData.ongoingProjects}</p>
+                    <p className="text-medium text-gray-600">Ongoing</p>
                   </div>
                 </div>
               </div>
@@ -489,22 +460,23 @@ export default function DashboardPage({
           </Card>
         </div>
 
-        {/* Today Tasks - Made Scrollable */}
-        <Card className="bg-white shadow-lg border-0 rounded-xl overflow-hidden">
+          <div className="md:grid md:grid-cols-3 gap-3">
+                    {/* Today Tasks - Made Scrollable */}
+        <Card className="bg-white md:col-span-2  border-0 rounded-xl overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl font-bold text-gray-900">Today&apos;s Tasks</CardTitle>
+            <CardTitle className="text-lg font-bold text-gray-900">Today&apos;s Tasks</CardTitle>
             <div className="flex items-center gap-3">
               <Filter className="h-4 w-4 text-gray-400" />
-              <Select value={taskStatusFilter} onValueChange={setTaskStatusFilter}>
+              <Select  value={taskStatusFilter} onValueChange={setTaskStatusFilter}>
                 <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue className="text-xs" placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="To Do">To Do</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Under Review">Under Review</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
+                <SelectContent className="text-xs">
+                  <SelectItem className="text-xs" value="all">All Status</SelectItem>
+                  <SelectItem className="text-xs" value="To Do">To Do</SelectItem>
+                  <SelectItem className="text-xs" value="In Progress">In Progress</SelectItem>
+                  <SelectItem className="text-xs" value="Under Review">Under Review</SelectItem>
+                  <SelectItem className="text-xs" value="Completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -520,17 +492,17 @@ export default function DashboardPage({
                     {/* Completion Status Indicator */}
                     <div className="flex-shrink-0">
                       {task.status === "Completed" ? (
-                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                          <CheckCircle className="w-3 h-3 text-white fill-current" />
+                        <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                          <CheckCircle className="w-2 h-2 text-white fill-current" />
                         </div>
                       ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white"></div>
+                        <div className="w-4 h-4 rounded-full border-2 border-gray-300 bg-white"></div>
                       )}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`font-semibold truncate ${
+                        className={`font-semibold text-large truncate ${
                           task.status === "Completed" ? "text-gray-500 line-through" : "text-gray-900"
                         }`}
                       >
@@ -538,7 +510,7 @@ export default function DashboardPage({
                       </p>
                       {task.description && (
                         <p
-                          className={`text-sm truncate mt-1 ${
+                          className={`text-medium truncate mt-1 ${
                             task.status === "Completed" ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
@@ -550,13 +522,13 @@ export default function DashboardPage({
                     <div className="flex items-center gap-4">
                       {task.assignee && (
                         <div className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
+                          <Avatar className="h-6 w-6">
                             <AvatarImage src={task.assignee.profilePictureUrl || "/placeholder.svg"} />
                             <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
                               {task.assignee.username.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm text-gray-700">{task.assignee.username}</span>
+                          <span className="text-medium text-gray-700">{task.assignee.username}</span>
                         </div>
                       )}
 
@@ -583,39 +555,36 @@ export default function DashboardPage({
           </CardContent>
         </Card>
 
-        {/* Time-based Stats - Original Design */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {TIME_STATS_DATA.map((timeStat, index) => (
-            <Card
-              key={timeStat.id}
-              className={`bg-gradient-to-r ${timeStat.color} text-white shadow-lg border-none overflow-hidden`}
-            >
-              <CardContent className="p-6 relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                <div className="flex items-center justify-between relative z-10">
-                  <div>
-                    <p className="text-white/80 text-sm uppercase tracking-wide">{timeStat.label}</p>
-                    <p className="text-2xl font-bold mt-1">
-                      {index === 0
-                        ? stats.todayCompletedTasks
-                        : index === 1
-                          ? stats.weekCompletedTasks
-                          : stats.monthCompletedTasks}
-                    </p>
-                    <p className="text-white/80 text-sm mt-1">{timeStat.subtitle}</p>
+    <Card className="bg-white   md:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Activity className="w-5 h-5 text-orange-600" />
+              <span>Team Performance</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+              <div className="space-y-4">
+                {analyticsData?.team.performance.map((member:any, index:any) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-small font-medium">{member.member.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <p className="text-medium font-medium text-gray-900">{member.member}</p>
+                        <p className="text-small text-gray-600">{member.tasks} tasks completed</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-medium font-semibold text-gray-900">{member.efficiency}%</p>
+                      <p className="text-small text-gray-600">Efficiency</p>
+                    </div>
                   </div>
-                  <div className={`${timeStat.iconBg} p-3 rounded-lg`}>
-                    <timeStat.icon className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center space-x-1 text-white/70 relative z-10">
-                  <timeStat.footerIcon className="w-4 h-4" />
-                  <span className="text-xs">{timeStat.footerText}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                ))}
+              </div>
+          </CardContent>
+        </Card>
+          </div>
       </div>
     </>
   )

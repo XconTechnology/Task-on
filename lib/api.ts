@@ -131,7 +131,25 @@ export const taskApi = {
     });
   },
 
- 
+   // Get task comments
+  getTaskComments: async (taskId: string): Promise<ApiResponse<any[]>> => {
+    return apiCall<any[]>(`/tasks/${taskId}/comments`)
+  },
+
+  // Get comment count for a task
+  getTaskCommentCount: async (taskId: string): Promise<ApiResponse<{ count: number }>> => {
+    return apiCall<{ count: number }>(`/tasks/${taskId}/comments`, {
+      method: "HEAD",
+    })
+  },
+
+  // Get comment counts for multiple tasks
+  getTasksCommentCounts: async (taskIds: string[]): Promise<ApiResponse<Record<string, number>>> => {
+    return apiCall<Record<string, number>>("/tasks/comments-count", {
+      method: "POST",
+      body: JSON.stringify({ taskIds }),
+    })
+  },
 };
 
 // User API Functions

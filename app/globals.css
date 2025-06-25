@@ -49,45 +49,45 @@
 @layer components {
   /* Headers */
   .header-large {
-    @apply text-3xl font-bold tracking-tight text-gray-900;
+    @apply text-2xl font-bold tracking-tight ;
   }
 
   .header-medium {
-    @apply text-2xl font-semibold tracking-tight text-gray-900;
+    @apply text-xl font-semibold tracking-tight ;
   }
 
   .header-small {
-    @apply text-xl font-semibold text-gray-900;
+    @apply text-lg font-semibold ;
   }
 
   .header-extra-small {
-    @apply text-base font-semibold text-gray-900;
+    @apply text-base font-semibold ;
   }
 
   /* Body Text */
   .text-large {
-    @apply text-base text-gray-900;
+    @apply text-sm ;
   }
 
   .text-medium {
-    @apply text-sm text-gray-900;
+    @apply text-xs ;
   }
 
   .text-small {
-    @apply text-xs text-gray-900;
+    @apply text-[10px] ;
   }
 
   .text-extra-small {
-    @apply text-[10px] text-gray-900;
+    @apply text-[8px] ;
   }
 
   /* Description Text */
   .text-description {
-    @apply text-sm text-gray-600;
+    @apply text-[12px] text-gray-600;
   }
 
   .text-description-small {
-    @apply text-xs text-gray-500;
+    @apply text-[8px] text-gray-500;
   }
 
   /* Muted Text */

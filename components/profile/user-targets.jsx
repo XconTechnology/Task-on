@@ -183,7 +183,7 @@ export default function UserTargets({ userId, timeframe }) {
       }
     } else {
       return {
-        cardClass: "border-0 shadow-sm bg-gray-50 opacity-75 cursor-not-allowed",
+        cardClass: "border-0 shadow-sm bg-gray-100 opacity-75 cursor-not-allowed",
         contentClass: "text-gray-500",
         interactive: false,
       }
@@ -302,7 +302,7 @@ export default function UserTargets({ userId, timeframe }) {
         </div>
 
         {/* Targets List */}
-        <div className="space-y-3">
+        <div className="gap-3 grid grid-cols-3">
           {targets.length === 0 ? (
             <div className="text-center py-12">
               <Target size={48} className="mx-auto text-gray-300 mb-4" />
@@ -338,11 +338,6 @@ export default function UserTargets({ userId, timeframe }) {
                         </div>
                         <p className={`text-sm mb-4 ${cardStyling.contentClass}`}>{target.description}</p>
                       </div>
-                      {target.status === "active" && (
-                        <div className="ml-4 text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded">
-                          Click to update
-                        </div>
-                      )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

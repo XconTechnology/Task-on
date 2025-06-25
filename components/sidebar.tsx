@@ -12,8 +12,6 @@ import {
   Clock,
   PanelRight,
   PanelLeft,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import InviteModal from "./modals/invite-modal"
@@ -31,7 +29,6 @@ export default function Sidebar() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false)
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false)
-  const [showAllMenuItems, setShowAllMenuItems] = useState(false)
   const [activeItem, setActiveItem] = useState(() => {
     return pathname.split("/")[1] || "dashboard"
   })
@@ -59,9 +56,6 @@ export default function Sidebar() {
     },
   ]
 
-  // Show first 5 items by default, or all if expanded
-  const visibleMenuItems = showAllMenuItems ? menuItems : menuItems.slice(0, 5)
-  const hasMoreItems = menuItems.length > 5
 
   const handleNavigation = (item: (typeof menuItems)[0]) => {
     setActiveItem(item.id)
@@ -72,10 +66,7 @@ export default function Sidebar() {
     router.push(`/projects/${newProject.id}`)
   }
 
-  const toggleMenuExpansion = () => {
-    setShowAllMenuItems(!showAllMenuItems)
-  }
-
+ 
   return (
     <>
       <div
@@ -102,18 +93,12 @@ export default function Sidebar() {
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <nav className="p-2">
             <ul className="space-y-1">
-              {visibleMenuItems.map((item, index) => {
+              {menuItems.map((item) => {
                 const Icon = item.icon
-                const isVisible = showAllMenuItems || index < 5
                 return (
                   <li
                     key={item.id}
-                    className={`transition-all duration-300 ease-in-out ${
-                      isVisible ? "opacity-100 transform translate-y-0" : "opacity-0 transform -translate-y-2"
-                    }`}
-                    style={{
-                      transitionDelay: isVisible ? `${index * 50}ms` : "0ms",
-                    }}
+                    className={`transition-all duration-300 ease-in-out  "opacity-100 transform translate-y-0"`}
                   >
                     <Link
                       href={item.path}
@@ -124,36 +109,12 @@ export default function Sidebar() {
                           : "text-gray-700 hover:bg-gray-50"
                       }`}
                     >
-                      <Icon size={18} className="flex-shrink-0" />
-                      {!isSidebarCollapsed && <span className="ml-3">{item.label}</span>}
+                      <Icon size={14} className="flex-shrink-0" />
+                      {!isSidebarCollapsed && <span className="ml-3 text-xs">{item.label}</span>}
                     </Link>
                   </li>
                 )
               })}
-
-              {/* More/Less Button */}
-              {hasMoreItems && !isSidebarCollapsed && (
-                <li className="transition-all duration-300 ease-in-out">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleMenuExpansion}
-                    className="w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-                  >
-                    {showAllMenuItems ? (
-                      <>
-                        <ChevronUp size={16} className="mr-2" />
-                        <span>Show Less</span>
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown size={16} className="mr-2" />
-                        <span>Show More</span>
-                      </>
-                    )}
-                  </Button>
-                </li>
-              )}
             </ul>
           </nav>
 

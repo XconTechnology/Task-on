@@ -158,13 +158,13 @@ export default function NotificationDropdown({ onTaskClick }: NotificationDropdo
         <div className="absolute right-0 top-full mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+            <h3 className="text-base font-semibold text-gray-900">Notifications</h3>
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="xs"
                 onClick={markAllAsRead}
-                className="text-blue-600 hover:text-blue-700 text-sm"
+                className="text-blue-600 hover:text-blue-700 text-xs"
               >
                 Mark all read
               </Button>
@@ -199,12 +199,12 @@ export default function NotificationDropdown({ onTaskClick }: NotificationDropdo
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
+                          <p className="text-medium font-medium text-gray-900 truncate">{notification.title}</p>
                           {!notification.isRead && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></div>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
+                        <p className="text-medium text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
 
                         {/* Additional info for task notifications */}
                         {notification.type === "task_assigned" && notification.data?.projectName && (
@@ -216,7 +216,7 @@ export default function NotificationDropdown({ onTaskClick }: NotificationDropdo
 
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center text-xs text-gray-500">
-                            <Clock size={12} className="mr-1" />
+                            <Clock size={10} className="mr-1" />
                             <span>{formatNotificationTime(notification.createdAt)}</span>
                           </div>
 

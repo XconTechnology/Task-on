@@ -56,7 +56,7 @@ const TaskColumn = ({
           />
           <div className="flex-1 flex items-center justify-between px-4 py-3">
             <div className="flex items-center space-x-3">
-              <h3 className="header-extra-small">{config.label}</h3>
+              <h3 className="text-large">{config.label}</h3>
               <span className="inline-flex items-center justify-center w-6 h-6 text-small font-medium text-gray-600 bg-gray-100 rounded-full">
                 {columnTasks.length}
               </span>

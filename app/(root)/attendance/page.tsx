@@ -103,11 +103,11 @@ export default function AttendancePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-foreground">Attendance Management</h1>
-          <p className="text-muted-foreground">Track team attendance based on time entries</p>
+          <h1 className="header-medium  font-bold text-foreground">Attendance Management</h1>
+          <p className="text-muted-foreground text-medium">Track team attendance based on time entries</p>
         </div>
         <Button onClick={calculateTodayAttendance} disabled={loading} className="shadow-sm">
-          <Sparkles className="w-4 h-4 mr-2" />
+          <Sparkles className="w-4 h-4 mr-2 text-large" />
           Calculate Today&apos;s Attendance
         </Button>
       </div>
@@ -163,32 +163,33 @@ export default function AttendancePage() {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-          <TabsTrigger value="daily" className="text-base">
+          <TabsTrigger value="daily" className="text-medium">
             Daily View
           </TabsTrigger>
-          <TabsTrigger value="monthly" className="text-base">
+          <TabsTrigger value="monthly" className="text-medium">
             Monthly View
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="daily" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 ">
             {/* Date Picker */}
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CalendarDays className="h-5 w-5" />
-                  Select Date
+                  <h1 className="header-small">Select Date</h1>
                 </CardTitle>
-                <CardDescription>Choose a date to view attendance details</CardDescription>
+                <CardDescription className="text-xs">Choose a date to view attendance details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <DatePicker
                   date={selectedDate}
                   onDateChange={(date) => date && setSelectedDate(date)}
                   placeholder="Select date"
+                  className="text-sm"
                 />
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   Selected:{" "}
                   {selectedDate.toLocaleDateString("en-US", {
                     weekday: "long",
@@ -205,9 +206,9 @@ export default function AttendancePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Attendance for {selectedDate.toLocaleDateString()}
+                 <h1 className="header-small">Attendance for {selectedDate.toLocaleDateString()}</h1>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   {dailyAttendance
                     ? `${dailyAttendance.presentCount} present, ${dailyAttendance.absentCount} absent`
                     : "Loading attendance data..."}
@@ -259,8 +260,8 @@ export default function AttendancePage() {
                   </div>
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
-                    <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">No attendance data available for this date</p>
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-medium">No attendance data available for this date</p>
                   </div>
                 )}
               </CardContent>
