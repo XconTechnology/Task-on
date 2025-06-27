@@ -163,16 +163,50 @@
     background: transparent;
   }
 
-  /* Draggable Task Cursors */
-  .task-card {
-    cursor: pointer;
-  }
 
-  .task-card.dragging {
-    cursor: grabbing !important;
-  }
+}
 
-  .task-card:active {
-    cursor: grabbing;
-  }
+
+/* Enhanced drag and drop animations */
+.task-card {
+  transition: all 0.2s ease-in-out;
+  transform-origin: center;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+}
+
+.task-card.dragging {
+  transform: rotate(3deg) scale(1.05) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  z-index: 1000;
+  cursor: grabbing !important;
+}
+
+/* Drop zone animations */
+.drop-zone-active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+  border: 2px dashed #3b82f6;
+  transform: scale(1.02);
+}
+
+/* Smooth transitions for task movements */
+.task-list {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Loading states */
+.task-updating {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Comment count animation */
+.comment-count {
+  transition: all 0.2s ease-in-out;
+}
+
+.comment-count:hover {
+  transform: scale(1.1);
 }

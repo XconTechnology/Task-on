@@ -259,7 +259,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSuccess, 
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+          <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto custom-scrollbar max-h-[calc(90vh-120px)]">
             {/* Project Name */}
             <div className="space-y-2">
               <label htmlFor="name" className="text-medium font-medium text-gray-900">

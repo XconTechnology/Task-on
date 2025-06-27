@@ -167,7 +167,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+        <form onSubmit={handleSubmit} className="space-y-6 custom-scrollbar overflow-y-auto max-h-[calc(90vh-120px)]">
           {/* Project Name */}
           <div className="space-y-2">
             <label htmlFor="name" className="text-medium font-medium text-gray-900">

@@ -73,7 +73,7 @@ export default function ChatSidebar({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
         <div className="space-y-3">
           {teamMembers.map((member) => {
             const isOnline = onlineUsers.find((u) => u.id === member.id)?.isOnline || false

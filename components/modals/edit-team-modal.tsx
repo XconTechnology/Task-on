@@ -208,7 +208,7 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold text-gray-900">Edit Team</DialogTitle>
@@ -288,7 +288,7 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
             {/* Current Members */}
             <div className="space-y-4">
               <h4 className="text-medium font-medium text-gray-900">Current Members</h4>
-              <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+              <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto custom-scrollbar">
                 {isLoadingMembers ? (
                   <div className="p-4 text-center text-gray-500">Loading members...</div>
                 ) : members.length > 0 ? (
@@ -347,7 +347,7 @@ export default function EditTeamModal({ isOpen, onClose, team, onSuccess, onDele
             {availableUsers.length > 0 && (
               <div className="space-y-4">
                 <h4 className="text-medium font-medium text-gray-900">Add Members</h4>
-                <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
+                <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto custom-scrollbar">
                   <div className="divide-y divide-gray-200">
                     {availableUsers.map((user: any) => (
                       <div key={user.memberId} className="p-3 flex items-center justify-between">

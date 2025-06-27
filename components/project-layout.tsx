@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useAppStore } from "@/lib/store"
 import BoardView from "./board-view"
 import ListView from "./list-view"
@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { LayoutGrid, List, Table, Calendar, Star } from "lucide-react"
 import CreateTaskModal from "./modals/create-task-modal"
 import SearchFilterBar from "./search-filter-bar"
+import { projectApi } from "@/lib/api"
+import { Project } from "@/lib/types"
 
 type ProjectLayoutProps = {
   projectId: string
@@ -19,6 +21,7 @@ type ProjectLayoutProps = {
 export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
   const { activeView, setActiveView, currentProject } = useAppStore()
   const [isModalNewTaskOpen, setIsModalNewTaskOpen] = useState(false)
+  const [project, setProject] = useState<Project>();
 
   const viewOptions = [
     { id: "board" as const, label: "Board", icon: LayoutGrid },
@@ -27,8 +30,25 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
     { id: "timeline" as const, label: "Timeline", icon: Calendar },
   ]
 
+  const fetchProject = async () => {
+  try {
+    const response = await projectApi.getProject(projectId); // ✅ Using your projectApi
+
+    if (response.success && response.data) {
+      setProject(response.data || []);
+    }
+  } catch (error) {
+    console.error("Failed to fetch projects:", error);
+  } 
+};
+
+useEffect(() => {
+  fetchProject()
+},[])
+
   const renderView = () => {
     const props = { projectId, setIsModalNewTaskOpen }
+
 
     switch (activeView) {
       case "board":
@@ -57,20 +77,21 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
                   projects
                 </a>
                 <span className="text-muted">/</span>
-                <span className="text-medium font-medium">Project 1</span>
+                <span className="text-medium font-medium">{project?.name}</span>
               </div>
             </div>
 
             {/* Main Header */}
             <div className="px-6 py-4">
+             {/*
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div>
-                    <h1 className="header-medium">{currentProject?.name || "E-commerce Platform"}</h1>
+                    <h1 className="header-medium">{project?.name}</h1>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      Active
+                      {project?.status}
                     </Badge>
                     <Button variant="ghost" size="sm">
                       <Star size={16} />
@@ -78,9 +99,10 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
                   </div>
                 </div>
               </div>
+             */}
 
               {/* View Tabs and Search/Filter Bar */}
-              <div className="flex w-full items-center mt-4 justify-between">
+              <div className="flex w-full items-center  justify-between">
                 {/* View Tabs */}
                 <div className="flex items-center space-x-6">
                   {viewOptions.map((option) => {

@@ -123,7 +123,7 @@ export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalP
           {results.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-medium font-medium text-gray-900">Invitation Results:</h4>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
+              <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
                 {results.map((result, index) => (
                   <div
                     key={index}

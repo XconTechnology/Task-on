@@ -299,7 +299,7 @@ export default function TeamsContent() {
             </Button>
             <Button className=" " onClick={() => setIsCreateTeamModalOpen(true)}>
               <Plus size={16} className="mr-2" />
-              <span className="text-sm">Create Team</span>
+              <span className="text-medium">Create Team</span>
             </Button>
           </div>
         </div>

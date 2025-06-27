@@ -128,7 +128,7 @@ export default function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
             ))}
           </div>
         </div>
-        <div className="p-3 max-h-48 overflow-y-auto">
+        <div className="p-3 max-h-48 overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-8 gap-1">
             {EMOJI_CATEGORIES[activeCategory as keyof typeof EMOJI_CATEGORIES].map((emoji, index) => (
               <button

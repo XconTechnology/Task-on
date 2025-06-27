@@ -152,7 +152,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl bg-white max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold text-gray-900">Create New Task</DialogTitle>
@@ -288,7 +288,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
                 ))}
               </div>
             ) : (
-              <div className="max-h-60 overflow-y-auto space-y-2 border border-gray-200 rounded-lg p-2">
+              <div className="max-h-60 overflow-y-auto  custom-scrollbar space-y-2 border border-gray-200 rounded-lg p-2">
                 {availableMembers.length > 0 ? (
                   availableMembers.map((member: any) => (
                     <div

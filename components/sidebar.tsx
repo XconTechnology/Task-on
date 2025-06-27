@@ -41,13 +41,7 @@ export default function Sidebar() {
     { id: "documents", label: "Documents", icon: FolderOpen, path: "/documents" },
     { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
     { id: "attendance", label: "Attendance", icon: Users, path: "/attendance" },
-    { id: "targets", label: "Targets", icon: Users, path: "/targets" },
-    {
-      id: "analytics",
-      label: "Analytics",
-      icon: BarChart3,
-      path: "/analytics",
-    },
+    { id: "targets", label: "Targets", icon: BarChart3, path: "/targets" },
     {
       id: "time-tracking",
       label: "Time Tracking",
@@ -109,8 +103,8 @@ export default function Sidebar() {
                           : "text-gray-700 hover:bg-gray-50"
                       }`}
                     >
-                      <Icon size={14} className="flex-shrink-0" />
-                      {!isSidebarCollapsed && <span className="ml-3 text-xs">{item.label}</span>}
+                      <Icon size={16} className="flex-shrink-0" />
+                      {!isSidebarCollapsed && <span className="ml-3 text-medium">{item.label}</span>}
                     </Link>
                   </li>
                 )

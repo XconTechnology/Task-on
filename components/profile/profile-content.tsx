@@ -282,7 +282,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     </Button>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-4 max-h-96 overflow-y-auto">
+                <CardContent className="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
                   {activeProjects.length === 0 ? (
                     <div className="text-center py-8">
                       <Briefcase className="w-12 h-12 mx-auto text-gray-300 mb-4" />
@@ -333,7 +333,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     <p className="text-gray-500">No recent activity</p>
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto space-y-4">
+                  <div className="max-h-96 overflow-y-auto custom-scrollbar space-y-4">
                     {activities.data.slice(0, 10).map((activity) => (
                       <div
                         key={activity.id}
@@ -366,7 +366,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     <p className="text-gray-500">This user hasn&apos;t been assigned any tasks yet.</p>
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto space-y-4">
+                  <div className="max-h-96 overflow-y-auto custom-scrollbar space-y-4">
                     {tasks.data.map((task) => (
                       <div
                         key={task.id}
@@ -468,7 +468,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     <p className="text-gray-500">This user hasn&apos;t performed any tracked activities.</p>
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto space-y-6">
+                  <div className="max-h-96 overflow-y-auto custom-scrollbar space-y-6">
                     {activities.data.map((activity, index) => (
                       <div key={activity.id} className="relative">
                         {index !== activities.data.length - 1 && (

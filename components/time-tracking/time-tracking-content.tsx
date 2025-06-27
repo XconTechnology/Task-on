@@ -460,7 +460,7 @@ export default function TimeTrackingContent() {
             </div>
           ) : (
             <div
-              className="space-y-1 max-h-96 overflow-y-auto"
+              className="space-y-1 max-h-96 overflow-y-auto custom-scrollbar"
               onScroll={handleScroll}
             >
               {timeEntries.data.map((entry) => {

@@ -163,7 +163,7 @@ export function CreateDocumentDialog({ open, onOpenChange, onSuccess }: CreateDo
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-200px)] overflow-y-auto pr-4">
+        <ScrollArea className="max-h-[calc(90vh-200px)] overflow-y-auto custom-scrollbar pr-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* File Upload */}
             <div className="space-y-2">

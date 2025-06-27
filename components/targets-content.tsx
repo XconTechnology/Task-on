@@ -289,14 +289,11 @@ export default function TargetsContent() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-sm text-gray-500">
-              {filteredTargets.length} of {allTargets.length} targets
-            </div>
           </div>
         </div>
 
         {/* Targets List */}
-        <div className="gap-3 grid grid-cols-2">
+        <div className="gap-3 grid grid-cols-3">
           {filteredTargets.map((target) => {
             const statusConfig = getStatusConfig(target.status)
             const StatusIcon = statusConfig.icon
@@ -310,12 +307,10 @@ export default function TargetsContent() {
                 className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
                 onClick={() => handleEditTarget(target)}
               >
+                 
                 <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-gray-900 text-lg">{target.title}</h3>
-                        <Badge className={`${statusConfig.color} border text-xs font-medium px-2 py-1`}>
+                   <div className="w-full mb-3 space-x-3">
+                    <Badge className={`${statusConfig.color} border text-xs font-medium px-2 py-1`}>
                           <StatusIcon size={12} className="mr-1" />
                           {target.status}
                         </Badge>
@@ -325,27 +320,33 @@ export default function TargetsContent() {
                             Overdue
                           </Badge>
                         )}
+                  </div>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-gray-900 text-base">{target.title}</h3>
+                      
                       </div>
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{target.description}</p>
+                      <p className="text-description text-gray-600 mb-4 line-clamp-2">{target.description}</p>
                     </div>
                   </div>
 
                   
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-medium font-medium text-gray-900">
                         {target.currentValue.toLocaleString()} / {target.targetValue.toLocaleString()} {target.unit}
                       </span>
-                      <span className="text-sm font-semibold text-gray-900">{Math.round(progressPercentage)}%</span>
+                      <span className="text-medium font-semibold text-gray-900">{Math.round(progressPercentage)}%</span>
                     </div>
-                    <Progress value={progressPercentage} className="h-2" />
+                    <Progress value={progressPercentage} className="h-[0.35rem]" />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3  mt-4">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
                         {target.assignee?.profilePictureUrl ? (
-                          <Avatar className="h-7 w-7">
+                          <Avatar className="h-5 w-5">
                             <AvatarImage src={target.assignee.profilePictureUrl || "/placeholder.svg"} />
                             <AvatarFallback className="text-xs">
                               {target.assignee.username.charAt(0).toUpperCase()}
@@ -359,8 +360,8 @@ export default function TargetsContent() {
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{target.assignee?.username}</p>
-                          <p className="text-xs text-gray-500">Assignee</p>
+                          <p className="text-medium font-medium text-gray-900">{target.assignee?.username}</p>
+                          <p className="text-small text-gray-500">Assignee</p>
                         </div>
                       </div>
                     </div>
@@ -368,8 +369,8 @@ export default function TargetsContent() {
                     <div className="flex items-center gap-2">
                       <Calendar size={16} className="text-gray-400" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{formatDate(target.deadline)}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-medium font-medium text-gray-900">{formatDate(target.deadline)}</p>
+                        <p className="text-small text-gray-500">
                           {daysRemaining > 0 ? `${daysRemaining} days left` : overdue ? "Overdue" : "Due today"}
                         </p>
                       </div>
@@ -379,8 +380,8 @@ export default function TargetsContent() {
                       <div className="flex items-center gap-2">
                         <TargetIcon size={16} className="text-gray-400" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{target.project.name}</p>
-                          <p className="text-xs text-gray-500">Project</p>
+                          <p className="text-medium font-medium text-gray-900">{target.project.name}</p>
+                          <p className="text-small text-gray-500">Project</p>
                         </div>
                       </div>
                     )}

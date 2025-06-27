@@ -70,7 +70,7 @@ export default function SearchFilterBar() {
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-80 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="pl-10 w-80 border-gray-300 "
           />
           {searchQuery && (
             <Button

@@ -103,7 +103,7 @@ export default function StatusDropdown({ currentStatus, onStatusChange, children
         </div>
 
         {/* Status Content */}
-        <div className="max-h-64 overflow-y-auto">
+        <div className="max-h-64 overflow-y-auto custom-scrollbar">
           {/* Not Started Section */}
           <div className="p-2">
             <div className="text-xs font-medium text-gray-500 uppercase tracking-wide px-2 py-1 mb-1">Not started</div>

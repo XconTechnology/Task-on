@@ -10,6 +10,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import { useState } from "react"
 import type {  AnalyticsData, DashboardStats, User as UserType } from "@/lib/types"
 import { getProgressColor, getProgressTextColor } from "../../lib/utils"
+import Link from "next/link"
 
 
 
@@ -100,16 +101,16 @@ export default function DashboardPage({
     completedTasks: dashboardData.completedTasks,
     inProgressTasks: dashboardData.inProgressTasks,
     todoTasks: dashboardData.todoTasks,
-    todayCompletedTasks: taskStats.todayCompletedTasks,
-    weekCompletedTasks: taskStats.weekCompletedTasks,
-    monthCompletedTasks: taskStats.monthCompletedTasks,
+    todayCompletedTasks: taskStats?.todayCompletedTasks,
+    weekCompletedTasks: taskStats?.weekCompletedTasks,
+    monthCompletedTasks: taskStats?.monthCompletedTasks,
     projectsCount: dashboardData.totalProjects,
     completionRate: dashboardData.projectsCompletionRate,
   }
 
   return (
     <>
-      <div className="px-6 py-4 bg-white border-b border-gray-200 z-50 fixed w-full">
+      <div className="px-6 py-4 bg-white border-b border-gray-200 z-20 fixed w-full">
         <div className="flex items-center space-x-2">
           <BarChart3 size={16} />
           <h1 className="text-lg">Dashboard</h1>
@@ -239,10 +240,10 @@ export default function DashboardPage({
                   </div>
                 </div>
 
-                <div className="mt-auto">
-                  <div className="px-5 py-3 mt-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="relative flex-shrink-0">
+                <div className="mt-auto ">
+                  <Link href='/projects'  className=" ">
+                    <div className="flex items-center space-x-2 px-5 py-3 mt-3 hover:bg-gray-50">
+                      <div className="relative flex-shrink-0 ">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-purple-300 flex items-center justify-center">
                           <FolderOpen className="w-4 h-4 text-white" />
                         </div>
@@ -253,7 +254,7 @@ export default function DashboardPage({
                         <p className="text-xs text-gray-500">View all projects</p>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               </div>
             </CardContent>
@@ -339,7 +340,7 @@ export default function DashboardPage({
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-96 overflow-y-auto custom-scrollbar">
                 <div className="p-6 space-y-4">
                   {/* Table Header */}
                   <div className="grid grid-cols-12 gap-4 text-medium font-semibold text-gray-600 border-b border-gray-100 pb-3">
@@ -438,21 +439,21 @@ export default function DashboardPage({
 
                 {/* Stats Grid */}
                 <div className="flex flex-wrap gap-4 justify-center">
-                  <div className=" ">
-                    <p className="text-xl font-bold text-gray-900">{dashboardData.totalProjects}</p>
+                  <div className="flex gap-1">
                     <p className="text-medium text-gray-600">Total Projects</p>
+                    <p className="text-medium font-bold text-gray-900">({dashboardData.totalProjects})</p>
                   </div>
-                  <div className="  ">
-                    <p className="text-xl font-bold text-green-600">{dashboardData.completedProjects}</p>
+                  <div className="flex gap-1">
                     <p className="text-medium text-gray-600">Completed</p>
+                    <p className="text-medium font-bold text-green-600">({dashboardData.completedProjects})</p>
                   </div>
-                  <div className="  ">
-                    <p className="text-xl font-bold text-red-600">{dashboardData.delayedProjects}</p>
+                  <div className="flex gap-1 ">
                     <p className="text-medium text-gray-600">Delayed</p>
+                    <p className="text-medium font-bold text-red-600">({dashboardData.delayedProjects})</p>
                   </div>
-                  <div className=" ">
-                    <p className="text-xl font-bold text-blue-600">{dashboardData.ongoingProjects}</p>
+                  <div className="flex gap-1">
                     <p className="text-medium text-gray-600">Ongoing</p>
+                    <p className="text-medium font-bold text-blue-600">({dashboardData.ongoingProjects})</p>
                   </div>
                 </div>
               </div>
@@ -461,7 +462,7 @@ export default function DashboardPage({
         </div>
 
           <div className="md:grid md:grid-cols-3 gap-3">
-                    {/* Today Tasks - Made Scrollable */}
+          {/* Today Tasks - Made Scrollable */}
         <Card className="bg-white md:col-span-2  border-0 rounded-xl overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 pb-4">
             <CardTitle className="text-lg font-bold text-gray-900">Today&apos;s Tasks</CardTitle>
@@ -482,7 +483,7 @@ export default function DashboardPage({
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-80 custom-scrollbar overflow-y-auto">
               <div className="p-6 space-y-4">
                 {filteredTasks.map((task) => (
                   <div

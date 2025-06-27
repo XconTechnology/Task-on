@@ -89,7 +89,7 @@ const RecentProjectsSection = ({ onCreateProject }: { onCreateProject: () => voi
                     <span className="text-muted-small">{stats.progress || 0}%</span>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-small">
+                <Badge variant="secondary" className="text-xs">
                   {stats.totalTasks || 0}
                 </Badge>
               </Link>

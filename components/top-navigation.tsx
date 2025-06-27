@@ -1,63 +1,70 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useUser } from "@/lib/user-context"
-import { Plus, Settings, HelpCircle, LogOut, User, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useState } from "react";
+import { useUser } from "@/lib/user-context";
+import {
+  Plus,
+  Settings,
+  HelpCircle,
+  LogOut,
+  User,
+  ChevronDown,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import GlobalSearch from "./global-search"
-import InviteModal from "./modals/invite-modal"
-import TaskDetailModal from "./task-detail-modal"
-import NotificationDropdown from "./notifications/notification-dropdown"
-import { taskApi } from "@/lib/api"
-import type { Task } from "@/lib/types"
-import Image from "next/image"
-import TimerDropdown from "./time-tracking/timer-dropdown"
-import Link from "next/link"
+} from "@/components/ui/dropdown-menu";
+import GlobalSearch from "./global-search";
+import InviteModal from "./modals/invite-modal";
+import TaskDetailModal from "./task-detail-modal";
+import NotificationDropdown from "./notifications/notification-dropdown";
+import { taskApi } from "@/lib/api";
+import type { Task } from "@/lib/types";
+import Image from "next/image";
+import TimerDropdown from "./time-tracking/timer-dropdown";
+import Link from "next/link";
 
 export default function TopNavigation() {
-  const { user, signOut } = useUser()
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false)
+  const { user, signOut } = useUser();
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
 
   const handleTaskClick = (task: Task) => {
-    setSelectedTask(task)
-    setIsTaskDetailOpen(true)
-  }
+    setSelectedTask(task);
+    setIsTaskDetailOpen(true);
+  };
 
   // Handle notification task click
   const handleNotificationTaskClick = async (taskId: string) => {
     try {
-      const response = await taskApi.getTask(taskId)
+      const response = await taskApi.getTask(taskId);
       if (response.success && response.data) {
-        setSelectedTask(response.data)
-        setIsTaskDetailOpen(true)
+        setSelectedTask(response.data);
+        setIsTaskDetailOpen(true);
       }
     } catch (error) {
-      console.error("Failed to fetch task:", error)
+      console.error("Failed to fetch task:", error);
     }
-  }
+  };
 
   // Handle timer task click
   const handleTimerTaskClick = async (taskId: string) => {
     try {
-      const response = await taskApi.getTask(taskId)
+      const response = await taskApi.getTask(taskId);
       if (response.success && response.data) {
-        setSelectedTask(response.data)
-        setIsTaskDetailOpen(true)
+        setSelectedTask(response.data);
+        setIsTaskDetailOpen(true);
       }
     } catch (error) {
-      console.error("Failed to fetch task:", error)
+      console.error("Failed to fetch task:", error);
     }
-  }
+  };
 
   return (
     <>
@@ -65,7 +72,12 @@ export default function TopNavigation() {
         <div className="flex items-center justify-between">
           {/* Left Section */}
           <div className="flex items-center space-x-4 pl-3">
-            <Image src={"/images/logo-dark.png"} width={74} height={74} alt="Taskon" />
+            <Image
+              src={"/images/logo-dark.png"}
+              width={74}
+              height={74}
+              alt="Taskon"
+            />
           </div>
 
           {/* Center Section - Search and Timer */}
@@ -90,7 +102,10 @@ export default function TopNavigation() {
             </Button>
 
             {/* Upgrade Button */}
-            <Button size="sm" className="bg-primary hover:bg-green-700 text-white hidden sm:flex">
+            <Button
+              size="sm"
+              className="bg-primary hover:bg-green-700 text-white hidden sm:flex"
+            >
               <span className="text-xs">Upgrade</span>
             </Button>
 
@@ -98,7 +113,11 @@ export default function TopNavigation() {
             <NotificationDropdown onTaskClick={handleNotificationTaskClick} />
 
             {/* Help */}
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100 hidden sm:flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:bg-gray-100 hidden sm:flex"
+            >
               <HelpCircle size={18} />
             </Button>
 
@@ -111,35 +130,49 @@ export default function TopNavigation() {
                   className="text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
                 >
                   <Avatar className="h-8 w-8 border-2 border-purple-200">
-                    <AvatarImage src={user?.profilePictureUrl || "/placeholder.svg?height=32&width=32"} />
+                    <AvatarImage
+                      src={
+                        user?.profilePictureUrl ||
+                        "/placeholder.svg?height=32&width=32"
+                      }
+                    />
                     <AvatarFallback className="bg-purple-100 text-purple-800">
                       {user?.username?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-small hidden sm:block">{user?.username || "User"}</span>
-                  <ChevronDown size={14} className="hidden sm:block text-gray-500" />
+                  <span className="text-medium hidden sm:block">
+                    {user?.username || "User"}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className="hidden sm:block text-gray-500"
+                  />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-white">
                 <div className="px-3 py-2 border-b border-gray-200">
-                  <p className="text-medium font-semibold text-gray-900">{user?.username || "User"}</p>
-                  <p className="text-small text-gray-600">{user?.email || "user@example.com"}</p>
+                  <p className="text-medium font-semibold text-gray-900">
+                    {user?.username || "User"}
+                  </p>
+                  <p className="text-small text-gray-600">
+                    {user?.email || "user@example.com"}
+                  </p>
                 </div>
-                <DropdownMenuItem className="cursor-pointer">
-              <Link
-                href={`/profile/${user?.id}`}
-                className="flex"
-              >
-                <User size={16} className="mr-2 items-center" />
-                 <span className="text-medium">My Profile</span>
-              </Link>
-                </DropdownMenuItem>
+                <Link href={`/profile/${user?.id}`} className="flex">
+                  <DropdownMenuItem className="cursor-pointer w-full">
+                    <User size={16} className="mr-2 items-center" />
+                    <span className="text-medium">My Profile</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem className="cursor-pointer">
                   <Settings size={16} className="mr-2" />
                   <span className="text-medium">Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-600 hover:text-red-700">
+                <DropdownMenuItem
+                  onClick={signOut}
+                  className="cursor-pointer text-red-600 hover:text-red-700"
+                >
                   <LogOut size={16} className="mr-2" />
                   <span className="text-medium">Sign out</span>
                 </DropdownMenuItem>
@@ -161,15 +194,15 @@ export default function TopNavigation() {
         task={selectedTask}
         isOpen={isTaskDetailOpen}
         onClose={() => {
-          setIsTaskDetailOpen(false)
-          setSelectedTask(null)
+          setIsTaskDetailOpen(false);
+          setSelectedTask(null);
         }}
         onUpdateTask={() => {
           // Just close the modal - no update handling needed
-          setIsTaskDetailOpen(false)
-          setSelectedTask(null)
+          setIsTaskDetailOpen(false);
+          setSelectedTask(null);
         }}
       />
     </>
-  )
+  );
 }
