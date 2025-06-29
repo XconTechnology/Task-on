@@ -90,7 +90,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PUT /api/tasks/[id]
 export async function PUT(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
@@ -103,14 +102,6 @@ export async function PUT(request: NextRequest) {
 
     const id = getIdFromRequest(request);
     const body = await request.json();
-    const { title, description, status, priority, assignedTo, dueDate } = body;
-
-    if (!title?.trim()) {
-      return NextResponse.json(
-        { success: false, error: "Task title is required" },
-        { status: 400 }
-      );
-    }
 
     // Get current workspace ID from header or fallback to user's first workspace
     const headerWorkspaceId = request.headers.get("x-workspace-id");
@@ -128,6 +119,7 @@ export async function PUT(request: NextRequest) {
 
     const db = await getDatabase();
     const tasksCollection = db.collection("tasks");
+    const usersCollection = db.collection("users");
 
     // Get user's role in the workspace
     const workspaceMember = await getWorkspaceMember(
@@ -148,20 +140,64 @@ export async function PUT(request: NextRequest) {
         { status: 403 }
       );
     }
-    console.log('taskid', id)
+
+    // Build dynamic update object - only include fields that are actually provided
+    const updateData: any = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Only update fields that are explicitly provided in the request
+    if (body.hasOwnProperty('title') && body.title !== undefined) {
+      if (!body.title?.trim()) {
+        return NextResponse.json(
+          { success: false, error: "Title cannot be empty" },
+          { status: 400 }
+        );
+      }
+      updateData.title = body.title.trim();
+    }
+
+    if (body.hasOwnProperty('description')) {
+      updateData.description = body.description?.trim() || "";
+    }
+
+    if (body.hasOwnProperty('status') && body.status !== undefined) {
+      updateData.status = body.status;
+    }
+
+    if (body.hasOwnProperty('priority')) {
+      updateData.priority = body.priority;
+    }
+
+    if (body.hasOwnProperty('assignedTo')) {
+      updateData.assignedTo = body.assignedTo || undefined;
+    }
+
+    if (body.hasOwnProperty('dueDate')) {
+      updateData.dueDate = body.dueDate || undefined;
+    }
+
+    if (body.hasOwnProperty('startDate')) {
+      updateData.startDate = body.startDate || undefined;
+    }
+
+    // Handle completion timestamp for status changes
+    if (body.hasOwnProperty('status')) {
+      if (body.status === 'Completed') {
+        updateData.completedAt = new Date().toISOString();
+      } else {
+        // Remove completedAt if status is changed from Completed to something else
+        updateData.completedAt = null;
+      }
+    }
+
+    console.log('Updating task:', id, 'with data:', updateData);
 
     const updatedTask = await tasksCollection.findOneAndUpdate(
       { id: id, workspaceId: currentWorkspaceId },
       {
-        $set: {
-          title: title.trim(),
-          description: description?.trim() || "",
-          status: status || "To Do",
-          priority: priority || "Medium",
-          assignedTo: assignedTo || undefined,
-          dueDate: dueDate || undefined,
-          updatedAt: new Date().toISOString(),
-        },
+        $set: updateData,
+        ...(updateData.completedAt === null ? { $unset: { completedAt: "" } } : {})
       },
       { returnDocument: "after" }
     );
@@ -172,17 +208,17 @@ export async function PUT(request: NextRequest) {
         { status: 404 }
       );
     }
-    
-{/*
-      const author = updatedTask.value.createdBy
-      ? await usersCollection.findOne({ id: updatedTask.value.createdBy })
+
+    // Populate author and assignee information
+    const author = updatedTask.createdBy
+      ? await usersCollection.findOne({ id: updatedTask.createdBy })
       : null;
-    const assignee = updatedTask.value.assignedTo
-      ? await usersCollection.findOne({ id: updatedTask.value.assignedTo })
+    const assignee = updatedTask.assignedTo
+      ? await usersCollection.findOne({ id: updatedTask.assignedTo })
       : null;
 
     const populatedTask = {
-      ...updatedTask.value,
+      ...updatedTask,
       author: author
         ? { id: author.id, username: author.username, email: author.email }
         : null,
@@ -196,11 +232,9 @@ export async function PUT(request: NextRequest) {
         : null,
     };
 
-  */}
-
     return NextResponse.json({
       success: true,
-      data: updatedTask,
+      data: populatedTask,
       message: "Task updated successfully",
     });
   } catch (error) {

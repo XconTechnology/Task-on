@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Send, Trash2, Edit, MoreVertical } from "lucide-react"
+import { Loader2, Send, Trash2, Edit, MoreVertical, Clock } from "lucide-react"
 import { format } from "date-fns"
 import { commentService, type TaskComment } from "@/lib/services/comment-service"
 import { useUser } from "@/lib/user-context"
@@ -98,6 +98,21 @@ export default function TaskComments({ taskId, workspaceId }: TaskCommentsProps)
     }
   }
 
+    const formatTimeAgo = (timestamp: any) => {
+    if (!timestamp) return "Just now"
+    
+    const date = new Date(timestamp.seconds * 1000)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+    
+    if (diffInMinutes < 1) return "Just now"
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`
+    if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)}d ago`
+    
+    return format(date, "MMM dd, yyyy")
+  }
+
   const handleDeleteComment = async (commentId: string) => {
     if (!window.confirm("Are you sure you want to delete this comment?")) return
 
@@ -140,7 +155,7 @@ export default function TaskComments({ taskId, workspaceId }: TaskCommentsProps)
           </div>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="flex space-x-3 group">
+            <div key={comment.id} className="flex space-x-3 group ">
               <Avatar className="h-8 w-8 flex-shrink-0">
                 <AvatarImage src={comment.user?.profilePictureUrl || "/placeholder.svg"} />
                 <AvatarFallback className="text-small">
@@ -152,9 +167,14 @@ export default function TaskComments({ taskId, workspaceId }: TaskCommentsProps)
                   <div className="flex items-center space-x-2">
                     <span className="text-medium font-medium">{comment.user?.username || "Unknown"}</span>
                     <span className="text-muted-small">
-                      {comment.createdAt
-                        ? format(new Date(comment.createdAt.seconds * 1000), "MMM dd, yyyy 'at' h:mm a")
-                        : "Just now"}
+                      {comment.createdAt && (
+                         <div className="flex items-center space-x-1 text-gray-500">
+                          <Clock size={12} />
+                          <span className="text-xs">
+                            {formatTimeAgo(comment.createdAt)}
+                          </span>
+                        </div>
+                      )}
                     </span>
                   </div>
 
@@ -235,7 +255,7 @@ export default function TaskComments({ taskId, workspaceId }: TaskCommentsProps)
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, handleSubmitComment)}
             rows={1}
-            className="w-full resize-none pl-12 pr-12 py-2 min-h-[40px] max-h-[120px] overflow-auto"
+            className="w-full resize-none pl-4 pr-12 py-2 min-h-[40px] max-h-[120px] overflow-auto"
             disabled={isSubmitting}
           />
           <Button

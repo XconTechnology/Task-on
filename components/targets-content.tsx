@@ -151,11 +151,6 @@ export default function TargetsContent() {
     return Math.min((current / target) * 100, 100)
   }
 
-  // Check if target is overdue
-  const isOverdue = (deadline: string, status: string) => {
-    return new Date(deadline) < new Date() && status === "active"
-  }
-
   // Format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -165,7 +160,7 @@ export default function TargetsContent() {
     })
   }
 
-  // Get days remaining
+  // Get days remaining (for active targets only)
   const getDaysRemaining = (deadline: string) => {
     const now = new Date()
     const deadlineDate = new Date(deadline)
@@ -299,7 +294,6 @@ export default function TargetsContent() {
             const StatusIcon = statusConfig.icon
             const progressPercentage = getProgressPercentage(target.currentValue, target.targetValue)
             const daysRemaining = getDaysRemaining(target.deadline)
-            const overdue = isOverdue(target.deadline, target.status)
 
             return (
               <Card
@@ -307,31 +301,23 @@ export default function TargetsContent() {
                 className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-white"
                 onClick={() => handleEditTarget(target)}
               >
-                 
                 <CardContent className="p-5">
-                   <div className="w-full mb-3 space-x-3">
+                  <div className="w-full mb-3">
                     <Badge className={`${statusConfig.color} border text-xs font-medium px-2 py-1`}>
-                          <StatusIcon size={12} className="mr-1" />
-                          {target.status}
-                        </Badge>
-                        {overdue && (
-                          <Badge className="bg-red-50 text-red-700 border-red-200 text-xs font-medium px-2 py-1">
-                            <AlertCircle size={12} className="mr-1" />
-                            Overdue
-                          </Badge>
-                        )}
+                      <StatusIcon size={12} className="mr-1" />
+                      {target.status}
+                    </Badge>
                   </div>
+
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-semibold text-gray-900 text-base">{target.title}</h3>
-                      
                       </div>
                       <p className="text-description text-gray-600 mb-4 line-clamp-2">{target.description}</p>
                     </div>
                   </div>
 
-                  
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-medium font-medium text-gray-900">
@@ -342,7 +328,7 @@ export default function TargetsContent() {
                     <Progress value={progressPercentage} className="h-[0.35rem]" />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3  mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 mt-4">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
                         {target.assignee?.profilePictureUrl ? (
@@ -371,7 +357,15 @@ export default function TargetsContent() {
                       <div>
                         <p className="text-medium font-medium text-gray-900">{formatDate(target.deadline)}</p>
                         <p className="text-small text-gray-500">
-                          {daysRemaining > 0 ? `${daysRemaining} days left` : overdue ? "Overdue" : "Due today"}
+                          {target.status === "active"
+                            ? daysRemaining > 0
+                              ? `${daysRemaining} days left`
+                              : "Due today"
+                            : target.status === "completed"
+                              ? "Completed"
+                              : target.status === "failed"
+                                ? "Failed"
+                                : "Cancelled"}
                         </p>
                       </div>
                     </div>
@@ -386,7 +380,6 @@ export default function TargetsContent() {
                       </div>
                     )}
                   </div>
-
                 </CardContent>
               </Card>
             )

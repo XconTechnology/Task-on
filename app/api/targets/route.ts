@@ -3,6 +3,7 @@ import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getUserRole } from "@/lib/permissions"
 import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
+import { calculateTargetStatus } from "@/lib/target-utils"
 import type { Target } from "@/lib/types"
 
 export async function GET(request: NextRequest) {
@@ -96,9 +97,40 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .toArray()
 
+    // CRITICAL: Check and update target statuses automatically
+    const targetsToUpdate = []
+    const updatedTargets = []
+
+    for (const target of targets) {
+      const statusCheck = calculateTargetStatus(target.currentValue, target.targetValue, target.deadline, target.status)
+
+      if (statusCheck.shouldUpdate) {
+        // Update the target status in database
+        const updateData = {
+          status: statusCheck.status,
+          updatedAt: new Date().toISOString(),
+          ...(statusCheck.status === "completed" && target.status !== "completed"
+            ? { completedAt: new Date().toISOString() }
+            : {}),
+        }
+
+        await targetsCollection.updateOne({ id: target.id }, { $set: updateData })
+
+        // Update the target object for response
+        const updatedTarget = { ...target, ...updateData }
+        updatedTargets.push(updatedTarget)
+
+        console.log(
+          `Target ${target.id} status updated from ${target.status} to ${statusCheck.status}: ${statusCheck.reason}`,
+        )
+      } else {
+        updatedTargets.push(target)
+      }
+    }
+
     // Populate user and project data
     const populatedTargets = await Promise.all(
-      targets.map(async (target) => {
+      updatedTargets.map(async (target) => {
         const populatedTarget = { ...target }
 
         // Populate assignee

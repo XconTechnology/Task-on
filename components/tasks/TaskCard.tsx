@@ -86,13 +86,13 @@ const TaskCard = ({
       }}
     >
       <CardContent className="p-0">
-        <div className="p-4 pt-4">
+        <div className="p-4 pt-2">
           {/* Priority and Tags */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center space-x-2">
               {task.priority && (
                 <Badge variant="outline" className={`text-xs ${priorityConfig[task.priority]}`}>
-                  {task.priority}
+                  <span className="text-small">{task.priority}</span>
                 </Badge>
               )}
             </div>

@@ -4,11 +4,7 @@ import { useEffect, useState } from "react"
 import { useAppStore } from "@/lib/store"
 import BoardView from "./board-view"
 import ListView from "./list-view"
-import TableView from "./table-view"
-import TimelineView from "./timeline-view"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { LayoutGrid, List, Table, Calendar, Star } from "lucide-react"
+import { LayoutGrid, List} from "lucide-react"
 import CreateTaskModal from "./modals/create-task-modal"
 import SearchFilterBar from "./search-filter-bar"
 import { projectApi } from "@/lib/api"
@@ -26,8 +22,6 @@ export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
   const viewOptions = [
     { id: "board" as const, label: "Board", icon: LayoutGrid },
     { id: "list" as const, label: "List", icon: List },
-    { id: "table" as const, label: "Table", icon: Table },
-    { id: "timeline" as const, label: "Timeline", icon: Calendar },
   ]
 
   const fetchProject = async () => {
@@ -55,10 +49,6 @@ useEffect(() => {
         return <BoardView {...props} />
       case "list":
         return <ListView {...props} />
-      case "table":
-        return <TableView {...props} />
-      case "timeline":
-        return <TimelineView {...props} />
       default:
         return <BoardView {...props} />
     }
@@ -82,7 +72,7 @@ useEffect(() => {
             </div>
 
             {/* Main Header */}
-            <div className="px-6 py-4">
+            <div className="px-6 pt-1">
              {/*
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -111,7 +101,7 @@ useEffect(() => {
                       <button
                         key={option.id}
                         onClick={() => setActiveView(option.id)}
-                        className={`flex items-center space-x-2 px-1 py-2 border-b-2 transition-colors ${
+                        className={`flex items-center space-x-2 px-1 py-3 border-b-2 transition-colors ${
                           activeView === option.id
                             ? "text-gray-900 border-gray-900"
                             : "text-gray-500 border-transparent hover:text-gray-700"
@@ -127,7 +117,7 @@ useEffect(() => {
                 </div>
 
                 {/* Search and Filter Bar */}
-                <div className="max-w-2xl ml-8">
+                <div className="max-w-2xl ml-8  pb-1">
                   <SearchFilterBar />
                 </div>
               </div>

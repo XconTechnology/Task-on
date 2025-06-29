@@ -2,7 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
+import { calculateTargetStatus } from "@/lib/target-utils"
 
+// Utility function to extract userId from URL
 // Utility function to extract userId from URL
 function getUserIdFromRequest(request: NextRequest): string | null {
   const url = new URL(request.url)
@@ -86,9 +88,39 @@ export async function GET(request: NextRequest) {
 
     const targets = await targetsCollection.find(query).sort({ createdAt: -1 }).toArray()
 
+    // CRITICAL: Check and update target statuses automatically
+    const updatedTargets = []
+
+    for (const target of targets) {
+      const statusCheck = calculateTargetStatus(target.currentValue, target.targetValue, target.deadline, target.status)
+
+      if (statusCheck.shouldUpdate) {
+        // Update the target status in database
+        const updateData = {
+          status: statusCheck.status,
+          updatedAt: new Date().toISOString(),
+          ...(statusCheck.status === "completed" && target.status !== "completed"
+            ? { completedAt: new Date().toISOString() }
+            : {}),
+        }
+
+        await targetsCollection.updateOne({ id: target.id }, { $set: updateData })
+
+        // Update the target object for response
+        const updatedTarget = { ...target, ...updateData }
+        updatedTargets.push(updatedTarget)
+
+        console.log(
+          `User target ${target.id} status updated from ${target.status} to ${statusCheck.status}: ${statusCheck.reason}`,
+        )
+      } else {
+        updatedTargets.push(target)
+      }
+    }
+
     // Populate target data
     const populatedTargets = await Promise.all(
-      targets.map(async (target) => {
+      updatedTargets.map(async (target) => {
         const populatedTarget = { ...target }
 
         // Populate assignee (should be the same user, but let's be consistent)
@@ -131,7 +163,7 @@ export async function GET(request: NextRequest) {
       }),
     )
 
-    // Calculate stats
+    // Calculate stats based on updated targets
     const totalTargets = populatedTargets.length
     const activeTargets = populatedTargets.filter((t) => t.status === "active").length
     const completedTargets = populatedTargets.filter((t) => t.status === "completed").length

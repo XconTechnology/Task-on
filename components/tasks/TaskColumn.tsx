@@ -58,11 +58,12 @@ const TaskColumn = ({
             : "border-2 border-transparent"
       }`}
     >
-      {/* Column Header */}
-      <div className="mb-4">
-        <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="w-1 h-12 rounded-l-lg" style={{ backgroundColor: config.color }} />
-          <div className="flex-1 flex items-center justify-between px-4 py-3">
+      <div className="bg-gray-50 p-2 rounded-lg">
+              {/* Column Header */}
+      <div className="mb-1">
+        <div className="flex items-center  rounded-lg ">
+          <div className="w-1 h-5 rounded-lg" style={{ backgroundColor: config.color }} />
+          <div className="flex-1 flex items-center justify-between px-2 py-1">
             <div className="flex items-center space-x-3">
               <h3 className="text-large font-semibold">{config.label}</h3>
               <span className="inline-flex items-center justify-center w-6 h-6 text-small font-medium text-gray-600 bg-gray-100 rounded-full">
@@ -73,7 +74,7 @@ const TaskColumn = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="p-1 h-8 w-8 bg-gray-100 hover:bg-gray-200 text-gray-600"
+                className="p-1 h-8 w-8 text-gray-600"
                 onClick={() => setIsModalNewTaskOpen(true)}
               >
                 <Plus size={16} />
@@ -84,7 +85,7 @@ const TaskColumn = ({
       </div>
 
       {/* Tasks */}
-      <div className="space-y-3 min-h-[400px] custom-scrollbar overflow-y-auto">
+      <div className="space-y-3  custom-scrollbar overflow-y-auto">
         {columnTasks.map((task) => (
           <TaskCard
             key={task.id}
@@ -95,16 +96,17 @@ const TaskColumn = ({
             commentCount={commentCounts[task.id]}
           />
         ))}
-
-        {columnTasks.length === 0 && (
-          <div
-            className={`text-center py-8 transition-all duration-300 ${
-              isOver && canDrop ? "text-gray-700" : "text-gray-400"
-            }`}
-          >
-            <div className="text-muted">{isOver && canDrop ? "Drop task here" : "No tasks"}</div>
+      </div>
+          {/* Add New Task Button */}
+        <div
+          className="mt-3 py-2 border-2 border-dashed border-gray-300 rounded-md hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+          onClick={() => setIsModalNewTaskOpen(true)}
+        >
+          <div className="flex items-center justify-center space-x-2 text-gray-500 group-hover:text-gray-700">
+            <Plus size={14} className="text-gray-400 group-hover:text-gray-600" />
+            <span className="text-xs font-medium">Add new</span>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
