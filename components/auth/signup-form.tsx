@@ -1,255 +1,331 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
 
 export default function SignUpForm() {
-  const router = useRouter()
   const [formData, setFormData] = useState({
+    username: "",
     email: "",
     password: "",
-    username: "",
+    confirmPassword: "",
   })
-  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState({
-    hasLength: false,
-    hasLower: false,
-    hasUpper: false,
-    hasNumber: false,
+    score: 0,
+    feedback: [],
   })
+
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const workspaceId = searchParams.get("workspaceId")
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
+    setError("")
+
+    // Check password strength
+    if (name === "password") {
+      checkPasswordStrength(value)
+    }
+  }
+
+  const checkPasswordStrength = (password: string) => {
+    let score = 0
+    const feedback = []
+
+    if (password.length >= 8) score++
+    else feedback.push("At least 8 characters")
+
+    if (/[a-z]/.test(password)) score++
+    else feedback.push("One lowercase letter")
+
+    if (/[A-Z]/.test(password)) score++
+    else feedback.push("One uppercase letter")
+
+    if (/\d/.test(password)) score++
+    else feedback.push("One number")
+
+    if (/[^a-zA-Z0-9]/.test(password)) score++
+    else feedback.push("One special character")
+
+    setPasswordStrength({ score, feedback })
+  }
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength.score <= 1) return "bg-red-500"
+    if (passwordStrength.score <= 2) return "bg-orange-500"
+    if (passwordStrength.score <= 3) return "bg-yellow-500"
+    if (passwordStrength.score <= 4) return "bg-blue-500"
+    return "bg-green-500"
+  }
+
+  const getPasswordStrengthText = () => {
+    if (passwordStrength.score <= 1) return "Very Weak"
+    if (passwordStrength.score <= 2) return "Weak"
+    if (passwordStrength.score <= 3) return "Fair"
+    if (passwordStrength.score <= 4) return "Good"
+    return "Strong"
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoading) return
+
+    // Validate form
+    if (!formData.username.trim()) {
+      setError("Username is required")
+      return
+    }
+
+    if (formData.username.length < 2 || formData.username.length > 30) {
+      setError("Username must be between 2 and 30 characters")
+      return
+    }
+
+    if (!formData.email.trim()) {
+      setError("Email is required")
+      return
+    }
+
+    if (!formData.password) {
+      setError("Password is required")
+      return
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+
+    if (passwordStrength.score < 3) {
+      setError("Please choose a stronger password")
+      return
+    }
+
     setIsLoading(true)
     setError("")
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      // Send verification code
+      const response = await fetch("/api/auth/send-verification", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          type: "signup",
+          userData: {
+            username: formData.username,
+            password: formData.password,
+            workspaceId: workspaceId,
+          },
+        }),
       })
 
       const data = await response.json()
 
       if (data.success) {
-        router.push("/onboarding")
+        // Redirect to verification page
+        router.push(
+          `/verify?email=${encodeURIComponent(formData.email)}&type=signup&verificationId=${data.verificationId}`,
+        )
       } else {
-        setError(data.error || "Sign up failed")
+        setError(data.error || "Failed to send verification code")
       }
     } catch (error) {
-      setError(`Network error. Please try again. ${error}`)
+      console.error("Signup error:", error)
+      setError("Network error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    if (error) setError("")
-
-    // Check password strength
-    if (field === "password") {
-      setPasswordStrength({
-        hasLength: value.length >= 8,
-        hasLower: /[a-z]/.test(value),
-        hasUpper: /[A-Z]/.test(value),
-        hasNumber: /\d/.test(value),
-      })
-    }
-  }
-
-  const isPasswordValid = Object.values(passwordStrength).every(Boolean)
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center space-x-3 mb-6 lg:hidden">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">PM</span>
-          </div>
-          <span className="text-xl font-bold text-gray-900">ProjectFlow</span>
-        </div>
-        <h1 className="header-medium mb-2">Create your account</h1>
-        <p className="text-description">Start your project management journey today</p>
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
+        <p className="text-gray-600">Join ProjectFlow and start managing your projects</p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-error">{error}</p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Username */}
+        <div className="space-y-2">
+          <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+            Username
+          </Label>
+          <Input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="Enter your username"
+            value={formData.username}
+            onChange={handleChange}
+            disabled={isLoading}
+            className="h-11"
+            autoComplete="username"
+          />
+        </div>
+
+        {/* Email */}
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            Email Address
+          </Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Enter your email"
+            value={formData.email}
+            onChange={handleChange}
+            disabled={isLoading}
+            className="h-11"
+            autoComplete="email"
+          />
+        </div>
+
+        {/* Password */}
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+            Password
+          </Label>
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Create a password"
+              value={formData.password}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="h-11 pr-10"
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
+
+          {/* Password Strength Indicator */}
+          {formData.password && (
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
+                    style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-gray-600">{getPasswordStrengthText()}</span>
+              </div>
+              {passwordStrength.feedback.length > 0 && (
+                <div className="text-xs text-gray-500">Missing: {passwordStrength.feedback.join(", ")}</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Confirm Password */}
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+            Confirm Password
+          </Label>
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm your password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="h-11 pr-10"
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+            <div className="flex items-center space-x-1 text-red-600 text-xs">
+              <AlertCircle size={12} />
+              <span>Passwords do not match</span>
+            </div>
+          )}
+          {formData.confirmPassword && formData.password === formData.confirmPassword && formData.password && (
+            <div className="flex items-center space-x-1 text-green-600 text-xs">
+              <CheckCircle size={12} />
+              <span>Passwords match</span>
+            </div>
+          )}
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="username" className="text-label">
-              Username
-            </Label>
-            <div className="relative mt-1">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                id="username"
-                type="text"
-                value={formData.username}
-                onChange={(e) => handleInputChange("username", e.target.value)}
-                placeholder="Choose a username"
-                className="pl-10"
-                required
-                disabled={isLoading}
-                minLength={2}
-                maxLength={30}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="email" className="text-label">
-              Email address
-            </Label>
-            <div className="relative mt-1">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                placeholder="Enter your email"
-                className="pl-10"
-                required
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="password" className="text-label">
-              Password
-            </Label>
-            <div className="relative mt-1">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                placeholder="Create a strong password"
-                className="pl-10 pr-10"
-                required
-                disabled={isLoading}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                disabled={isLoading}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
-            {/* Password Strength Indicator */}
-            {formData.password && (
-              <div className="mt-3 space-y-2">
-                <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${passwordStrength.hasLength ? "bg-green-500" : "bg-gray-300"}`}
-                  />
-                  <span className={`text-small ${passwordStrength.hasLength ? "text-green-600" : "text-gray-500"}`}>
-                    At least 8 characters
-                  </span>
-                  {passwordStrength.hasLength && <Check size={14} className="text-green-500" />}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${passwordStrength.hasLower ? "bg-green-500" : "bg-gray-300"}`}
-                  />
-                  <span className={`text-small ${passwordStrength.hasLower ? "text-green-600" : "text-gray-500"}`}>
-                    One lowercase letter
-                  </span>
-                  {passwordStrength.hasLower && <Check size={14} className="text-green-500" />}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${passwordStrength.hasUpper ? "bg-green-500" : "bg-gray-300"}`}
-                  />
-                  <span className={`text-small ${passwordStrength.hasUpper ? "text-green-600" : "text-gray-500"}`}>
-                    One uppercase letter
-                  </span>
-                  {passwordStrength.hasUpper && <Check size={14} className="text-green-500" />}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${passwordStrength.hasNumber ? "bg-green-500" : "bg-gray-300"}`}
-                  />
-                  <span className={`text-small ${passwordStrength.hasNumber ? "text-green-600" : "text-gray-500"}`}>
-                    One number
-                  </span>
-                  {passwordStrength.hasNumber && <Check size={14} className="text-green-500" />}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-start space-x-2">
-          <input
-            type="checkbox"
-            id="terms"
-            required
-            className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            disabled={isLoading}
-          />
-          <label htmlFor="terms" className="text-medium text-gray-600">
-            I agree to the{" "}
-            <Link href="/terms" className="text-link">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-link">
-              Privacy Policy
-            </Link>
-          </label>
-        </div>
-
+        {/* Submit Button */}
         <Button
           type="submit"
-          disabled={isLoading || !isPasswordValid}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12"
+          disabled={isLoading}
+          className="w-full h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
         >
           {isLoading ? (
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-              <span className="text-medium">Creating account...</span>
-            </div>
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating Account...
+            </>
           ) : (
-            <div className="flex items-center space-x-2">
-              <span className="text-medium">Create account</span>
-              <ArrowRight size={16} />
-            </div>
+            "Create Account"
           )}
         </Button>
       </form>
 
-      {/* Footer */}
+      {/* Terms */}
+      <div className="text-center text-xs text-gray-500">
+        By creating an account, you agree to our{" "}
+        <Link href="/terms" className="text-blue-600 hover:underline">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="text-blue-600 hover:underline">
+          Privacy Policy
+        </Link>
+      </div>
+
+      {/* Sign In Link */}
       <div className="text-center">
-        <p className="text-medium text-gray-600">
-          Already have an account?{" "}
-          <Link href="/signin" className="text-link font-medium">
-            Sign in
-          </Link>
-        </p>
+        <span className="text-gray-600">Already have an account? </span>
+        <Link href="/signin" className="text-blue-600 hover:underline font-medium">
+          Sign in
+        </Link>
       </div>
     </div>
   )

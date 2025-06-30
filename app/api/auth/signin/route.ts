@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, validateOnly = false } = body;
 
     // Validation
     if (!email || !password) {
@@ -64,7 +64,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate JWT token
+    // If validateOnly is true, just return success without creating session
+    if (validateOnly) {
+      return NextResponse.json({
+        success: true,
+        message: "Credentials validated successfully",
+      });
+    }
+
+    // Generate JWT token for full signin
     const token = generateToken({
       userId: user.id,
       email: user.email,

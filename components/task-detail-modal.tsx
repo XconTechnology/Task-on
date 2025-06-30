@@ -521,7 +521,11 @@ export default function TaskDetailModal({
                             <div className="flex items-center space-x-1">
                               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                               <span className="text-sm font-mono font-semibold text-red-600">
-                                {formatTime(elapsedTime)}
+                                {formatDuration(
+                                  taskTime.isRunning
+                                    ? taskTime.totalTime + elapsedTime
+                                    : taskTime.totalTime
+                                )}
                               </span>
                             </div>
                           </div>

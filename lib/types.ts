@@ -240,13 +240,32 @@ export interface Workspace {
   updatedAt: string;
 }
 
-export type WorkspaceMember = {
-  memberId: string;
-  username: string;
-  email: string;
-  role: "Owner" | "Admin" | "Member"; // Moved role here from User
-  joinedAt: string;
-};
+
+export interface WorkspaceMember {
+  memberId: string
+  username: string
+  email: string
+  profilePictureUrl?: string
+  role: "Owner" | "Admin" | "Member"
+  joinedAt: string
+  // Add salary information
+  salary?: {
+    amount: number
+    currency: string
+    lastUpdated: string
+    updatedBy: string
+  }
+}
+
+export interface SalaryUpdate {
+  amount: number
+  currency: string
+}
+
+export interface MemberUpdate {
+  role?: "Owner" | "Admin" | "Member"
+  salary?: SalaryUpdate
+}
 
 export type PendingInvite = {
   id: string;

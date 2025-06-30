@@ -265,6 +265,7 @@ export default function TimeTrackingContent() {
     );
   }
 
+
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -513,13 +514,13 @@ export default function TimeTrackingContent() {
                     <div className="flex items-center space-x-3">
                       <span className="text-sm font-medium text-gray-900">
                         {formatDuration(
-                          entryIsRunning && activeTimer?.id === entry.id
+                          entryIsRunning 
                             ? (entry.duration || 0) + elapsedTime
                             : entry.duration || 0
                         )}
                       </span>
                       <div className="flex items-center space-x-1">
-                        {entryIsRunning && activeTimer?.id === entry.id ? (
+                        {entryIsRunning  ? (
                           <Button
                             variant="ghost"
                             size="sm"

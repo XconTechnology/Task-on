@@ -1,14 +1,29 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
-import { VerificationUtils } from "@/lib/verification-utils"
-import EmailService from "@/lib/email-verification-service"
+import { isValidEmail, checkRateLimit } from "@/lib/auth"
+import { generateVerificationCode, storeVerificationCode, checkResendRateLimit } from "@/lib/verification-utils"
+import { sendVerificationEmail } from "@/lib/email-verification-service"
 
 export async function POST(request: NextRequest) {
   try {
+    const forwardedFor = request.headers.get("x-forwarded-for")
+    const clientIp = forwardedFor?.split(",")[0]?.trim() || "unknown"
+
+    // Rate limiting
+    if (!checkRateLimit(`send-verification:${clientIp}`, 5, 15 * 60 * 1000)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Too many verification requests. Please try again later.",
+        },
+        { status: 429 },
+      )
+    }
+
     const body = await request.json()
     const { email, type, userData } = body
 
-    // Validate input
+    // Validation
     if (!email || !type) {
       return NextResponse.json({ success: false, error: "Email and type are required" }, { status: 400 })
     }
@@ -17,109 +32,80 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid verification type" }, { status: 400 })
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({ success: false, error: "Invalid email format" }, { status: 400 })
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ success: false, error: "Please enter a valid email address" }, { status: 400 })
+    }
+
+    // Check resend rate limit
+    if (!checkResendRateLimit(email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Too many resend attempts. Please wait before requesting another code.",
+        },
+        { status: 429 },
+      )
     }
 
     const db = await getDatabase()
-    const verificationsCollection = db.collection("verifications")
     const usersCollection = db.collection("users")
 
-    // For signin, check if user exists
-    if (type === "signin") {
-      const existingUser = await usersCollection.findOne({ email })
-      if (!existingUser) {
+    if (type === "signup") {
+      // For signup, check if user already exists
+      const existingUser = await usersCollection.findOne({
+        email: email.toLowerCase(),
+      })
+
+      if (existingUser) {
+        return NextResponse.json({ success: false, error: "User with this email already exists" }, { status: 409 })
+      }
+
+      // Validate userData for signup
+      if (!userData || !userData.username || !userData.password) {
+        return NextResponse.json(
+          { success: false, error: "Username and password are required for signup" },
+          { status: 400 },
+        )
+      }
+    } else if (type === "signin") {
+      // For signin, check if user exists
+      const user = await usersCollection.findOne({
+        email: email.toLowerCase(),
+      })
+
+      if (!user) {
         return NextResponse.json({ success: false, error: "No account found with this email address" }, { status: 404 })
       }
     }
 
-    // For signup, check if user already exists
-    if (type === "signup") {
-      const existingUser = await usersCollection.findOne({ email })
-      if (existingUser) {
-        return NextResponse.json(
-          { success: false, error: "An account with this email already exists" },
-          { status: 409 },
-        )
-      }
+    // Generate and store verification code
+    const code = generateVerificationCode()
+    const verificationId = await storeVerificationCode(email, code, type, userData)
+
+    // Get username for email
+    let username = "User"
+    if (type === "signup" && userData?.username) {
+      username = userData.username
+    } else if (type === "signin") {
+      const user = await usersCollection.findOne({ email: email.toLowerCase() })
+      username = user?.username || "User"
     }
-
-    // Check for existing verification and rate limiting
-    const existingVerification = await verificationsCollection.findOne({
-      email,
-      type,
-      expiresAt: { $gt: new Date() },
-    })
-
-    if (existingVerification) {
-      // Check if we can resend (1 minute cooldown)
-      const canResend = VerificationUtils.canResendCode(new Date(existingVerification.createdAt), 1)
-      if (!canResend) {
-        const timeRemaining = VerificationUtils.getTimeRemaining(new Date(existingVerification.expiresAt))
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Please wait before requesting another code",
-            timeRemaining:
-              timeRemaining.minutes > 0
-                ? `${timeRemaining.minutes}m ${timeRemaining.seconds}s`
-                : `${timeRemaining.seconds}s`,
-          },
-          { status: 429 },
-        )
-      }
-    }
-
-    // Generate new verification code
-    const code = VerificationUtils.generateCode()
-    const verificationId = VerificationUtils.generateVerificationId()
-    const expiresAt = VerificationUtils.getExpirationTime()
-
-    // Create verification record
-    const verificationRecord = {
-      id: verificationId,
-      email,
-      code: VerificationUtils.hashCode(code), // Store hashed code
-      type,
-      expiresAt,
-      attempts: 0,
-      createdAt: new Date(),
-      userData: userData || {},
-    }
-
-    // Remove any existing verification for this email and type
-    await verificationsCollection.deleteMany({ email, type })
-
-    // Insert new verification
-    await verificationsCollection.insertOne(verificationRecord)
 
     // Send verification email
-    const emailResult = await EmailService.sendVerificationCode({
-      email,
-      code, // Send plain code in email
-      username: userData?.username,
-      type,
-    })
+    const emailResult = await sendVerificationEmail(email, code, username, type)
 
     if (!emailResult.success) {
-      // Clean up verification record if email failed
-      await verificationsCollection.deleteOne({ id: verificationId })
-
+      console.error("Failed to send verification email:", emailResult.error)
       return NextResponse.json(
         { success: false, error: "Failed to send verification email. Please try again." },
         { status: 500 },
       )
     }
 
-    // Return success without the actual code
     return NextResponse.json({
       success: true,
       message: "Verification code sent successfully",
       verificationId,
-      expiresAt: expiresAt.toISOString(),
-      email: email.replace(/(.{2})(.*)(@.*)/, "$1***$3"), // Mask email for security
     })
   } catch (error) {
     console.error("Send verification error:", error)
