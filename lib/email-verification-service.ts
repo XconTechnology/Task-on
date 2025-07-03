@@ -309,7 +309,7 @@ export async function sendWelcomeEmail(email: string, username: string) {
           <p>Congratulations! Your email has been verified and your ProjectFlow account is now active.</p>
           
           <div style="text-align: center;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard" class="cta-button">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://www.taskon.cloud"}/dashboard" class="cta-button">
               Get Started Now
             </a>
           </div>
@@ -365,7 +365,7 @@ export async function sendWelcomeEmail(email: string, username: string) {
     ✓ Track progress and meet deadlines
     ✓ Set and achieve your targets
     
-    Get started: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard
+    Get started: ${process.env.NEXT_PUBLIC_APP_URL || "https://www.taskon.cloud"}/dashboard
     
     If you have any questions or need help getting started, don't hesitate to reach out to our support team.
     
