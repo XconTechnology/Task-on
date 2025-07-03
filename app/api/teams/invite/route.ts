@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     const results = []
     const baseUrl =
       process.env.APP_URL ||
-      (process.env.NEXT_PUBLIC_APP_URL ? `https://${process.env.NEXT_PUBLIC_APP_URL}` : "http://localhost:3000")
+      (process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}` : "http://localhost:3000")
 
     for (const email of emails) {
       try {
