@@ -90,7 +90,7 @@ export default function OnboardingFlow() {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat  opacity-20"
         style={{
-          backgroundImage: "url('/onboarding_Img.png')",
+          backgroundImage: "url('/background.png')",
         }}
       ></div>
       {/* Dark overlay to dim the background further */}

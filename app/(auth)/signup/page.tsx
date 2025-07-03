@@ -1,12 +1,13 @@
-import type { Metadata } from "next"
-import SignUpForm from "@/components/auth/signup-form"
+import type { Metadata } from "next";
+import SignUpForm from "@/components/auth/signup-form";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Sign Up - ProjectFlow",
   description:
     "Create your ProjectFlow account and start managing projects like a pro. Join thousands of teams already using ProjectFlow.",
   robots: "noindex, nofollow",
-}
+};
 
 export default function SignUpPage() {
   return (
@@ -15,7 +16,9 @@ export default function SignUpPage() {
         {/* Left Side - Form */}
         <div className="flex-1 flex items-center justify-center px-6 py-12">
           <div className="w-full max-w-md">
-            <SignUpForm />
+            <Suspense fallback={<div>Loading form...</div>}>
+              <SignUpForm />
+            </Suspense>
           </div>
         </div>
 
@@ -32,14 +35,19 @@ export default function SignUpPage() {
               </div>
               <h1 className="text-4xl font-bold mb-4">Start your journey!</h1>
               <p className="text-xl text-blue-100 mb-8">
-                Join thousands of teams who trust ProjectFlow to manage their projects efficiently.
+                Join thousands of teams who trust ProjectFlow to manage their
+                projects efficiently.
               </p>
             </div>
 
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
@@ -49,25 +57,37 @@ export default function SignUpPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold">Powerful Project Management</h3>
-                  <p className="text-blue-100">Organize tasks, track progress, and hit deadlines</p>
+                  <p className="text-blue-100">
+                    Organize tasks, track progress, and hit deadlines
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
                   <h3 className="font-semibold">Free to Start</h3>
-                  <p className="text-blue-100">Begin with our free plan and upgrade as you grow</p>
+                  <p className="text-blue-100">
+                    Begin with our free plan and upgrade as you grow
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
@@ -77,7 +97,9 @@ export default function SignUpPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold">Lightning Fast</h3>
-                  <p className="text-blue-100">Built for speed and performance you can rely on</p>
+                  <p className="text-blue-100">
+                    Built for speed and performance you can rely on
+                  </p>
                 </div>
               </div>
             </div>
@@ -89,5 +111,5 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

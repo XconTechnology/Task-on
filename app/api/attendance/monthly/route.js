@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+import {  NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 
-export async function POST(request: NextRequest){
+export async function POST(request){
   try {
     const user = getUserFromRequest(request)
     if (!user) {

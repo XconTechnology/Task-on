@@ -1,19 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Users, Crown, Shield, User, Mail } from "lucide-react"
+import { Search, Users, Crown, Shield, User, Mail, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent} from "@/components/ui/tabs"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import InviteModal from "@/components/modals/invite-modal"
+import SalaryModal from "@/components/modals/salary-modal"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { workspaceApi } from "@/lib/api"
 import Link from "next/link"
-import type {  WorkspaceMember } from "@/lib/types"
-import MemberActionsDropdown from "@/components/workspace/member-actions-dropdown"
+import type { WorkspaceMember } from "@/lib/types"
 import { useUser } from "@/lib/user-context"
 import {
   Dialog,
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { AlertTriangle, Check, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import MemberActionsDropdown from "../workspace/member-actions-dropdown"
 
 export default function MembersContent() {
   const { user } = useUser()
@@ -44,17 +45,18 @@ export default function MembersContent() {
   // Member delete state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
+  // Salary modal state
+  const [isSalaryModalOpen, setIsSalaryModalOpen] = useState(false)
+
   useEffect(() => {
     fetchMembers()
   }, [])
-
 
   const fetchMembers = async () => {
     try {
       const data = await workspaceApi.getMembers()
       if (data.success) {
         setMembers(data.data || [])
-
         // Find current user's role
         if (user && data.data) {
           const currentMember = data.data.find((member: any) => member.memberId === user.id)
@@ -81,6 +83,12 @@ export default function MembersContent() {
     setIsUpdateRoleDialogOpen(true)
   }
 
+  // Handle opening the salary modal
+  const handleUpdateSalary = (member: WorkspaceMember) => {
+    setSelectedMember(member)
+    setIsSalaryModalOpen(true)
+  }
+
   // Handle opening the delete member dialog
   const handleRemoveMember = (member: WorkspaceMember) => {
     setSelectedMember(member)
@@ -97,7 +105,6 @@ export default function MembersContent() {
     setIsLoading(true)
     try {
       const response = await workspaceApi.updateMemberRole(selectedMember.memberId, selectedRole)
-
       if (response.success) {
         toast({
           title: "Role updated",
@@ -135,7 +142,6 @@ export default function MembersContent() {
     setIsLoading(true)
     try {
       const response = await workspaceApi.removeMember(selectedMember.memberId)
-
       if (response.success) {
         toast({
           title: "Member removed",
@@ -193,11 +199,30 @@ export default function MembersContent() {
     }
   }
 
+  // Check if current user can see salaries
+  const canViewSalaries = currentUserRole === "Owner" || currentUserRole === "Admin"
+
+  // Format salary display
+  const formatSalary = (salary: any) => {
+    if (!salary) return "Not set"
+    const currencySymbols: { [key: string]: string } = {
+      USD: "$",
+      PKR: "RS",
+      EUR: "€",
+      GBP: "£",
+      CAD: "C$",
+      AUD: "A$",
+      JPY: "¥",
+    }
+    const symbol = currencySymbols[salary.currency] || salary.currency
+    return `${symbol}${salary.amount.toLocaleString()}`
+  }
+
   return (
     <>
       <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between ">
           <div>
             <h1 className="header-large">Workspace Members</h1>
             <p className="text-description mt-1">Manage your workspace members and their permissions.</p>
@@ -225,28 +250,43 @@ export default function MembersContent() {
 
         {/* Tabs */}
         <Tabs defaultValue="members" className="space-y-6">
-
           <TabsContent value="members" className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            
+              {/* Table Header */}
+              <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <div className="grid grid-cols-12 gap-4 text-sm font-medium text-gray-700">
+                  <div className="col-span-4">Person</div>
+                  <div className="col-span-3">Email</div>
+                  {canViewSalaries && <div className="col-span-2">Salary</div>}
+                  <div className={canViewSalaries ? "col-span-2" : "col-span-4"}>Role</div>
+                  <div className="col-span-1"></div>
+                </div>
+              </div>
+
               <div className="divide-y divide-gray-200">
                 {isLoadingMembers ? (
                   // Skeleton loading for members
                   Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="px-6 py-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
+                      <div className="grid grid-cols-12 gap-4 items-center">
+                        <div className="col-span-4 flex items-center space-x-3">
                           <Skeleton className="h-10 w-10 rounded-full" />
                           <div className="space-y-2">
                             <Skeleton className="h-4 w-32" />
-                            <Skeleton className="h-3 w-48" />
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right space-y-2">
-                            <Skeleton className="h-5 w-16" />
-                            <Skeleton className="h-3 w-24" />
+                        <div className="col-span-3">
+                          <Skeleton className="h-4 w-48" />
+                        </div>
+                        {canViewSalaries && (
+                          <div className="col-span-2">
+                            <Skeleton className="h-4 w-20" />
                           </div>
+                        )}
+                        <div className={canViewSalaries ? "col-span-2" : "col-span-4"}>
+                          <Skeleton className="h-6 w-16" />
+                        </div>
+                        <div className="col-span-1">
                           <Skeleton className="h-8 w-8 rounded" />
                         </div>
                       </div>
@@ -255,34 +295,73 @@ export default function MembersContent() {
                 ) : filteredMembers.length > 0 ? (
                   filteredMembers.map((member: any) => (
                     <div key={member.memberId} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                       <Link href={`/profile/${member.memberId}`}>
-                        <div className="flex items-center space-x-4">
-                          <div className="relative">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={member.profilePictureUrl || "/placeholder.svg"} />
-                              <AvatarFallback>{member.username.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-green-500" />
-                          </div>
-                          <div>
-                            <h4 className="text-medium font-semibold text-gray-900">{member.username}</h4>
-                            <p className="text-small text-gray-600">{member.email}</p>
-                          </div>
-                        </div>
-                       </Link>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <div className="flex items-center space-x-2">
-                              {getRoleIcon(member.role)}
-                              <Badge variant="secondary" className={getRoleBadgeClass(member.role)}>
-                                {member.role || "Member"}
-                              </Badge>
+                      <div className="grid grid-cols-12 gap-4 items-center">
+                        {/* Person */}
+                        <div className="col-span-4">
+                          <Link href={`/profile/${member.memberId}`}>
+                            <div className="flex items-center space-x-3 cursor-pointer">
+                              <div className="relative">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={member.profilePictureUrl || "/placeholder.svg"} />
+                                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                                    {member.username.charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-green-500" />
+                              </div>
+                              <div>
+                                <h4 className="text-medium font-semibold text-gray-900">{member.username}</h4>
+                              </div>
                             </div>
-                            <p className="text-small text-gray-500 mt-1">
-                              Joined {new Date(member.joinedAt).toLocaleDateString()}
-                            </p>
+                          </Link>
+                        </div>
+
+                        {/* Email */}
+                        <div className="col-span-3">
+                          <p className="text-medium text-gray-600">{member.email}</p>
+                        </div>
+
+                        {/* Salary (only visible to admins/owners) */}
+                        {canViewSalaries && (
+                          <div className="col-span-2">
+                            <div className="flex items-center space-x-2">
+                              <DollarSign size={14} className="text-green-600" />
+                              <span className="text-sm font-medium text-gray-900">{formatSalary(member.salary)}</span>
+                            </div>
+                            {member.salary && (
+                              <p className="text-small text-gray-500 mt-1">
+                                Updated {new Date(member.salary.lastUpdated).toLocaleDateString()}
+                              </p>
+                            )}
                           </div>
+                        )}
+
+                        {/* Role */}
+                        <div className={canViewSalaries ? "col-span-2" : "col-span-4"}>
+                          <div className="flex items-center space-x-2">
+                            {getRoleIcon(member.role)}
+                            <Badge variant="secondary" className={getRoleBadgeClass(member.role)}>
+                              {member.role || "Member"}
+                            </Badge>
+                          </div>
+                          <p className="text-small text-gray-500 mt-1">
+                            Joined {new Date(member.joinedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="col-span-1 flex items-center justify-end space-x-2">
+                          {/* Salary Button (only for admins/owners) */}
+                          {canViewSalaries && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUpdateSalary(member)}
+                              className="h-8 w-8 p-0 hover:bg-green-100"
+                            >
+                              <DollarSign size={14} className="text-green-600" />
+                            </Button>
+                          )}
 
                           {/* Member Actions Dropdown */}
                           <MemberActionsDropdown
@@ -310,7 +389,6 @@ export default function MembersContent() {
               </div>
             </div>
           </TabsContent>
-
         </Tabs>
       </div>
 
@@ -323,7 +401,7 @@ export default function MembersContent() {
           </DialogHeader>
           <div className="flex items-center space-x-4 py-4">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={ "/placeholder.svg"} />
+              <AvatarImage src={selectedMember?.profilePictureUrl || "/placeholder.svg"} />
               <AvatarFallback>{selectedMember?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
             </Avatar>
             <div>
@@ -331,6 +409,7 @@ export default function MembersContent() {
               <p className="text-sm text-gray-500">{selectedMember?.email}</p>
             </div>
           </div>
+
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Select Role</label>
@@ -382,6 +461,7 @@ export default function MembersContent() {
               </div>
             </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsUpdateRoleDialogOpen(false)} disabled={isLoading}>
               Cancel
@@ -415,6 +495,7 @@ export default function MembersContent() {
               Are you sure you want to remove {selectedMember?.username} from this workspace?
             </DialogDescription>
           </DialogHeader>
+
           <div className="bg-red-50 p-4 rounded-md border border-red-200 my-4">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -426,6 +507,7 @@ export default function MembersContent() {
               </div>
             </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isLoading}>
               Cancel
@@ -446,6 +528,14 @@ export default function MembersContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Salary Modal */}
+      <SalaryModal
+        isOpen={isSalaryModalOpen}
+        onClose={() => setIsSalaryModalOpen(false)}
+        member={selectedMember}
+        onSuccess={fetchMembers}
+      />
 
       <InviteModal
         isOpen={isInviteModalOpen}

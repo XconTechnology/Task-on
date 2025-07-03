@@ -1,4 +1,4 @@
-import type { AttendanceRecord, DailyAttendance, MonthlyAttendance, AttendanceStats, ApiResponse } from "./types"
+import type { DailyAttendance, MonthlyAttendance, ApiResponse, UserMonthlyAttendance } from "./types"
 import { apiCall } from "./api_call"
 
 export const attendanceApi = {
@@ -22,23 +22,44 @@ export const attendanceApi = {
     return apiCall<MonthlyAttendance>(endpoint)
   },
 
-  // Get user attendance stats
-  getUserAttendance: async (
-    userId: string,
-    startDate?: string,
-    endDate?: string,
-  ): Promise<ApiResponse<{ user: any; records: AttendanceRecord[]; stats: AttendanceStats }>> => {
-    let endpoint = `/attendance/user/${userId}`
-    const params = new URLSearchParams()
-    if (startDate) params.append("startDate", startDate)
-    if (endDate) params.append("endDate", endDate)
-    if (params.toString()) endpoint += `?${params.toString()}`
 
-    return apiCall(endpoint)
-  },
 
   // Get attendance summary for date range
   getAttendanceSummary: async (startDate: string, endDate: string): Promise<ApiResponse<any>> => {
     return apiCall(`/attendance/summary?startDate=${startDate}&endDate=${endDate}`)
+  },
+  // Get user's monthly attendance
+  getUserMonthlyAttendance: async (userId: string, month: string): Promise<ApiResponse<UserMonthlyAttendance>> => {
+    return apiCall<UserMonthlyAttendance>(`/attendance/user/${userId}/monthly?month=${month}`)
+  },
+
+  // Get user's attendance stats for multiple months
+  getUserAttendanceStats: async (
+    userId: string,
+    months = 6,
+  ): Promise<
+    ApiResponse<{
+      monthlyStats: Array<{
+        month: string
+        attendanceRate: number
+        presentDays: number
+        totalDays: number
+      }>
+      overallStats: {
+        averageAttendanceRate: number
+        totalPresentDays: number
+        totalWorkingDays: number
+      }
+    }>
+  > => {
+    return apiCall(`/attendance/user/${userId}/stats?months=${months}`)
+  },
+
+  // Calculate user attendance for a specific month
+  calculateUserMonthlyAttendance: async (userId: string, month: string): Promise<ApiResponse<void>> => {
+    return apiCall(`/attendance/user/${userId}/calculate`, {
+      method: "POST",
+      body: JSON.stringify({ month }),
+    })
   },
 }

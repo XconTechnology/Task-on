@@ -14,10 +14,8 @@ import EditTeamModal from "@/components/modals/edit-team-modal"
 import { teamApi } from "@/lib/api/teams"
 import Link from "next/link"
 import type { Team} from "@/lib/types"
-import { useToast } from "@/hooks/use-toast"
 
 export default function TeamsContent() {
-  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [teams, setTeams] = useState<Team[]>([])
   const [isLoadingTeams, setIsLoadingTeams] = useState(true)

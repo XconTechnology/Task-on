@@ -1,143 +1,159 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect, useRef } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Mail, RefreshCw, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react"
-import Link from "next/link"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Loader2,
+  Mail,
+  RefreshCw,
+  ArrowLeft,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function VerifyPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Get parameters from URL
-  const email = searchParams.get("email")
-  const type = searchParams.get("type") as "signup" | "signin"
-  const verificationId = searchParams.get("verificationId")
+  const email = searchParams.get("email");
+  const type = searchParams.get("type") as "signup" | "signin";
 
   // State management
-  const [code, setCode] = useState(["", "", "", "", "", ""])
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [isResending, setIsResending] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-  const [timeRemaining, setTimeRemaining] = useState(600) // 10 minutes in seconds
-  const [canResend, setCanResend] = useState(false)
-  const [resendCooldown, setResendCooldown] = useState(0)
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Refs for input focus management
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Redirect if missing required parameters
   useEffect(() => {
     if (!email || !type || !["signup", "signin"].includes(type)) {
-      router.push("/signin")
-      return
+      router.push("/signin");
+      return;
     }
-  }, [email, type, router])
+  }, [email, type, router]);
 
   // Timer for code expiration
   useEffect(() => {
-    if (timeRemaining <= 0) return
+    if (timeRemaining <= 0) return;
 
     const timer = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
-          setCanResend(true)
-          return 0
+          return 0;
         }
-        return prev - 1
-      })
-    }, 1000)
+        return prev - 1;
+      });
+    }, 1000);
 
-    return () => clearInterval(timer)
-  }, [timeRemaining])
+    return () => clearInterval(timer);
+  }, [timeRemaining]);
 
   // Resend cooldown timer
   useEffect(() => {
-    if (resendCooldown <= 0) return
+    if (resendCooldown <= 0) return;
 
     const timer = setInterval(() => {
       setResendCooldown((prev) => {
         if (prev <= 1) {
-          return 0
+          return 0;
         }
-        return prev - 1
-      })
-    }, 1000)
+        return prev - 1;
+      });
+    }, 1000);
 
-    return () => clearInterval(timer)
-  }, [resendCooldown])
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   // Auto-focus first input on mount
   useEffect(() => {
     if (inputRefs.current[0]) {
-      inputRefs.current[0].focus()
+      inputRefs.current[0].focus();
     }
-  }, [])
+  }, []);
 
   // Handle input change
   const handleInputChange = (index: number, value: string) => {
     // Only allow digits
-    if (!/^\d*$/.test(value)) return
+    if (!/^\d*$/.test(value)) return;
 
-    const newCode = [...code]
-    newCode[index] = value.slice(-1) // Only take the last character
-    setCode(newCode)
-    setError("")
+    const newCode = [...code];
+    newCode[index] = value.slice(-1); // Only take the last character
+    setCode(newCode);
+    setError("");
 
     // Auto-focus next input
     if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus()
+      inputRefs.current[index + 1]?.focus();
     }
 
     // Auto-submit when all fields are filled
-    if (newCode.every((digit) => digit !== "") && newCode.join("").length === 6) {
-      handleVerify(newCode.join(""))
+    if (
+      newCode.every((digit) => digit !== "") &&
+      newCode.join("").length === 6
+    ) {
+      handleVerify(newCode.join(""));
     }
-  }
+  };
 
   // Handle backspace
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus()
+      inputRefs.current[index - 1]?.focus();
     }
-  }
+  };
 
   // Handle paste
   const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault()
-    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6)
+    e.preventDefault();
+    const pastedData = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
 
     if (pastedData.length === 6) {
-      const newCode = pastedData.split("")
-      setCode(newCode)
-      setError("")
+      const newCode = pastedData.split("");
+      setCode(newCode);
+      setError("");
 
       // Focus last input
-      inputRefs.current[5]?.focus()
+      inputRefs.current[5]?.focus();
 
       // Auto-submit
-      handleVerify(pastedData)
+      handleVerify(pastedData);
     }
-  }
+  };
 
   // Verify code
   const handleVerify = async (codeToVerify?: string) => {
-    const verificationCode = codeToVerify || code.join("")
+    const verificationCode = codeToVerify || code.join("");
 
     if (verificationCode.length !== 6) {
-      setError("Please enter all 6 digits")
-      return
+      setError("Please enter all 6 digits");
+      return;
     }
 
-    setIsVerifying(true)
-    setError("")
+    setIsVerifying(true);
+    setError("");
 
     try {
       const response = await fetch("/api/auth/verify-code", {
@@ -150,42 +166,42 @@ export default function VerifyPage() {
           code: verificationCode,
           type,
         }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        setSuccess(data.message)
+        setSuccess(data.message);
 
         // Store user data in localStorage for authentication
         if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user))
+          localStorage.setItem("user", JSON.stringify(data.user));
         }
 
         // Redirect after a short delay
         setTimeout(() => {
-          router.push(data.redirectTo || "/dashboard")
-        }, 1500)
+          router.push(data.redirectTo || "/dashboard");
+        }, 1500);
       } else {
-        setError(data.error)
+        setError(data.error);
         // Clear the code inputs on error
-        setCode(["", "", "", "", "", ""])
-        inputRefs.current[0]?.focus()
+        setCode(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      console.error("Verification error:", error)
-      setError("Network error. Please try again.")
+      console.error("Verification error:", error);
+      setError("Network error. Please try again.");
     } finally {
-      setIsVerifying(false)
+      setIsVerifying(false);
     }
-  }
+  };
 
   // Resend code
   const handleResend = async () => {
-    if (resendCooldown > 0) return
+    if (resendCooldown > 0) return;
 
-    setIsResending(true)
-    setError("")
+    setIsResending(true);
+    setError("");
 
     try {
       const response = await fetch("/api/auth/send-verification", {
@@ -198,44 +214,44 @@ export default function VerifyPage() {
           type,
           userData: {}, // Empty for resend
         }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.success) {
-        setSuccess("New verification code sent!")
-        setTimeRemaining(600) // Reset timer
-        setCanResend(false)
-        setResendCooldown(60) // 1 minute cooldown
-        setCode(["", "", "", "", "", ""])
-        inputRefs.current[0]?.focus()
+        setSuccess("New verification code sent!");
+        setTimeRemaining(600); // Reset timer
+        setResendCooldown(60); // 1 minute cooldown
+        setCode(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
       } else {
-        setError(data.error)
+        setError(data.error);
       }
     } catch (error) {
-      console.error("Resend error:", error)
-      setError("Failed to resend code. Please try again.")
+      console.error("Resend error:", error);
+      setError("Failed to resend code. Please try again.");
     } finally {
-      setIsResending(false)
+      setIsResending(false);
     }
-  }
+  };
 
   // Format time display
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   // Get masked email for display
   const getMaskedEmail = (email: string) => {
-    const [username, domain] = email.split("@")
-    const maskedUsername = username.slice(0, 2) + "*".repeat(username.length - 2)
-    return `${maskedUsername}@${domain}`
-  }
+    const [username, domain] = email.split("@");
+    const maskedUsername =
+      username.slice(0, 2) + "*".repeat(username.length - 2);
+    return `${maskedUsername}@${domain}`;
+  };
 
   if (!email || !type) {
-    return null // Will redirect in useEffect
+    return null; // Will redirect in useEffect
   }
 
   return (
@@ -244,7 +260,11 @@ export default function VerifyPage() {
         {/* Back button */}
         <div className="mb-6">
           <Link href={type === "signup" ? "/signup" : "/signin"}>
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:text-gray-800"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to {type === "signup" ? "Sign Up" : "Sign In"}
             </Button>
@@ -257,11 +277,15 @@ export default function VerifyPage() {
               <Mail className="w-8 h-8 text-blue-600" />
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Verify Your Email</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Verify Your Email
+              </CardTitle>
               <CardDescription className="text-gray-600 mt-2">
                 We&apos;ve sent a 6-digit verification code to
                 <br />
-                <span className="font-medium text-gray-900">{getMaskedEmail(email)}</span>
+                <span className="font-medium text-gray-900">
+                  {getMaskedEmail(email)}
+                </span>
               </CardDescription>
             </div>
           </CardHeader>
@@ -271,7 +295,9 @@ export default function VerifyPage() {
             {success && (
               <Alert className="border-green-200 bg-green-50">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">{success}</AlertDescription>
+                <AlertDescription className="text-green-800">
+                  {success}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -289,7 +315,7 @@ export default function VerifyPage() {
                 {code.map((digit, index) => (
                   <Input
                     key={index}
-                    ref={(el) => (inputRefs.current[index] = el)}
+                    ref={(el) => {inputRefs.current[index] = el;}}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
@@ -323,14 +349,21 @@ export default function VerifyPage() {
             <div className="text-center space-y-3">
               {timeRemaining > 0 ? (
                 <p className="text-sm text-gray-600">
-                  Code expires in <span className="font-medium text-gray-900">{formatTime(timeRemaining)}</span>
+                  Code expires in{" "}
+                  <span className="font-medium text-gray-900">
+                    {formatTime(timeRemaining)}
+                  </span>
                 </p>
               ) : (
-                <p className="text-sm text-red-600 font-medium">Verification code has expired</p>
+                <p className="text-sm text-red-600 font-medium">
+                  Verification code has expired
+                </p>
               )}
 
               <div className="flex items-center justify-center space-x-2">
-                <span className="text-sm text-gray-600">Didn&apos;t receive the code?</span>
+                <span className="text-sm text-gray-600">
+                  Didn&apos;t receive the code?
+                </span>
                 <Button
                   variant="link"
                   size="sm"
@@ -367,5 +400,5 @@ export default function VerifyPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

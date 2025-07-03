@@ -1,8 +1,18 @@
 "use client"
 
 import type React from "react"
-
-import { User, Calendar, Clock, Trophy, Target, Briefcase, Activity, ChevronRight, Loader2 } from "lucide-react"
+import {
+  User,
+  Calendar,
+  Clock,
+  Trophy,
+  Target,
+  Briefcase,
+  Activity,
+  ChevronRight,
+  Loader2,
+  DollarSign,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatTime, getActivityIcon, getInitials, getPriorityColor, getStatusColor } from "@/lib/utils"
 import { TimeframeFilter } from "./timeframe-filter"
 import UserTargets from "./user-targets"
+import UserAttendance from "./user-attendance"
 
 interface ProfileContentProps {
   user: {
@@ -20,6 +31,13 @@ interface ProfileContentProps {
     email: string
     profilePictureUrl?: string
     createdAt: string | Date
+    // Add salary information
+    salary?: {
+      amount: number
+      currency: string
+      lastUpdated: string
+      updatedBy: string
+    }
   }
   stats: {
     totalTasks: number
@@ -52,6 +70,8 @@ interface ProfileContentProps {
     loading: boolean
     hasMore: boolean
   }
+  // Add current user role for salary visibility
+  currentUserRole?: string
 }
 
 const ProfileContent: React.FC<ProfileContentProps> = ({
@@ -64,6 +84,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   tasksTargetRef,
   timeframe,
   onTimeframeChange,
+  currentUserRole,
 }) => {
   // Helper function to get the right time value based on timeframe
   const getTimeValue = () => {
@@ -92,6 +113,23 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
     }
   }
 
+  // Format salary display
+  const formatSalary = (salary: { amount: number; currency: string }) => {
+    const currencySymbols: { [key: string]: string } = {
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+      CAD: "C$",
+      AUD: "A$",
+      JPY: "¥",
+    }
+    const symbol = currencySymbols[salary.currency] || salary.currency
+    return `${symbol}${salary.amount.toLocaleString()}/month`
+  }
+
+  // Check if current user can see salary
+  const canSeeSalary = currentUserRole === "Owner" || currentUserRole === "Admin"
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -118,6 +156,13 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                 <Badge variant="secondary" className="bg-green-100 text-green-700">
                   Online
                 </Badge>
+                {/* Salary Display - Only visible to Admin/Owner */}
+                {canSeeSalary && user.salary && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    <DollarSign className="w-3 h-3 mr-1" />
+                    {formatSalary(user.salary)}
+                  </Badge>
+                )}
               </div>
 
               <div className="w-full justify-between flex gap-4 text-sm text-gray-600 mb-4">
@@ -141,7 +186,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Activity Overview</h2>
-              <p className="text-sm text-gray-600">Filter activities by time period</p>
+              <p className="text-medium text-gray-600">Filter activities by time period</p>
             </div>
             <TimeframeFilter value={timeframe} onValueChange={onTimeframeChange} />
           </div>
@@ -156,7 +201,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-blue-600 mb-1">Total tasks</p>
-                  <p className="text-3xl font-bold text-blue-900">
+                  <p className="text-2xl font-bold text-blue-900">
                     {timeframe === "all" ? stats?.totalTasks || 0 : stats?.filteredTasks || 0}
                   </p>
                   <p className="text-xs text-blue-600 mt-1">{stats?.completionRate || 0}% completion rate</p>
@@ -173,7 +218,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-green-600 mb-1">Completed</p>
-                  <p className="text-3xl font-bold text-green-900">
+                  <p className="text-2xl font-bold text-green-900">
                     {timeframe === "all" ? stats?.completedTasks || 0 : stats?.filteredProjects || 0}
                   </p>
                   <p className="text-xs text-green-600 mt-1">Tasks finished</p>
@@ -190,7 +235,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-purple-600 mb-1">Time Tracked</p>
-                  <p className="text-3xl font-bold text-purple-900">{getTimeValue()}</p>
+                  <p className="text-2xl font-bold text-purple-900">{getTimeValue()}</p>
                   <p className="text-xs text-purple-600 mt-1">{getTimeDescription()}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
@@ -205,7 +250,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-orange-600 mb-1">Active Projects</p>
-                  <p className="text-3xl font-bold text-orange-900">
+                  <p className="text-2xl font-bold text-orange-900">
                     {timeframe === "all" ? stats?.activeProjects || 0 : stats?.filteredProjects || 0}
                   </p>
                   <p className="text-xs text-orange-600 mt-1">Currently working on</p>
@@ -220,11 +265,12 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[500px]">
+          <TabsList className="grid w-full grid-cols-6 lg:w-[600px]">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="targets">Targets</TabsTrigger>
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
 
@@ -235,7 +281,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
                     <Target className="w-5 h-5 text-blue-600" />
-                    <span>Recent Tasks</span>
+                    <span className="text-lg">Recent Tasks</span>
                   </CardTitle>
                   {tasks.data.length > 4 && (
                     <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
@@ -257,12 +303,12 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                       >
                         <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`} />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{task.title}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="font-medium text-large text-gray-900 truncate">{task.title}</p>
+                          <p className="text-medium text-gray-500">
                             {task.dueDate ? `Due ${new Date(task.dueDate).toLocaleDateString()}` : "No due date"}
                           </p>
                         </div>
-                        <Badge className={`${getStatusColor(task.status)} border`}>{task.status}</Badge>
+                        <Badge className={`${getStatusColor(task.status)} border`}><p className="text-small">{task.status}</p></Badge>
                       </div>
                     ))
                   )}
@@ -274,7 +320,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center space-x-2">
                     <Briefcase className="w-5 h-5 text-green-600" />
-                    <span>Active Projects</span>
+                    <span className="text-lg">Active Projects</span>
                   </CardTitle>
                   {activeProjects.length > 3 && (
                     <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
@@ -297,14 +343,14 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                           className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-gray-900">{project.name}</h4>
+                            <h4 className="font-medium text-large text-gray-900">{project.name}</h4>
                             <Badge variant="secondary" className="bg-green-100 text-green-700">
-                              Active
+                              <p className="text-small">Active</p>
                             </Badge>
                           </div>
-                          <p className="text-sm text-gray-600 mb-3">{project.description || "No description"}</p>
+                          <p className="text-medium text-gray-600 mb-3">{project.description || "No description"}</p>
                           <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>
+                            <span className="">
                               Started {project.startDate ? new Date(project.startDate).toLocaleDateString() : "N/A"}
                             </span>
                             <span>{progress}% Complete</span>
@@ -323,7 +369,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Activity className="w-5 h-5 text-purple-600" />
-                  <span>Recent Activity</span>
+                  <span className="text-lg">Recent Activity</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -341,8 +387,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                       >
                         <div className="flex-shrink-0 mt-1">{getActivityIcon(activity.type)}</div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900">{activity.title}</p>
-                          <p className="text-sm text-gray-600">{activity.description}</p>
+                          <p className="font-medium text-large text-gray-900">{activity.title}</p>
+                          <p className="text-medium text-gray-600">{activity.description}</p>
                           <p className="text-xs text-gray-500 mt-1">{new Date(activity.timestamp).toLocaleString()}</p>
                         </div>
                       </div>
@@ -366,7 +412,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     <p className="text-gray-500">This user hasn&apos;t been assigned any tasks yet.</p>
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto custom-scrollbar space-y-4">
+                  <div className="max-h-96 overflow-y-auto space-y-4">
                     {tasks.data.map((task) => (
                       <div
                         key={task.id}
@@ -455,6 +501,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
 
           <TabsContent value="targets">{user.id && <UserTargets userId={user.id} timeframe={timeframe} />}</TabsContent>
 
+          <TabsContent value="attendance">
+            {user.id && <UserAttendance userId={user.id} timeframe={timeframe} />}
+          </TabsContent>
+
           <TabsContent value="activity">
             <Card>
               <CardHeader>
@@ -468,7 +518,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     <p className="text-gray-500">This user hasn&apos;t performed any tracked activities.</p>
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto custom-scrollbar space-y-6">
+                  <div className="max-h-96 overflow-y-auto space-y-6">
                     {activities.data.map((activity, index) => (
                       <div key={activity.id} className="relative">
                         {index !== activities.data.length - 1 && (

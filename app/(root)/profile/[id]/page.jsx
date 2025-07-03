@@ -8,13 +8,16 @@ import { Button } from "@/components/ui/button"
 import { formatTime } from "@/lib/utils"
 import { taskApi, projectApi, timeTrackingApi, workspaceApi } from "@/lib/api"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
+import { useUser } from "@/lib/user-context"
 import ProfileContent from "@/components/profile/profile-content"
 
 export default function ProfilePage() {
   const params = useParams()
   const userId = params.id
+  const { user: currentUser } = useUser()
 
   const [user, setUser] = useState(null)
+  const [currentUserRole, setCurrentUserRole] = useState("Member")
   const [timeframe, setTimeframe] = useState("all")
   const [stats, setStats] = useState({
     totalTasks: 0,
@@ -87,6 +90,14 @@ export default function ProfilePage() {
         return
       }
 
+      // Find current user's role
+      if (currentUser && membersRes.data) {
+        const currentMember = membersRes.data.find((member) => member.memberId === currentUser.id)
+        if (currentMember) {
+          setCurrentUserRole(currentMember.role || "Member")
+        }
+      }
+
       setUser({
         id: foundUser.memberId,
         username: foundUser.username,
@@ -95,6 +106,8 @@ export default function ProfilePage() {
         workspaceIds: [],
         createdAt: foundUser.joinedAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        // Include salary information if available
+        salary: foundUser.salary,
       })
 
       await Promise.all([loadProjects(), loadFilteredData()])
@@ -393,6 +406,7 @@ export default function ProfilePage() {
       timeframe={timeframe}
       onTimeframeChange={setTimeframe}
       timeEntries={timeEntries}
+      currentUserRole={currentUserRole}
     />
   )
 }

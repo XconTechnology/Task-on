@@ -12,7 +12,7 @@ export interface EmailOptions {
 export async function sendEmail({ to, subject, html, text }: EmailOptions) {
   try {
     const data = await resend.emails.send({
-      from: "ProjectFlow <noreply@yourdomain.com>", // Replace with your verified domain
+      from: process.env.EMAIL_FROM!,
       to: [to],
       subject,
       html,

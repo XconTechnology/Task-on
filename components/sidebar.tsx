@@ -70,7 +70,7 @@ export default function Sidebar() {
         } flex flex-col h-full custom-scrollbar overflow-y-auto`}
       >
         {/* Header */}
-        <div className="px-4 py-1 border-b border-gray-200">
+        <div className={`px-4 ${isSidebarCollapsed ?'py-3' :'py-1'} border-b border-gray-200`}>
           <div className="flex items-center justify-between">
             {!isSidebarCollapsed && <WorkspaceSwitcher />}
             <Button

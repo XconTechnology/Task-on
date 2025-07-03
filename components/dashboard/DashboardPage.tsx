@@ -1,5 +1,5 @@
 "use client"
-import { Target, Clock, Activity, ArrowUp, FolderOpen, Filter, CheckCircle, Zap, Award, BarChart3 } from "lucide-react"
+import { Clock, Activity, ArrowUp, FolderOpen, Filter, CheckCircle, Zap, Award, BarChart3 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -560,7 +560,7 @@ export default function DashboardPage({
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Activity className="w-5 h-5 text-orange-600" />
-              <span>Team Performance</span>
+              <span className="text-lg">Team Performance</span>
             </CardTitle>
           </CardHeader>
           <CardContent>

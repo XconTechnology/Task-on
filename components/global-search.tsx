@@ -180,7 +180,7 @@ export default function GlobalSearch({ onTaskClick }: GlobalSearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={handleFocus}
-            className="w-full bg-gray-100 border border-gray-200 rounded-lg py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full bg-gray-100 border border-gray-200 rounded-lg py-1.5 pl-10 pr-4 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           />
         </div>
 

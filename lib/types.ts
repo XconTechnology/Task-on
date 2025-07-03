@@ -629,6 +629,32 @@ export interface TargetStats {
   completionRate: number
 }
 
+export interface UserAttendanceDay {
+  date: string
+  isPresent: boolean
+  totalTimeWorked: number
+  timeEntries: number
+  attendanceRate: number
+}
+
+export interface UserMonthlyAttendance {
+  userId: string
+  username: string
+  email: string
+  month: string
+  year: number
+  monthName: string
+  days: UserAttendanceDay[]
+  stats: {
+    totalDays: number
+    presentDays: number
+    absentDays: number
+    attendanceRate: number
+    totalTimeWorked: number
+    averageHoursPerDay: number
+    totalEntries: number
+  }
+}
 
 {
   /*

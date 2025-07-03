@@ -15,7 +15,7 @@ type ProjectLayoutProps = {
 }
 
 export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
-  const { activeView, setActiveView, currentProject } = useAppStore()
+  const { activeView, setActiveView } = useAppStore()
   const [isModalNewTaskOpen, setIsModalNewTaskOpen] = useState(false)
   const [project, setProject] = useState<Project>();
 

@@ -42,7 +42,7 @@ import TaskComments from "./tasks/task-comments";
 import { useUser } from "@/lib/user-context";
 import { useTimeTracking } from "@/lib/contexts/time-tracking-context";
 import { timeTrackingApi, workspaceApi } from "@/lib/api";
-import { formatTime, formatDuration } from "@/lib/utils";
+import { formatDuration } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 type TaskDetailModalProps = {
@@ -70,9 +70,8 @@ export default function TaskDetailModal({
 
   // Editing states
   const [editingField, setEditingField] = useState<string | null>(null);
-  const [editedValues, setEditedValues] = useState<Partial<Task>>({});
+  const [editedValues, setEditedValues] = useState<any>({});
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
-  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   // Task time tracking
   const [taskTime, setTaskTime] = useState({ totalTime: 0, isRunning: false });
@@ -111,7 +110,6 @@ export default function TaskDetailModal({
   };
 
   const fetchAvailableMembers = async () => {
-    setIsLoadingMembers(true);
     try {
       const response = await workspaceApi.getMembers();
       if (response.success && response.data) {
@@ -119,9 +117,7 @@ export default function TaskDetailModal({
       }
     } catch (error) {
       console.error("Failed to fetch members:", error);
-    } finally {
-      setIsLoadingMembers(false);
-    }
+    } 
   };
 
   const handleStartTimer = async () => {

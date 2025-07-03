@@ -17,6 +17,7 @@ import type {
   Target,
   PaginatedTargets,
   TargetStats,
+  MemberUpdate,
 } from "./types";
 import { apiCall } from "./api_call"; // Import the working apiCall function
 
@@ -195,30 +196,46 @@ export const userApi = {
 export const workspaceApi = {
   // Get workspace members
   getMembers: async (): Promise<ApiResponse<any[]>> => {
-    return apiCall<any[]>("/workspace/members");
+    return apiCall<any[]>("/workspace/members")
   },
 
-  // Update member role
-  updateMemberRole: async (
-    memberId: string,
-    role: string
-  ): Promise<ApiResponse<any>> => {
+  // Update member role and/or salary
+  updateMember: async (memberId: string, updates: MemberUpdate): Promise<ApiResponse<any>> => {
+    return apiCall<any>(`/workspace/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    })
+  },
+
+  // Update member role (legacy method - kept for backward compatibility)
+  updateMemberRole: async (memberId: string, role: string): Promise<ApiResponse<any>> => {
     return apiCall<any>(`/workspace/members/${memberId}`, {
       method: "PUT",
       body: JSON.stringify({ role }),
-    });
+    })
+  },
+
+  // Update member salary
+  updateMemberSalary: async (
+    memberId: string,
+    salary: { amount: number; currency: string },
+  ): Promise<ApiResponse<any>> => {
+    return apiCall<any>(`/workspace/members/${memberId}`, {
+      method: "PUT",
+      body: JSON.stringify({ salary }),
+    })
   },
 
   // Remove member from workspace
   removeMember: async (memberId: string): Promise<ApiResponse<any>> => {
     return apiCall<any>(`/workspace/members/${memberId}`, {
       method: "DELETE",
-    });
+    })
   },
 
   // Get workspace settings
   getSettings: async (): Promise<ApiResponse<any>> => {
-    return apiCall<any>("/workspace/settings");
+    return apiCall<any>("/workspace/settings")
   },
 
   // Update workspace settings
@@ -226,12 +243,12 @@ export const workspaceApi = {
     return apiCall<any>("/workspace/settings", {
       method: "PUT",
       body: JSON.stringify(settings),
-    });
+    })
   },
 
   // Get user's workspaces
   getUserWorkspaces: async (): Promise<ApiResponse<any[]>> => {
-    return apiCall<any[]>("/workspaces/user");
+    return apiCall<any[]>("/workspaces/user")
   },
 
   // Switch to workspace
@@ -239,7 +256,7 @@ export const workspaceApi = {
     return apiCall<any>("/workspace/switch", {
       method: "POST",
       body: JSON.stringify({ workspaceId }),
-    });
+    })
   },
 
   // Create new workspace
@@ -247,45 +264,33 @@ export const workspaceApi = {
     return apiCall<any>("/workspaces", {
       method: "POST",
       body: JSON.stringify({ name }),
-    });
+    })
   },
 
   // Send invitations (automatically uses current workspace)
-  inviteUsers: async (
-    emails: string[],
-    role: string,
-    workspaceId?: string
-  ): Promise<ApiResponse<any>> => {
+  inviteUsers: async (emails: string[], role: string, workspaceId?: string): Promise<ApiResponse<any>> => {
     return apiCall<any>("/teams/invite", {
       method: "POST",
       body: JSON.stringify({ emails, role, workspaceId }),
-    });
+    })
   },
 
   // Send invitations with explicit workspace
-  inviteUsersToWorkspace: async (
-    emails: string[],
-    role: string,
-    workspaceId: string
-  ): Promise<ApiResponse<any>> => {
+  inviteUsersToWorkspace: async (emails: string[], role: string, workspaceId: string): Promise<ApiResponse<any>> => {
     return apiCall<any>("/teams/invite", {
       method: "POST",
       body: JSON.stringify({ emails, role, workspaceId }),
-    });
+    })
   },
 
   // Accept invitation
-  acceptInvite: async (
-    token: string,
-    username: string,
-    password: string
-  ): Promise<ApiResponse<any>> => {
+  acceptInvite: async (token: string, username: string, password: string): Promise<ApiResponse<any>> => {
     return apiCall<any>("/teams/accept-invite", {
       method: "POST",
       body: JSON.stringify({ token, username, password }),
-    });
+    })
   },
-};
+}
 
 // Search API Functions
 export const searchApi = {

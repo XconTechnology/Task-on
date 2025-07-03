@@ -23,7 +23,7 @@ export default function SignUpForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
-    feedback: [],
+    feedback: [] as string[],
   })
 
   const router = useRouter()

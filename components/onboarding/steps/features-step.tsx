@@ -53,12 +53,12 @@ export default function FeaturesStep({ data, updateData }: FeaturesStepProps) {
                 : "border-gray-200 hover:border-gray-300 text-gray-700"
             }`}
           >
-            <span className="text-small font-medium">{feature}</span>
+            <span className="text-medium font-medium">{feature}</span>
           </button>
         ))}
       </div>
 
-      <p className="text-description-small text-gray-500 max-w-md mx-auto">
+      <p className="text-medium text-gray-500 max-w-md mx-auto">
         Don&apos;t worry, you&apos;ll have access to all of these in your Workspace.
       </p>
     </div>

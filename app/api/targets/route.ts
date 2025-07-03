@@ -98,8 +98,7 @@ export async function GET(request: NextRequest) {
       .toArray()
 
     // CRITICAL: Check and update target statuses automatically
-    const targetsToUpdate = []
-    const updatedTargets = []
+    const updatedTargets :any = []
 
     for (const target of targets) {
       const statusCheck = calculateTargetStatus(target.currentValue, target.targetValue, target.deadline, target.status)
@@ -130,7 +129,7 @@ export async function GET(request: NextRequest) {
 
     // Populate user and project data
     const populatedTargets = await Promise.all(
-      updatedTargets.map(async (target) => {
+      updatedTargets.map(async (target: any) => {
         const populatedTarget = { ...target }
 
         // Populate assignee

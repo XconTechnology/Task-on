@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
     const targets = await targetsCollection.find(query).sort({ createdAt: -1 }).toArray()
 
     // CRITICAL: Check and update target statuses automatically
-    const updatedTargets = []
+    const updatedTargets : any = []
 
     for (const target of targets) {
       const statusCheck = calculateTargetStatus(target.currentValue, target.targetValue, target.deadline, target.status)
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
 
     // Populate target data
     const populatedTargets = await Promise.all(
-      updatedTargets.map(async (target) => {
+      updatedTargets.map(async (target: any) => {
         const populatedTarget = { ...target }
 
         // Populate assignee (should be the same user, but let's be consistent)

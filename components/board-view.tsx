@@ -221,11 +221,11 @@ export default function BoardView({ projectId, setIsModalNewTaskOpen }: BoardPro
         setSelectedTask(response.data)
 
         // Refresh comment count using Firebase
-        if (currentWorkspace?.id) {
+        if (currentWorkspace?.id ) {
           const count = await commentService.getCommentCount(response.data.id, currentWorkspace.id)
           setCommentCounts((prev) => ({
             ...prev,
-            [response.data.id]: count,
+            [response.data?.id as any]: count,
           }))
         }
       }
