@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { X, Users } from "lucide-react"
+import { X, Users, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -16,10 +16,24 @@ type InviteModalProps = {
   onSuccess?: () => void
 }
 
+const POSITIONS = [
+  "Customer Support",
+  "Project Manager",
+  "Email Marketer",
+  "SEO Specialist",
+  "Copywriter / Content Writer",
+  "Social Media Marketer",
+  "Graphic Designer",
+  "UI/UX Designer",
+  "Software Developer",
+  "Mobile Developer",
+]
+
 export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalProps) {
   const { currentWorkspace } = useUser()
   const [emails, setEmails] = useState("")
   const [role, setRole] = useState("Member")
+  const [position, setPosition] = useState("") // New position state
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
 
@@ -44,7 +58,8 @@ export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalP
       // Use current workspace ID if available
       const workspaceId = currentWorkspace?.id
 
-      const response = await workspaceApi.inviteUsers(emailList, role, workspaceId)
+      // Updated to include position in the API call
+      const response = await workspaceApi.inviteUsers(emailList, position, role,  workspaceId)
 
       if (response.success) {
         setResults(response.data || [])
@@ -64,9 +79,11 @@ export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalP
   const handleClose = () => {
     setEmails("")
     setRole("Member")
+    setPosition("") // Reset position
     setResults([])
     onClose()
   }
+      console.log('position', position)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -115,6 +132,34 @@ export default function InviteModal({ isOpen, onClose, onSuccess }: InviteModalP
                   </SelectContent>
                 </Select>
                 <p className="text-small text-gray-500 mt-1">Can access all public items in your Workspace.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Position Selection - NEW */}
+          <div className="space-y-2">
+            <label className="text-medium font-medium text-gray-900">Position (Optional)</label>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Briefcase size={16} className="text-gray-600" />
+              </div>
+              <div className="flex-1">
+                <Select value={position} onValueChange={setPosition} disabled={isLoading}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select position (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="No position specified">No position specified</SelectItem>
+                    {POSITIONS.map((pos) => (
+                      <SelectItem key={pos} value={pos}>
+                        {pos}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-small text-gray-500 mt-1">
+                  {position ? `Will be assigned as ${position}` : "Position can be set later"}
+                </p>
               </div>
             </div>
           </div>

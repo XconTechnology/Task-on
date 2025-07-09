@@ -78,28 +78,28 @@ export interface Team {
 }
 
 export interface Project {
-  id: string
-  name: string
-  description?: string
-  workspaceId: string
-  createdBy: string
-  teamId?: string
+  id: string;
+  name: string;
+  description?: string;
+  workspaceId: string;
+  createdBy: string;
+  teamId?: string;
   // NEW: Add member assignments
-  assignedMembers?: string[] // Array of user IDs assigned to this project
-  startDate?: string
-  endDate?: string
-  status: "ongoing" | "completed" | "delayed" | "archived" // Updated status options
-  createdAt: string
-  updatedAt: string
+  assignedMembers?: string[]; // Array of user IDs assigned to this project
+  startDate?: string;
+  endDate?: string;
+  status: "ongoing" | "completed" | "delayed" | "archived"; // Updated status options
+  createdAt: string;
+  updatedAt: string;
   // Add completion rate calculation fields
-  totalTasks?: number
-  completedTasks?: number
-  completionRate?: number
+  totalTasks?: number;
+  completedTasks?: number;
+  completionRate?: number;
   projectManager?: {
-    id: string
-    username: string
-    email: string
-  }
+    id: string;
+    username: string;
+    email: string;
+  };
 }
 
 export enum Priority {
@@ -240,31 +240,31 @@ export interface Workspace {
   updatedAt: string;
 }
 
-
 export interface WorkspaceMember {
-  memberId: string
-  username: string
-  email: string
-  profilePictureUrl?: string
-  role: "Owner" | "Admin" | "Member"
-  joinedAt: string
+  memberId: string;
+  username: string;
+  email: string;
+  profilePictureUrl?: string;
+  role: "Owner" | "Admin" | "Member";
+  position?: string; // NEW: Optional position field
+  joinedAt: string;
   // Add salary information
   salary?: {
-    amount: number
-    currency: string
-    lastUpdated: string
-    updatedBy: string
-  }
+    amount: number;
+    currency: string;
+    lastUpdated: string;
+    updatedBy: string;
+  };
 }
 
 export interface SalaryUpdate {
-  amount: number
-  currency: string
+  amount: number;
+  currency: string;
 }
 
 export interface MemberUpdate {
-  role?: "Owner" | "Admin" | "Member"
-  salary?: SalaryUpdate
+  role?: "Owner" | "Admin" | "Member";
+  salary?: SalaryUpdate;
 }
 
 export type PendingInvite = {
@@ -272,6 +272,7 @@ export type PendingInvite = {
   email: string;
   role: "Admin" | "Member";
   invitedBy: string;
+  position?: string; // NEW: Optional position field
   invitedAt: string;
   token: string;
   expiresAt: string;
@@ -574,86 +575,86 @@ export interface MonthlyAttendance {
 // Add these Target interfaces to your existing types.ts file
 
 export interface Target {
-  id: string
-  title: string
-  description: string
-  workspaceId: string
-  assignedTo: string // User ID
-  projectId?: string // Optional project relation
-  targetValue: number // The goal to reach (e.g., 10000 followers, 10 tasks)
-  currentValue: number // Current progress
-  unit: string // e.g., "followers", "tasks", "sales", etc.
-  deadline: string // ISO date string
-  status: "active" | "completed" | "failed" | "cancelled"
-  createdBy: string // Admin/Owner who created the target
-  createdAt: string
-  updatedAt: string
-  completedAt?: string
+  id: string;
+  title: string;
+  description: string;
+  workspaceId: string;
+  assignedTo: string; // User ID
+  projectId?: string; // Optional project relation
+  targetValue: number; // The goal to reach (e.g., 10000 followers, 10 tasks)
+  currentValue: number; // Current progress
+  unit: string; // e.g., "followers", "tasks", "sales", etc.
+  deadline: string; // ISO date string
+  status: "active" | "completed" | "failed" | "cancelled";
+  createdBy: string; // Admin/Owner who created the target
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
   // Populated fields for display
   assignee?: {
-    id: string
-    username: string
-    email: string
-    profilePictureUrl?: string
-  }
+    id: string;
+    username: string;
+    email: string;
+    profilePictureUrl?: string;
+  };
   project?: {
-    id: string
-    name: string
-  }
+    id: string;
+    name: string;
+  };
   creator?: {
-    id: string
-    username: string
-    email: string
-  }
+    id: string;
+    username: string;
+    email: string;
+  };
 }
 
 export interface TargetFilters {
-  status?: "active" | "completed" | "failed" | "cancelled" | "all"
-  search?: string
-  assignedTo?: string
-  projectId?: string
+  status?: "active" | "completed" | "failed" | "cancelled" | "all";
+  search?: string;
+  assignedTo?: string;
+  projectId?: string;
 }
 
 export interface PaginatedTargets {
-  targets: Target[]
-  hasMore: boolean
-  total: number
-  page: number
+  targets: Target[];
+  hasMore: boolean;
+  total: number;
+  page: number;
 }
 
 export interface TargetStats {
-  totalTargets: number
-  activeTargets: number
-  completedTargets: number
-  failedTargets: number
-  completionRate: number
+  totalTargets: number;
+  activeTargets: number;
+  completedTargets: number;
+  failedTargets: number;
+  completionRate: number;
 }
 
 export interface UserAttendanceDay {
-  date: string
-  isPresent: boolean
-  totalTimeWorked: number
-  timeEntries: number
-  attendanceRate: number
+  date: string;
+  isPresent: boolean;
+  totalTimeWorked: number;
+  timeEntries: number;
+  attendanceRate: number;
 }
 
 export interface UserMonthlyAttendance {
-  userId: string
-  username: string
-  email: string
-  month: string
-  year: number
-  monthName: string
-  days: UserAttendanceDay[]
+  userId: string;
+  username: string;
+  email: string;
+  month: string;
+  year: number;
+  monthName: string;
+  days: UserAttendanceDay[];
   stats: {
-    totalDays: number
-    presentDays: number
-    absentDays: number
-    attendanceRate: number
-    totalTimeWorked: number
-    averageHoursPerDay: number
-    totalEntries: number
-  }
+    totalDays: number;
+    presentDays: number;
+    absentDays: number;
+    attendanceRate: number;
+    totalTimeWorked: number;
+    averageHoursPerDay: number;
+    totalEntries: number;
+  };
 }
 
 {

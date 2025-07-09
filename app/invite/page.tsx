@@ -1,21 +1,22 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { Briefcase } from "lucide-react"
 
 export default function InvitePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
-  const token = searchParams.get("token")
 
+  const token = searchParams.get("token")
   const [isLoading, setIsLoading] = useState(false)
   const [isValidating, setIsValidating] = useState(true)
   const [inviteData, setInviteData] = useState<any>(null)
@@ -162,7 +163,7 @@ export default function InvitePage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">Accept Invitation</CardTitle>
+          <CardTitle className="text-center">Accept Invitatiosn</CardTitle>
           <CardDescription className="text-center">
             You&apos;ve been invited to join {inviteData?.workspace?.name || "a workspace"} as a{" "}
             {inviteData?.invite?.role || "member"}
@@ -174,6 +175,20 @@ export default function InvitePage() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" value={inviteData?.invite?.email || ""} disabled />
             </div>
+
+            {/* Position Display - NEW */}
+              <div className="space-y-2">
+                <Label htmlFor="position">Position</Label>
+                <div className="flex items-center space-x-2">
+                  <Input id="position" value={inviteData?.invite?.position} disabled className="flex-1" />
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    <Briefcase className="w-3 h-3 mr-1" />
+                    Assigned
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500">This position was assigned by the workspace admin</p>
+              </div>
+
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
@@ -186,6 +201,7 @@ export default function InvitePage() {
                 maxLength={30}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -198,6 +214,7 @@ export default function InvitePage() {
                 minLength={8}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -209,6 +226,7 @@ export default function InvitePage() {
                 required
               />
             </div>
+
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex items-center space-x-2">

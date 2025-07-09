@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     // Find the specific invite
     const invite = workspace.pendingInvites.find((inv: any) => inv.token === token)
 
+    console.log('invite 1:',invite)
     if (!invite) {
       return NextResponse.json({ success: false, error: "Invalid invitation" }, { status: 404 })
     }
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invitation has expired" }, { status: 400 })
     }
 
-    // Return invite data (without sensitive info)
+    // Return invite data (without sensitive info) - NOW INCLUDING POSITION
     return NextResponse.json({
       success: true,
       data: {
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
         invite: {
           email: invite.email,
           role: invite.role,
+          position: invite.position, // NEW: Include position
           invitedAt: invite.invitedAt,
           expiresAt: invite.expiresAt,
         },

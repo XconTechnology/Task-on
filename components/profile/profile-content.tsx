@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import {
   User,
@@ -23,21 +22,12 @@ import { formatTime, getActivityIcon, getInitials, getPriorityColor, getStatusCo
 import { TimeframeFilter } from "./timeframe-filter"
 import UserTargets from "./user-targets"
 import UserAttendance from "./user-attendance"
+import ExportButton from "./export-button"
+import type { User as UserType, Task, Project, TimeEntry, RecentActivity, WorkspaceMember } from "@/lib/types"
 
 interface ProfileContentProps {
-  user: {
-    id?: string
-    username: string
-    email: string
-    profilePictureUrl?: string
-    createdAt: string | Date
-    // Add salary information
-    salary?: {
-      amount: number
-      currency: string
-      lastUpdated: string
-      updatedBy: string
-    }
+  user: UserType & {
+    salary?: WorkspaceMember["salary"]
   }
   stats: {
     totalTasks: number
@@ -53,20 +43,20 @@ interface ProfileContentProps {
     allTimeHours?: number
   }
   tasks: {
-    data: any[]
+    data: Task[]
     loading: boolean
     hasMore: boolean
   }
   activities: {
-    data: any[]
+    data: RecentActivity[]
   }
-  activeProjects: any[]
+  activeProjects: Project[]
   tasksTargetRef: React.RefObject<HTMLDivElement>
   getProjectProgress: (projectId: string) => number
   timeframe: string
   onTimeframeChange: (timeframe: string) => void
   timeEntries?: {
-    data: any[]
+    data: TimeEntry[]
     loading: boolean
     hasMore: boolean
   }
@@ -135,47 +125,52 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
       {/* Header Section */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-start space-x-6">
-            {/* Avatar */}
-            <div className="relative">
-              <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
-                <AvatarImage src={user.profilePictureUrl || "/placeholder.svg"} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl font-bold">
-                  {getInitials(user.username)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-6">
+              {/* Avatar */}
+              <div className="relative">
+                <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
+                  <AvatarImage src={user.profilePictureUrl || "/placeholder.svg"} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xl font-bold">
+                    {getInitials(user.username)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
               </div>
-            </div>
-
-            {/* User Info */}
-            <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
-                <Badge variant="secondary" className="bg-green-100 text-green-700">
-                  Online
-                </Badge>
-                {/* Salary Display - Only visible to Admin/Owner */}
-                {canSeeSalary && user.salary && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    <DollarSign className="w-3 h-3 mr-1" />
-                    {formatSalary(user.salary)}
+              {/* User Info */}
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
+                  <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    Online
                   </Badge>
-                )}
-              </div>
-
-              <div className="w-full justify-between flex gap-4 text-sm text-gray-600 mb-4">
-                <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span>{user.email}</span>
+                  {/* Salary Display - Only visible to Admin/Owner */}
+                  {canSeeSalary && user.salary && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <DollarSign className="w-3 h-3 mr-1" />
+                      {formatSalary(user.salary)}
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+                <div className="w-full justify-between flex gap-4 text-sm text-gray-600 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4" />
+                    <span>{user.email}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Export Button - Only visible to Admin/Owner */}
+            {user.id && (
+              <ExportButton userId={user.id} username={user.username} currentUserRole={currentUserRole || "Member"} />
+            )}
           </div>
         </div>
       </div>
@@ -212,7 +207,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               </div>
             </CardContent>
           </Card>
-
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -229,7 +223,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               </div>
             </CardContent>
           </Card>
-
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -244,7 +237,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
               </div>
             </CardContent>
           </Card>
-
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -263,7 +255,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
           </Card>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content - Rest of the component remains the same */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-6 lg:w-[600px]">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -308,7 +300,9 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                             {task.dueDate ? `Due ${new Date(task.dueDate).toLocaleDateString()}` : "No due date"}
                           </p>
                         </div>
-                        <Badge className={`${getStatusColor(task.status)} border`}><p className="text-small">{task.status}</p></Badge>
+                        <Badge className={`${getStatusColor(task.status)} border`}>
+                          <p className="text-small">{task.status}</p>
+                        </Badge>
                       </div>
                     ))
                   )}
@@ -399,6 +393,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
             </Card>
           </TabsContent>
 
+          {/* Other tab contents remain the same */}
           <TabsContent value="tasks">
             <Card>
               <CardHeader>
@@ -433,7 +428,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                         </div>
                       </div>
                     ))}
-
                     {/* Infinite scroll trigger */}
                     {tasks.hasMore && (
                       <div ref={tasksTargetRef} className="flex justify-center py-4">
@@ -464,7 +458,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                       const progress = getProjectProgress(project.id)
                       const projectTasks = tasks.data.filter((task) => task.projectId === project.id)
                       const remainingTasks = projectTasks.filter((task) => task.status !== "Completed").length
-
                       return (
                         <div
                           key={project.id}
@@ -500,11 +493,9 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
           </TabsContent>
 
           <TabsContent value="targets">{user.id && <UserTargets userId={user.id} timeframe={timeframe} />}</TabsContent>
-
           <TabsContent value="attendance">
             {user.id && <UserAttendance userId={user.id} timeframe={timeframe} />}
           </TabsContent>
-
           <TabsContent value="activity">
             <Card>
               <CardHeader>
@@ -518,7 +509,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     <p className="text-gray-500">This user hasn&apos;t performed any tracked activities.</p>
                   </div>
                 ) : (
-                  <div className="max-h-96 overflow-y-auto space-y-6">
+                  <div className="max-h-96 overflow-y-auto custom-scrollbar space-y-6">
                     {activities.data.map((activity, index) => (
                       <div key={activity.id} className="relative">
                         {index !== activities.data.length - 1 && (

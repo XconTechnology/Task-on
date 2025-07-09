@@ -385,3 +385,73 @@ export const MOCK_TASKS = [
         return "bg-gray-100 text-gray-800"
     }
   }
+
+
+  // Position-based categories for task classification
+export const POSITION_CATEGORIES = {
+  "Software Developer": [
+    "Frontend",
+    "Backend",
+    "Fullstack",
+    "Landing Page",
+    "Web App",
+    "API Development",
+    "Bug Fixing",
+    "Database Setup",
+    "Authentication",
+    "Deployment",
+    "Integration",
+    "Dashboard",
+    "CMS Setup",
+    "Code Review",
+  ],
+  "Mobile Developer": ["Mobile App", "Push Notification", "App Store Upload", "UI Integration", "API Integration"],
+  "UI/UX Designer": ["Wireframe", "Prototype", "User Flow", "UI Design", "UX Audit", "Figma Handoff"],
+  "Graphic Designer": [
+    "Logo",
+    "Banner",
+    "Poster",
+    "Business Card",
+    "Social Media Graphic",
+    "Brand Kit",
+    "Icon Design",
+    "Flyer",
+    "Brochure",
+  ],
+  "Social Media Marketer": [
+    "Post Creation",
+    "Content Plan",
+    "Hashtag Research",
+    "Campaign Launch",
+    "Engagement Boost",
+    "Story Design",
+    "Reel Scheduling",
+  ],
+  "Copywriter / Content Writer": [
+    "Blog Post",
+    "Landing Copy",
+    "Product Description",
+    "Ad Copy",
+    "Email Copy",
+    "Caption Writing",
+  ],
+  "SEO Specialist": ["Keyword Research", "On-Page SEO", "Backlinking", "Meta Tags", "Traffic Report"],
+  "Email Marketer": ["Newsletter", "Campaign Setup", "Email Design", "Sequence Automation", "A/B Testing"],
+  "Project Manager": ["Task Assignment", "Timeline Planning", "Progress Tracking", "Team Sync", "Report Writing"],
+  "Customer Support": ["Ticket Reply", "Bug Report", "FAQ Update", "Chat Support", "Feedback Collection"],
+} as const
+
+// Helper function to get categories for a specific position
+export const getCategoriesForPosition = (position: string): string[] => {
+  return POSITION_CATEGORIES[position as keyof typeof POSITION_CATEGORIES] || []
+}
+
+// Helper function to get all available positions
+export const getAllPositions = (): string[] => {
+  return Object.keys(POSITION_CATEGORIES)
+}
+
+// Helper function to check if a position has categories
+export const hasCategories = (position: string): boolean => {
+  return position in POSITION_CATEGORIES && POSITION_CATEGORIES[position as keyof typeof POSITION_CATEGORIES].length > 0
+}

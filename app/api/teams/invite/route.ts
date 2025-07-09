@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { emails, role = "Member", workspaceId } = body
+    const { position, emails, role = "Member", workspaceId } = body
 
     // Validation
     if (!emails || !Array.isArray(emails) || emails.length === 0) {
@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
               id: `invite_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               email: email.toLowerCase(),
               role,
+              position,
               invitedBy: user.userId,
               invitedAt: new Date().toISOString(),
               token: inviteToken,
@@ -160,6 +161,7 @@ export async function POST(request: NextRequest) {
             id: `invite_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             email: email.toLowerCase(),
             role,
+            position,
             invitedBy: user.userId,
             invitedAt: new Date().toISOString(),
             token: inviteToken,

@@ -268,10 +268,10 @@ export const workspaceApi = {
   },
 
   // Send invitations (automatically uses current workspace)
-  inviteUsers: async (emails: string[], role: string, workspaceId?: string): Promise<ApiResponse<any>> => {
+  inviteUsers: async (emails: string[],position:string, role: string, workspaceId?: string): Promise<ApiResponse<any>> => {
     return apiCall<any>("/teams/invite", {
       method: "POST",
-      body: JSON.stringify({ emails, role, workspaceId }),
+      body: JSON.stringify({ emails,position, role, workspaceId }),
     })
   },
 
@@ -640,7 +640,118 @@ export const targetApi = {
   },
 }
 
+// Export API Functions - NEW
+export const exportApi = {
+  // Export user data as PDF
+  exportUserData: async (userId: string, timeframe: string): Promise<ApiResponse<Blob>> => {
+    try {
+      // We need to use a special approach for blob responses
+      // Since apiCall expects JSON, we'll handle this differently
+      const currentWorkspaceId = localStorage.getItem("currentWorkspaceId") || ""
 
+      const response = await fetch(`/api/export/user/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-workspace-id": currentWorkspaceId,
+        },
+        body: JSON.stringify({ timeframe }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        return {
+          success: false,
+          error: errorData.error || `HTTP error! status: ${response.status}`,
+        }
+      }
+
+      const blob = await response.blob()
+      return {
+        success: true,
+        data: blob,
+      }
+    } catch (error) {
+      console.error("Export API call failed:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      }
+    }
+  },
+
+  // Export multiple users data (bulk export)
+  exportMultipleUsers: async (userIds: string[], timeframe: string): Promise<ApiResponse<Blob>> => {
+    try {
+      const currentWorkspaceId = localStorage.getItem("currentWorkspaceId") || ""
+
+      const response = await fetch(`/api/export/users/bulk`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-workspace-id": currentWorkspaceId,
+        },
+        body: JSON.stringify({ userIds, timeframe }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        return {
+          success: false,
+          error: errorData.error || `HTTP error! status: ${response.status}`,
+        }
+      }
+
+      const blob = await response.blob()
+      return {
+        success: true,
+        data: blob,
+      }
+    } catch (error) {
+      console.error("Bulk export API call failed:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      }
+    }
+  },
+
+  // Export workspace analytics
+  exportWorkspaceAnalytics: async (timeframe: string): Promise<ApiResponse<Blob>> => {
+    try {
+      const currentWorkspaceId = localStorage.getItem("currentWorkspaceId") || ""
+
+      const response = await fetch(`/api/export/workspace/analytics`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-workspace-id": currentWorkspaceId,
+        },
+        body: JSON.stringify({ timeframe }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        return {
+          success: false,
+          error: errorData.error || `HTTP error! status: ${response.status}`,
+        }
+      }
+
+      const blob = await response.blob()
+      return {
+        success: true,
+        data: blob,
+      }
+    } catch (error) {
+      console.error("Workspace analytics export API call failed:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      }
+    }
+  },
+}
 // Export all APIs as a single object for easy importing
 export const api = {
   projects: projectApi,

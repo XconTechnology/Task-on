@@ -62,12 +62,15 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date().toISOString(),
     }
 
-    // Create workspace member
+
+
+    // Create workspace member - NOW INCLUDING POSITION
     const newMember: WorkspaceMember = {
       memberId: userId,
       username,
       email: invite.email,
       role: invite.role,
+      position: invite.position, // NEW: Include position from invite
       joinedAt: new Date().toISOString(),
     }
 
@@ -83,12 +86,11 @@ export async function POST(request: NextRequest) {
     )
 
     // After successfully adding user to workspace, add:
-
     // Create notifications for existing workspace members
     try {
       const existingMemberIds = workspace.members
-        .filter((member:any) => member.memberId !== userId)
-        .map((member:any) => member.memberId)
+        .filter((member: any) => member.memberId !== userId)
+        .map((member: any) => member.memberId)
 
       if (existingMemberIds.length > 0) {
         await notificationService.notifyWorkspaceMemberJoined(
