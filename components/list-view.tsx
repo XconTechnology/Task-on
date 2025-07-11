@@ -15,20 +15,21 @@ import DeleteTaskDialog from "./tasks/delete-task-dialog"
 import { format } from "date-fns"
 import TaskActionsDropdown from "./tasks/task-actions-dropdown"
 import { ListPriorityConfig, ListStatusConfig } from "@/lib/constants"
+import CreateTaskModal from "./modals/create-task-modal"
 
 type ListViewProps = {
   projectId: string
-  setIsModalNewTaskOpen: (isOpen: boolean) => void
 }
 
-export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewProps) {
-  const { tasks, setTasks, updateTaskStatus, isLoading, setLoading, setError } = useAppStore()
+export default function ListView({ projectId }: ListViewProps) {
+  const { tasks,addTask, setTasks, updateTaskStatus, isLoading, setLoading, setError } = useAppStore()
   const { filterTasks } = useSearchFilterStore()
   const [collapsedSections, setCollapsedSections] = useState<Set<Status>>(new Set())
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [taskToUpdate, setTaskToUpdate] = useState<Task | null>(null)
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null)
+  const [isModalNewTaskOpen, setIsModalNewTaskOpen] = useState(false);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -105,6 +106,9 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
     setTasks(updatedTasks)
     setTaskToDelete(null)
   }
+  const handleOnTaskCreated = (newTask: any) => {
+  addTask(newTask); // ✅ use the zustand action
+}
 
   if (isLoading) {
     return (
@@ -312,6 +316,14 @@ export default function ListView({ projectId, setIsModalNewTaskOpen }: ListViewP
           </div>
         )}
       </div>
+
+
+      <CreateTaskModal
+        isOpen={isModalNewTaskOpen}
+        onClose={() => setIsModalNewTaskOpen(false)}
+        projectId={projectId}
+        onTaskCreated={handleOnTaskCreated}
+      />
 
       <UpdateTaskModal
         task={taskToUpdate}

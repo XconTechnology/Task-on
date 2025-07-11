@@ -203,8 +203,8 @@ export default function MembersContent() {
   const canViewSalaries = currentUserRole === "Owner" || currentUserRole === "Admin"
 
   // Format salary display
-  const formatSalary = (salary: any) => {
-    if (!salary) return "Not set"
+   const formatSalarySymbol = (salary: any) => {
+    if (!salary) return "$"
     const currencySymbols: { [key: string]: string } = {
       USD: "$",
       PKR: "RS",
@@ -215,7 +215,12 @@ export default function MembersContent() {
       JPY: "¥",
     }
     const symbol = currencySymbols[salary.currency] || salary.currency
-    return `${symbol}${salary.amount.toLocaleString()}`
+    return `${symbol}`
+  }
+
+  const formatSalary = (salary: any) => {
+    if (!salary) return "Not set"
+    return `${salary.amount.toLocaleString()}`
   }
 
   return (
@@ -325,7 +330,7 @@ export default function MembersContent() {
                         {canViewSalaries && (
                           <div className="col-span-2">
                             <div className="flex items-center space-x-2">
-                              <DollarSign size={14} className="text-green-600" />
+                              <span className="text-sm font-medium text-green-600">{formatSalarySymbol(member.salary)}</span>
                               <span className="text-sm font-medium text-gray-900">{formatSalary(member.salary)}</span>
                             </div>
                             {member.salary && (

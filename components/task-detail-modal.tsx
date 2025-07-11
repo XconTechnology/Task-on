@@ -1,9 +1,8 @@
-"use client";
+"use client"
 
-import type React from "react";
-
-import { useState, useEffect } from "react";
-import { type Task, Status, Priority } from "@/lib/types";
+import type React from "react"
+import { useState, useEffect } from "react"
+import { type Task, Status, Priority } from "@/lib/types"
 import {
   X,
   Calendar,
@@ -19,162 +18,141 @@ import {
   Edit3,
   Check,
   ChevronDown,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import StatusDropdown from "./status-dropdown";
-import { format } from "date-fns";
-import TaskComments from "./tasks/task-comments";
-import { useUser } from "@/lib/user-context";
-import { useTimeTracking } from "@/lib/contexts/time-tracking-context";
-import { timeTrackingApi, workspaceApi } from "@/lib/api";
-import { formatDuration } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+  Tag,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import StatusDropdown from "./status-dropdown"
+import { format } from "date-fns"
+import TaskComments from "./tasks/task-comments"
+import { useUser } from "@/lib/user-context"
+import { useTimeTracking } from "@/lib/contexts/time-tracking-context"
+import { timeTrackingApi, workspaceApi } from "@/lib/api"
+import { formatDuration } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+import { getCategoriesForPosition } from "@/lib/constants"
 
 type TaskDetailModalProps = {
-  task: Task | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onUpdateTask?: (taskId: string, updates: Partial<Task>) => void;
-};
+  task: Task | null
+  isOpen: boolean
+  onClose: () => void
+  onUpdateTask?: (taskId: string, updates: Partial<Task>) => void
+}
 
-export default function TaskDetailModal({
-  task,
-  isOpen,
-  onClose,
-  onUpdateTask,
-}: TaskDetailModalProps) {
-  const { user, currentWorkspace } = useUser();
-  const {
-    activeTimer,
-    elapsedTime,
-    startTimer,
-    stopTimer,
-    isLoading: timerLoading,
-  } = useTimeTracking();
-  const { toast } = useToast();
+export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }: TaskDetailModalProps) {
+  const { user, currentWorkspace } = useUser()
+  const { activeTimer, elapsedTime, startTimer, stopTimer, isLoading: timerLoading } = useTimeTracking()
+  const { toast } = useToast()
 
   // Editing states
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [editedValues, setEditedValues] = useState<any>({});
-  const [availableMembers, setAvailableMembers] = useState<any[]>([]);
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [editedValues, setEditedValues] = useState<any>({})
+  const [availableMembers, setAvailableMembers] = useState<any[]>([])
 
   // Task time tracking
-  const [taskTime, setTaskTime] = useState({ totalTime: 0, isRunning: false });
-  const [loadingTaskTime, setLoadingTaskTime] = useState(false);
+  const [taskTime, setTaskTime] = useState({ totalTime: 0, isRunning: false })
+  const [loadingTaskTime, setLoadingTaskTime] = useState(false)
 
   useEffect(() => {
     if (task && isOpen) {
-      fetchTaskTime();
-      fetchAvailableMembers();
-      setEditedValues({});
-      setEditingField(null);
+      fetchTaskTime()
+      fetchAvailableMembers()
+      setEditedValues({})
+      setEditingField(null)
     }
-  }, [task, isOpen]);
+  }, [task, isOpen])
 
   useEffect(() => {
     if (activeTimer?.taskId === task?.id) {
-      setTaskTime((prev) => ({ ...prev, isRunning: true }));
+      setTaskTime((prev) => ({ ...prev, isRunning: true }))
     } else {
-      setTaskTime((prev) => ({ ...prev, isRunning: false }));
+      setTaskTime((prev) => ({ ...prev, isRunning: false }))
     }
-  }, [activeTimer, task?.id]);
+  }, [activeTimer, task?.id])
 
   const fetchTaskTime = async () => {
-    if (!task) return;
-    setLoadingTaskTime(true);
+    if (!task) return
+    setLoadingTaskTime(true)
     try {
-      const response = await timeTrackingApi.getTaskTime(task.id);
+      const response = await timeTrackingApi.getTaskTime(task.id)
       if (response.success && response.data) {
-        setTaskTime(response.data);
+        setTaskTime(response.data)
       }
     } catch (error) {
-      console.error("Failed to fetch task time:", error);
+      console.error("Failed to fetch task time:", error)
     } finally {
-      setLoadingTaskTime(false);
+      setLoadingTaskTime(false)
     }
-  };
+  }
 
   const fetchAvailableMembers = async () => {
     try {
-      const response = await workspaceApi.getMembers();
+      const response = await workspaceApi.getMembers()
       if (response.success && response.data) {
-        setAvailableMembers(response.data);
+        setAvailableMembers(response.data)
       }
     } catch (error) {
-      console.error("Failed to fetch members:", error);
-    } 
-  };
+      console.error("Failed to fetch members:", error)
+    }
+  }
 
   const handleStartTimer = async () => {
-    if (!task) return;
+    if (!task) return
     try {
-      await startTimer(task.id);
-      await fetchTaskTime();
+      await startTimer(task.id)
+      await fetchTaskTime()
     } catch (error) {
-      console.error("Failed to start timer:", error);
+      console.error("Failed to start timer:", error)
     }
-  };
+  }
 
   const handleStopTimer = async () => {
-    if (!activeTimer) return;
+    if (!activeTimer) return
     try {
-      await stopTimer();
-      await fetchTaskTime();
+      await stopTimer()
+      await fetchTaskTime()
     } catch (error) {
-      console.error("Failed to stop timer:", error);
+      console.error("Failed to stop timer:", error)
     }
-  };
+  }
 
   const startEditing = (field: string, currentValue?: any) => {
-    setEditingField(field);
-    setEditedValues({ ...editedValues, [field]: currentValue });
-  };
+    setEditingField(field)
+    setEditedValues({ ...editedValues, [field]: currentValue })
+  }
 
   const cancelEditing = () => {
-    setEditingField(null);
-    setEditedValues({});
-  };
+    setEditingField(null)
+    setEditedValues({})
+  }
 
   const saveField = async (field: string) => {
-    if (!task || !onUpdateTask) return;
-
+    if (!task || !onUpdateTask) return
     try {
-      const updateData = { [field]: editedValues[field] };
-      await onUpdateTask(task.id, updateData);
-
+      const updateData = { [field]: editedValues[field] }
+      await onUpdateTask(task.id, updateData)
       toast({
         title: "Task Updated",
         description: `${field.charAt(0).toUpperCase() + field.slice(1)} has been updated successfully.`,
-      });
-
-      setEditingField(null);
-      setEditedValues({});
+      })
+      setEditingField(null)
+      setEditedValues({})
     } catch (error) {
-      console.error("Failed to update task:", error);
+      console.error("Failed to update task:", error)
       toast({
         variant: "destructive",
         title: "Update Failed",
         description: "Failed to update task. Please try again.",
-      });
+      })
     }
-  };
+  }
 
-  if (!task) return null;
+  if (!task) return null
 
   const statusConfig = {
     [Status.ToDo]: {
@@ -197,7 +175,7 @@ export default function TaskDetailModal({
       color: "bg-green-100 text-green-700",
       dotColor: "bg-green-500",
     },
-  };
+  }
 
   const priorityConfig = {
     [Priority.Urgent]: {
@@ -225,9 +203,14 @@ export default function TaskDetailModal({
       color: "bg-gray-100 text-gray-700",
       dotColor: "bg-gray-400",
     },
-  };
+  }
 
-  const isTimerActive = activeTimer?.taskId === task.id;
+  const isTimerActive = activeTimer?.taskId === task.id
+
+  // Get current user's position to determine available categories
+  const currentUserMember = availableMembers.find((member) => member.memberId === user?.id)
+  const userPosition = currentUserMember?.position
+  const availableCategories = userPosition ? getCategoriesForPosition(userPosition) : []
 
   // Editable Field Component
   const EditableField = ({
@@ -238,38 +221,33 @@ export default function TaskDetailModal({
     placeholder = "Empty",
     children,
   }: {
-    field: string;
-    value: any;
-    displayValue?: string;
-    type?: "text" | "textarea" | "select" | "date" | "member";
-    placeholder?: string;
-    children?: React.ReactNode;
+    field: string
+    value: any
+    displayValue?: string
+    type?: "text" | "textarea" | "select" | "date" | "member"
+    placeholder?: string
+    children?: React.ReactNode
   }) => {
-    const isEditing = editingField === field;
-
+    const isEditing = editingField === field
     if (isEditing) {
       return (
         <div className="flex items-center space-x-2">
           {type === "text" && (
             <Input
               value={editedValues[field] || value || ""}
-              onChange={(e) =>
-                setEditedValues({ ...editedValues, [field]: e.target.value })
-              }
+              onChange={(e) => setEditedValues({ ...editedValues, [field]: e.target.value })}
               className="flex-1"
               autoFocus
               onKeyDown={(e) => {
-                if (e.key === "Enter") saveField(field);
-                if (e.key === "Escape") cancelEditing();
+                if (e.key === "Enter") saveField(field)
+                if (e.key === "Escape") cancelEditing()
               }}
             />
           )}
           {type === "textarea" && (
             <Textarea
               value={editedValues[field] || value || ""}
-              onChange={(e) =>
-                setEditedValues({ ...editedValues, [field]: e.target.value })
-              }
+              onChange={(e) => setEditedValues({ ...editedValues, [field]: e.target.value })}
               className="flex-1"
               autoFocus
               rows={3}
@@ -279,30 +257,19 @@ export default function TaskDetailModal({
             <Input
               type="date"
               value={editedValues[field] || value || ""}
-              onChange={(e) =>
-                setEditedValues({ ...editedValues, [field]: e.target.value })
-              }
+              onChange={(e) => setEditedValues({ ...editedValues, [field]: e.target.value })}
               className="flex-1"
               autoFocus
             />
           )}
-          <Button
-            size="sm"
-            onClick={() => saveField(field)}
-            className="h-8 w-8 p-0"
-          >
+          <Button size="sm" onClick={() => saveField(field)} className="h-8 w-8 p-0">
             <Check size={14} />
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={cancelEditing}
-            className="h-8 w-8 p-0"
-          >
+          <Button size="sm" variant="ghost" onClick={cancelEditing} className="h-8 w-8 p-0">
             <X size={14} />
           </Button>
         </div>
-      );
+      )
     }
 
     return (
@@ -312,18 +279,13 @@ export default function TaskDetailModal({
       >
         <div className="flex-1">
           {children || (
-            <span className={value ? "text-medium" : "text-muted italic"}>
-              {displayValue || value || placeholder}
-            </span>
+            <span className={value ? "text-medium" : "text-muted italic"}>{displayValue || value || placeholder}</span>
           )}
         </div>
-        <Edit3
-          size={14}
-          className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
-        />
+        <Edit3 size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -360,7 +322,6 @@ export default function TaskDetailModal({
                 </Button>
               </div>
             </div>
-
             {/* Task Content */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 ">
               {/* Title */}
@@ -369,7 +330,6 @@ export default function TaskDetailModal({
                   <h1 className="header-medium mb-2">{task.title}</h1>
                 </EditableField>
               </div>
-
               {/* Properties Grid */}
               <div className="grid grid-cols-2 gap-6 mb-8">
                 {/* Status */}
@@ -380,26 +340,19 @@ export default function TaskDetailModal({
                   </div>
                   <StatusDropdown
                     currentStatus={task.status}
-                    onStatusChange={(newStatus) =>
-                      onUpdateTask?.(task.id, { status: newStatus })
-                    }
+                    onStatusChange={(newStatus) => onUpdateTask?.(task.id, { status: newStatus })}
                   >
                     <Button
                       variant="outline"
                       size="sm"
                       className={`${statusConfig[task.status].color} hover:bg-opacity-80`}
                     >
-                      <div
-                        className={`w-2 h-2 rounded-full ${statusConfig[task.status].dotColor} mr-2`}
-                      />
-                      <span className="text-small">
-                        {statusConfig[task.status].label}
-                      </span>
+                      <div className={`w-2 h-2 rounded-full ${statusConfig[task.status].dotColor} mr-2`} />
+                      <span className="text-small">{statusConfig[task.status].label}</span>
                       <ChevronDown size={14} className="ml-1" />
                     </Button>
                   </StatusDropdown>
                 </div>
-
                 {/* Assignee */}
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2 w-28">
@@ -408,26 +361,18 @@ export default function TaskDetailModal({
                   </div>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-auto p-2 justify-start hover:bg-gray-50"
-                      >
+                      <Button variant="ghost" className="h-auto p-2 justify-start hover:bg-gray-50">
                         {task.assignee ? (
                           <div className="flex items-center space-x-2">
                             <Avatar className="h-6 w-6">
                               <AvatarImage
-                                src={
-                                  task.assignee.profilePictureUrl ||
-                                  "/placeholder.svg"
-                                }
+                                src={task.assignee.profilePictureUrl || "/placeholder.svg" || "/placeholder.svg"}
                               />
                               <AvatarFallback className="text-small">
                                 {task.assignee.username.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-medium">
-                              {task.assignee.username}
-                            </span>
+                            <span className="text-medium">{task.assignee.username}</span>
                             <ChevronDown size={14} className="text-gray-400" />
                           </div>
                         ) : (
@@ -447,9 +392,7 @@ export default function TaskDetailModal({
                           <Button
                             variant="ghost"
                             className="w-full justify-start h-auto p-2"
-                            onClick={() =>
-                              onUpdateTask?.(task.id, { assignedTo: undefined })
-                            }
+                            onClick={() => onUpdateTask?.(task.id, { assignedTo: undefined })}
                           >
                             <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300 mr-2" />
                             <span className="text-muted">Unassigned</span>
@@ -467,22 +410,15 @@ export default function TaskDetailModal({
                             >
                               <Avatar className="h-6 w-6 mr-2">
                                 <AvatarImage
-                                  src={
-                                    member.profilePictureUrl ||
-                                    "/placeholder.svg"
-                                  }
+                                  src={member.profilePictureUrl || "/placeholder.svg" || "/placeholder.svg"}
                                 />
                                 <AvatarFallback className="text-small">
                                   {member.username.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="text-left">
-                                <div className="text-sm font-medium">
-                                  {member.username}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {member.email}
-                                </div>
+                                <div className="text-sm font-medium">{member.username}</div>
+                                <div className="text-xs text-gray-500">{member.email}</div>
                               </div>
                             </Button>
                           ))}
@@ -491,7 +427,6 @@ export default function TaskDetailModal({
                     </PopoverContent>
                   </Popover>
                 </div>
-
                 {/* Track Time */}
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2 w-28">
@@ -518,9 +453,7 @@ export default function TaskDetailModal({
                               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                               <span className="text-sm font-mono font-semibold text-red-600">
                                 {formatDuration(
-                                  taskTime.isRunning
-                                    ? taskTime.totalTime + elapsedTime
-                                    : taskTime.totalTime
+                                  taskTime.isRunning ? taskTime.totalTime + elapsedTime : taskTime.totalTime,
                                 )}
                               </span>
                             </div>
@@ -537,13 +470,9 @@ export default function TaskDetailModal({
                               <Play size={12} />
                             </Button>
                             {taskTime.totalTime > 0 ? (
-                              <span className="text-sm text-gray-600">
-                                {formatDuration(taskTime.totalTime)}
-                              </span>
+                              <span className="text-sm text-gray-600">{formatDuration(taskTime.totalTime)}</span>
                             ) : (
-                              <span className="text-sm text-gray-600">
-                                0 min
-                              </span>
+                              <span className="text-sm text-gray-600">0 min</span>
                             )}
                           </div>
                         )}
@@ -551,7 +480,6 @@ export default function TaskDetailModal({
                     )}
                   </div>
                 </div>
-
                 {/* Due Date */}
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2 w-28">
@@ -561,16 +489,11 @@ export default function TaskDetailModal({
                   <EditableField
                     field="dueDate"
                     value={task.dueDate}
-                    displayValue={
-                      task.dueDate
-                        ? format(new Date(task.dueDate), "MMM dd, yyyy")
-                        : undefined
-                    }
+                    displayValue={task.dueDate ? format(new Date(task.dueDate), "MMM dd, yyyy") : undefined}
                     type="date"
                     placeholder="Set due date"
                   />
                 </div>
-
                 {/* Priority */}
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2 w-28">
@@ -579,21 +502,12 @@ export default function TaskDetailModal({
                   </div>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-auto p-2 justify-start hover:bg-gray-50"
-                      >
+                      <Button variant="ghost" className="h-auto p-2 justify-start hover:bg-gray-50">
                         {task.priority ? (
                           <div className="flex items-center space-x-2">
-                            <div
-                              className={`w-2 h-2 rounded-full ${priorityConfig[task.priority].dotColor}`}
-                            />
-                            <Badge
-                              className={priorityConfig[task.priority].color}
-                            >
-                              <span className="text-small">
-                                {priorityConfig[task.priority].label}
-                              </span>
+                            <div className={`w-2 h-2 rounded-full ${priorityConfig[task.priority].dotColor}`} />
+                            <Badge className={priorityConfig[task.priority].color}>
+                              <span className="text-small">{priorityConfig[task.priority].label}</span>
                             </Badge>
                             <ChevronDown size={14} className="text-gray-400" />
                           </div>
@@ -606,31 +520,25 @@ export default function TaskDetailModal({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-48 p-1" align="start">
-                      {Object.entries(priorityConfig).map(
-                        ([priority, config]) => (
-                          <Button
-                            key={priority}
-                            variant="ghost"
-                            className="w-full justify-start h-auto p-2"
-                            onClick={() =>
-                              onUpdateTask?.(task.id, {
-                                priority: priority as Priority,
-                              })
-                            }
-                          >
-                            <div
-                              className={`w-2 h-2 rounded-full ${config.dotColor} mr-2`}
-                            />
-                            <span className="text-sm">{config.label}</span>
-                          </Button>
-                        )
-                      )}
+                      {Object.entries(priorityConfig).map(([priority, config]) => (
+                        <Button
+                          key={priority}
+                          variant="ghost"
+                          className="w-full justify-start h-auto p-2"
+                          onClick={() =>
+                            onUpdateTask?.(task.id, {
+                              priority: priority as Priority,
+                            })
+                          }
+                        >
+                          <div className={`w-2 h-2 rounded-full ${config.dotColor} mr-2`} />
+                          <span className="text-sm">{config.label}</span>
+                        </Button>
+                      ))}
                       <Button
                         variant="ghost"
                         className="w-full justify-start h-auto p-2"
-                        onClick={() =>
-                          onUpdateTask?.(task.id, { priority: undefined })
-                        }
+                        onClick={() => onUpdateTask?.(task.id, { priority: undefined })}
                       >
                         <div className="w-2 h-2 rounded-full border border-gray-300 mr-2" />
                         <span className="text-sm text-muted">No Priority</span>
@@ -638,7 +546,6 @@ export default function TaskDetailModal({
                     </PopoverContent>
                   </Popover>
                 </div>
-
                 {/* Start Date */}
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2 w-28">
@@ -648,17 +555,64 @@ export default function TaskDetailModal({
                   <EditableField
                     field="startDate"
                     value={task.startDate}
-                    displayValue={
-                      task.startDate
-                        ? format(new Date(task.startDate), "MMM dd, yyyy")
-                        : undefined
-                    }
+                    displayValue={task.startDate ? format(new Date(task.startDate), "MMM dd, yyyy") : undefined}
                     type="date"
                     placeholder="Set start date"
                   />
                 </div>
+                {/* Category - NEW */}
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2 w-28">
+                      <Tag size={16} className="text-gray-400" />
+                      <span className="text-label">Category</span>
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" className="h-auto p-2 justify-start hover:bg-gray-50">
+                          {task.category ? (
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                                <span className="text-small">{task.category}</span>
+                              </Badge>
+                              <ChevronDown size={14} className="text-gray-400" />
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-muted">Select category</span>
+                              <ChevronDown size={14} className="text-gray-400" />
+                            </div>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-1" align="start">
+                        <div className="p-2 border-b">
+                          <h4 className="font-medium text-sm">Categories for {userPosition}</h4>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {availableCategories.map((category) => (
+                            <Button
+                              key={category}
+                              variant="ghost"
+                              className="w-full justify-start h-auto p-2"
+                              onClick={() => onUpdateTask?.(task.id, { category })}
+                            >
+                              <Tag size={14} className="mr-2 text-purple-600" />
+                              <span className="text-sm">{category}</span>
+                            </Button>
+                          ))}
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start h-auto p-2"
+                            onClick={() => onUpdateTask?.(task.id, { category: undefined })}
+                          >
+                            <div className="w-3.5 h-3.5 rounded border border-gray-700 mr-2" />
+                            <span className="text-sm text-muted">No Category</span>
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
               </div>
-
               {/* Description */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
@@ -671,17 +625,12 @@ export default function TaskDetailModal({
                   placeholder="Add description..."
                 >
                   <div className="text-medium text-gray-700 whitespace-pre-wrap">
-                    {task.description || (
-                      <span className="text-muted italic">
-                        Add description...
-                      </span>
-                    )}
+                    {task.description || <span className="text-muted italic">Add description...</span>}
                   </div>
                 </EditableField>
               </div>
             </div>
           </div>
-
           {/* Activity Sidebar with Comments */}
           <div className="w-96 border-l border-gray-200 bg-gray-50 flex flex-col">
             <div className="px-4 py-3 border-b border-gray-200">
@@ -692,17 +641,13 @@ export default function TaskDetailModal({
                 </Button>
               </div>
             </div>
-
             {/* Comments Section */}
             {user && currentWorkspace && (
-              <TaskComments
-                taskId={task.id}
-                workspaceId={task.workspaceId || currentWorkspace.id}
-              />
+              <TaskComments taskId={task.id} workspaceId={task.workspaceId || currentWorkspace.id} />
             )}
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

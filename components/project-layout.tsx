@@ -41,7 +41,7 @@ useEffect(() => {
 },[])
 
   const renderView = () => {
-    const props = { projectId, setIsModalNewTaskOpen }
+    const props = { projectId }
 
 
     switch (activeView) {
@@ -54,6 +54,9 @@ useEffect(() => {
     }
   }
 
+  const handleOnTaskCreated =() => {
+    
+  }
   return (
     <div className="flex flex-col h-full bg-gray-50 ">
       <div className="flex flex-1 overflow-hidden">
@@ -129,7 +132,6 @@ useEffect(() => {
         </div>
       </div>
 
-      <CreateTaskModal isOpen={isModalNewTaskOpen} onClose={() => setIsModalNewTaskOpen(false)} projectId={projectId} />
     </div>
   )
 }

@@ -2,8 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
-import { writeFile, mkdir } from "fs/promises"
-import { join } from "path"
+import { firebaseStorageService } from "@/lib/firebase-storage"
 
 // GET /api/documents - Get documents with pagination and filters
 export async function GET(request: NextRequest) {
@@ -35,7 +34,6 @@ export async function GET(request: NextRequest) {
 
     // Build query
     const query: any = { workspaceId: currentWorkspaceId }
-
     if (projectId) query.projectId = projectId
     if (taskId) query.taskId = taskId
     if (search) {
@@ -98,7 +96,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/documents - Create new document
+// POST /api/documents - Create new document with Firebase Storage
 export async function POST(request: NextRequest) {
   try {
     const user = getUserFromRequest(request)
@@ -129,51 +127,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "File size too large (max 50MB)" }, { status: 400 })
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), "public", "uploads", currentWorkspaceId)
-    await mkdir(uploadsDir, { recursive: true })
+    try {
+      // Upload file to Firebase Storage
+      const uploadResult = await firebaseStorageService.uploadFile(file, currentWorkspaceId, file.name, {
+        uploadedBy: user.userId,
+        documentName: name,
+        projectId: projectId || "",
+        taskId: taskId || "",
+      })
 
-    // Generate unique filename
-    const timestamp = Date.now()
-    const randomString = Math.random().toString(36).substr(2, 9)
-    const fileExtension = file.name.split(".").pop()
-    const uniqueFileName = `${timestamp}_${randomString}.${fileExtension}`
-    const filePath = join(uploadsDir, uniqueFileName)
+      const db = await getDatabase()
+      const documentsCollection = db.collection("documents")
+      const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-    // Save file to disk
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
+      const newDocument = {
+        id: documentId,
+        name: name.trim(),
+        description: description?.trim() || "",
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        fileUrl: uploadResult.downloadURL, // Firebase Storage download URL
+        storagePath: uploadResult.storagePath, // Firebase Storage path for deletion
+        workspaceId: currentWorkspaceId,
+        projectId: projectId || undefined,
+        taskId: taskId || undefined,
+        uploadedBy: user.userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
 
-    const fileUrl = `/uploads/${currentWorkspaceId}/${uniqueFileName}`
+      await documentsCollection.insertOne(newDocument)
 
-    const db = await getDatabase()
-    const documentsCollection = db.collection("documents")
-
-    const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const newDocument = {
-      id: documentId,
-      name: name.trim(),
-      description: description?.trim() || "",
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      fileUrl,
-      workspaceId: currentWorkspaceId,
-      projectId: projectId || undefined,
-      taskId: taskId || undefined,
-      uploadedBy: user.userId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      return NextResponse.json({
+        success: true,
+        data: newDocument,
+        message: "Document uploaded successfully",
+      })
+    } catch (storageError) {
+      console.error("Firebase Storage upload error:", storageError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Upload failed: ${storageError instanceof Error ? storageError.message : "Unknown storage error"}`,
+        },
+        { status: 500 },
+      )
     }
-
-    await documentsCollection.insertOne(newDocument)
-
-    return NextResponse.json({
-      success: true,
-      data: newDocument,
-      message: "Document uploaded successfully",
-    })
   } catch (error) {
     console.error("Create document error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })

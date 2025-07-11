@@ -50,10 +50,6 @@ export default function OnboardingFlow() {
         return onboardingData.features && onboardingData.features.length > 0
       case 4:
         return !!onboardingData.workspaceName?.trim()
-      case 5:
-        return true // Invite step is optional
-      case 6:
-        return !!onboardingData.referralSource
       default:
         return false
     }

@@ -34,8 +34,9 @@ export default function SearchFilterBar() {
   const activeFilterCount = getActiveFilterCount()
 
   // Get unique assignees from tasks
+  console.log('tasks', tasks)
   const uniqueAssignees = Array.from(
-    new Map(tasks.filter((task) => task.assignee).map((task) => [task.assignee!.id, task.assignee!])).values(),
+    new Map(tasks?.filter((task) => task.assignee).map((task) => [task.assignee!.id, task.assignee!])).values(),
   )
 
   const statusOptions = [
@@ -205,7 +206,7 @@ export default function SearchFilterBar() {
                     <div className="w-5 h-5 rounded-full bg-gray-200 mr-2" />
                     Unassigned
                   </Button>
-                  {uniqueAssignees.map((assignee) => (
+                  {uniqueAssignees?.map((assignee) => (
                     <Button
                       key={assignee.id}
                       variant={assigneeFilter === assignee.id ? "default" : "outline"}

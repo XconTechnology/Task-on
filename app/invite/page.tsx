@@ -163,7 +163,7 @@ export default function InvitePage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-center">Accept Invitatiosn</CardTitle>
+          <CardTitle className="text-center">Accept Invitation</CardTitle>
           <CardDescription className="text-center">
             You&apos;ve been invited to join {inviteData?.workspace?.name || "a workspace"} as a{" "}
             {inviteData?.invite?.role || "member"}
@@ -173,14 +173,25 @@ export default function InvitePage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" value={inviteData?.invite?.email || ""} disabled />
+              <Input
+                id="email"
+                value={inviteData?.invite?.email || ""}
+                disabled
+                className="bg-gray-100 text-gray-600 cursor-not-allowed"
+              />
             </div>
 
-            {/* Position Display - NEW */}
+            {/* Position Display - NEW with different background */}
+            {inviteData?.invite?.position && (
               <div className="space-y-2">
                 <Label htmlFor="position">Position</Label>
                 <div className="flex items-center space-x-2">
-                  <Input id="position" value={inviteData?.invite?.position} disabled className="flex-1" />
+                  <Input
+                    id="position"
+                    value={inviteData.invite.position}
+                    disabled
+                    className="flex-1 bg-gray-100 text-gray-600 cursor-not-allowed"
+                  />
                   <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                     <Briefcase className="w-3 h-3 mr-1" />
                     Assigned
@@ -188,6 +199,7 @@ export default function InvitePage() {
                 </div>
                 <p className="text-xs text-gray-500">This position was assigned by the workspace admin</p>
               </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
