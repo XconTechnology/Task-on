@@ -5,7 +5,6 @@ import { useAppStore } from "@/lib/store"
 import BoardView from "./board-view"
 import ListView from "./list-view"
 import { LayoutGrid, List} from "lucide-react"
-import CreateTaskModal from "./modals/create-task-modal"
 import SearchFilterBar from "./search-filter-bar"
 import { projectApi } from "@/lib/api"
 import { Project } from "@/lib/types"
@@ -16,7 +15,6 @@ type ProjectLayoutProps = {
 
 export default function ProjectLayout({ projectId }: ProjectLayoutProps) {
   const { activeView, setActiveView } = useAppStore()
-  const [isModalNewTaskOpen, setIsModalNewTaskOpen] = useState(false)
   const [project, setProject] = useState<Project>();
 
   const viewOptions = [
@@ -54,9 +52,6 @@ useEffect(() => {
     }
   }
 
-  const handleOnTaskCreated =() => {
-    
-  }
   return (
     <div className="flex flex-col h-full bg-gray-50 ">
       <div className="flex flex-1 overflow-hidden">
@@ -131,7 +126,6 @@ useEffect(() => {
           <div className="flex-1 overflow-auto custom-scrollbar">{renderView()}</div>
         </div>
       </div>
-
     </div>
   )
 }

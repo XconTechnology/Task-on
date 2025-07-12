@@ -18,6 +18,7 @@ import type {
   PaginatedTargets,
   TargetStats,
   MemberUpdate,
+  TaskAttachment,
 } from "./types";
 import { apiCall } from "./api_call"; // Import the working apiCall function
 
@@ -752,6 +753,63 @@ export const exportApi = {
     }
   },
 }
+
+
+
+// Task Attachment API Functions
+export const taskAttachmentApi = {
+  // Get attachments for a task
+  getTaskAttachments: async (taskId: string): Promise<ApiResponse<TaskAttachment[]>> => {
+    return apiCall<TaskAttachment[]>(`/tasks/${taskId}/attachments`)
+  },
+
+ // Create new attachment - FIXED: Now uses the correct task-specific route
+  createAttachment: async (taskId: string, formData: FormData): Promise<ApiResponse<TaskAttachment>> => {
+    return apiCall<TaskAttachment>(`/tasks/${taskId}/attachments`, {
+      method: "POST",
+      body: formData,
+    })
+  },
+
+
+  // Get attachment by ID
+  getAttachment: async (id: string): Promise<ApiResponse<TaskAttachment>> => {
+    return apiCall<TaskAttachment>(`/tasks/attachments/${id}`)
+  },
+
+  // Delete attachment
+  deleteAttachment: async (id: string): Promise<ApiResponse<void>> => {
+    return apiCall<void>(`/tasks/attachments/${id}`, {
+      method: "DELETE",
+    })
+  },
+
+  // Download attachment
+  downloadAttachment: async (id: string, filename: string): Promise<void> => {
+    try {
+      const currentWorkspaceId = localStorage.getItem("currentWorkspaceId") || ""
+      const response = await fetch(`/api/tasks/attachments/${id}/download`, {
+        headers: {
+          "x-workspace-id": currentWorkspaceId,
+        },
+      })
+      if (!response.ok) throw new Error("Download failed")
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error("Download error:", error)
+      throw error
+    }
+  },
+}
+
 // Export all APIs as a single object for easy importing
 export const api = {
   projects: projectApi,
@@ -760,6 +818,7 @@ export const api = {
   search: searchApi,
   workspace: workspaceApi,
   analytics: analyticsApi,
+   taskAttachments: taskAttachmentApi, // Add task attachments API
 };
 
 export default api;

@@ -92,7 +92,7 @@
 
   /* Muted Text */
   .text-muted {
-    @apply text-sm text-gray-500;
+    @apply  text-gray-400;
   }
 
   .text-muted-small {
@@ -101,7 +101,7 @@
 
   /* Labels */
   .text-label {
-    @apply text-sm font-medium text-gray-700;
+    @apply text-xs font-medium text-gray-700;
   }
 
   .text-label-small {

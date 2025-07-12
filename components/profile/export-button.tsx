@@ -4,14 +4,9 @@ import type React from "react";
 import { useState } from "react";
 import {
   Download,
-  Share2,
-  Mail,
-  MessageCircle,
-  Instagram,
   FileText,
   Calendar,
   Clock,
-  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,15 +17,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { exportApi } from "@/lib/api";
 
@@ -48,13 +34,15 @@ const ExportButton: React.FC<ExportButtonProps> = ({
   onExport,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+{/*
+    const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareStep, setShareStep] = useState<"timeframe" | "platform">(
     "timeframe"
   );
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("");
 
+  */}
   // Check if user has permission to export
   const canExport = currentUserRole === "Owner" || currentUserRole === "Admin";
 
@@ -104,7 +92,9 @@ const ExportButton: React.FC<ExportButtonProps> = ({
     }
   };
 
-  const handleShareTimeframeSelect = (timeframe: string) => {
+{/*
+  
+    const handleShareTimeframeSelect = (timeframe: string) => {
     setSelectedTimeframe(timeframe);
     setShareStep("platform");
   };
@@ -203,15 +193,8 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       setIsSharing(false);
     }
   };
-
-  const timeframeOptions = [
-    { value: "week", label: "Last Week", icon: Calendar },
-    { value: "month", label: "Last Month", icon: Calendar },
-    { value: "year", label: "Last Year", icon: Clock },
-    { value: "all", label: "All Time", icon: FileText },
-  ];
-
-  const handleShareDialogClose = () => {
+  
+    const handleShareDialogClose = () => {
     setIsShareDialogOpen(false);
     setShareStep("timeframe");
     setSelectedTimeframe("");
@@ -226,6 +209,15 @@ const ExportButton: React.FC<ExportButtonProps> = ({
     const option = timeframeOptions.find((opt) => opt.value === value);
     return option ? option.label : value;
   };
+
+    */}
+
+      const timeframeOptions = [
+    { value: "week", label: "Last Week", icon: Calendar },
+    { value: "month", label: "Last Month", icon: Calendar },
+    { value: "year", label: "Last Year", icon: Clock },
+    { value: "all", label: "All Time", icon: FileText },
+  ];
 
   return (
     <div className="flex items-center gap-2">
@@ -263,7 +255,8 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       </DropdownMenu>
 
       {/* Share Dialog - Completely Redesigned */}
-      <Dialog open={isShareDialogOpen} onOpenChange={handleShareDialogClose}>
+      
+    {/*  <Dialog open={isShareDialogOpen} onOpenChange={handleShareDialogClose}>
         <Button
           variant="outline"
           size="sm"
@@ -335,7 +328,6 @@ const ExportButton: React.FC<ExportButtonProps> = ({
                 <MessageCircle className="w-6 h-6 text-green-600" />
                 <span className="text-sm">WhatsApp</span>
               </Button>
-              {/*
                <Button
                 variant="outline"
                 onClick={() => handleShare("instagram")}
@@ -345,7 +337,6 @@ const ExportButton: React.FC<ExportButtonProps> = ({
                 <Instagram className="w-6 h-6 text-pink-600" />
                 <span className="text-sm">Instagram</span>
               </Button>
-               */}
                 <Button
                   variant="outline"
                   onClick={() => handleShare("native")}
@@ -368,15 +359,8 @@ const ExportButton: React.FC<ExportButtonProps> = ({
           )}
         </DialogContent>
       </Dialog>
+    */}
 
-      {canExport && (
-        <Badge
-          variant="secondary"
-          className="bg-purple-100 text-purple-700 text-xs"
-        >
-          Admin Access
-        </Badge>
-      )}
     </div>
   );
 };

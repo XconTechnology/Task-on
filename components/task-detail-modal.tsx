@@ -12,13 +12,13 @@ import {
   Activity,
   MoreHorizontal,
   Star,
-  Share,
   Play,
   Square,
   Edit3,
   Check,
   ChevronDown,
   Tag,
+  Paperclip,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,9 +27,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import StatusDropdown from "./status-dropdown"
 import { format } from "date-fns"
 import TaskComments from "./tasks/task-comments"
+import TaskAttachments from "./tasks/task-attachments"
 import { useUser } from "@/lib/user-context"
 import { useTimeTracking } from "@/lib/contexts/time-tracking-context"
 import { timeTrackingApi, workspaceApi } from "@/lib/api"
@@ -212,7 +214,11 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
   const userPosition = currentUserMember?.position
   const availableCategories = userPosition ? getCategoriesForPosition(userPosition) : []
 
-  // Editable Field Component
+  // Check if user can upload attachments (assignee or admin)
+  const canUploadAttachments =
+    task.assignedTo === user?.id || currentUserMember?.role === "Admin" || currentUserMember?.role === "Owner"
+
+  // Editable Field Component (same as before)
   const EditableField = ({
     field,
     value,
@@ -258,7 +264,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
               type="date"
               value={editedValues[field] || value || ""}
               onChange={(e) => setEditedValues({ ...editedValues, [field]: e.target.value })}
-              className="flex-1"
+              className="flex-1 text-xs"
               autoFocus
             />
           )}
@@ -310,10 +316,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                 </Button>
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm">
-                  <Share size={16} className="mr-2" />
-                  <span className="text-small">Share</span>
-                </Button>
+              
                 <Button variant="ghost" size="sm">
                   <MoreHorizontal size={16} />
                 </Button>
@@ -377,7 +380,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                           </div>
                         ) : (
                           <div className="flex items-center space-x-2">
-                            <span className="text-muted">Empty</span>
+                            <span className="text-gray-400 ">Empty</span>
                             <ChevronDown size={14} className="text-gray-400" />
                           </div>
                         )}
@@ -395,7 +398,7 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                             onClick={() => onUpdateTask?.(task.id, { assignedTo: undefined })}
                           >
                             <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300 mr-2" />
-                            <span className="text-muted">Unassigned</span>
+                            <span className="text-gray-400">Unassigned</span>
                           </Button>
                           {availableMembers.map((member) => (
                             <Button
@@ -560,7 +563,8 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                     placeholder="Set start date"
                   />
                 </div>
-                {/* Category - NEW */}
+                {/* Category */}
+                {userPosition && availableCategories.length > 0 && (
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2 w-28">
                       <Tag size={16} className="text-gray-400" />
@@ -605,13 +609,14 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                             className="w-full justify-start h-auto p-2"
                             onClick={() => onUpdateTask?.(task.id, { category: undefined })}
                           >
-                            <div className="w-3.5 h-3.5 rounded border border-gray-700 mr-2" />
+                            <div className="w-3.5 h-3.5 rounded border border-gray-300 mr-2" />
                             <span className="text-sm text-muted">No Category</span>
                           </Button>
                         </div>
                       </PopoverContent>
                     </Popover>
                   </div>
+                )}
               </div>
               {/* Description */}
               <div className="mb-8">
@@ -625,26 +630,61 @@ export default function TaskDetailModal({ task, isOpen, onClose, onUpdateTask }:
                   placeholder="Add description..."
                 >
                   <div className="text-medium text-gray-700 whitespace-pre-wrap">
-                    {task.description || <span className="text-muted italic">Add description...</span>}
+                    {task.description || <span className="text-gray-400 italic">Add description...</span>}
                   </div>
                 </EditableField>
               </div>
             </div>
           </div>
-          {/* Activity Sidebar with Comments */}
+          {/* Activity Sidebar with Tabs */}
           <div className="w-96 border-l border-gray-200 bg-gray-50 flex flex-col">
             <div className="px-4 py-3 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-label">Activity & Comments</h3>
+                <h3 className="text-label">Activity & Files</h3>
                 <Button variant="ghost" size="sm">
                   <Activity size={16} />
                 </Button>
               </div>
             </div>
-            {/* Comments Section */}
-            {user && currentWorkspace && (
-              <TaskComments taskId={task.id} workspaceId={task.workspaceId || currentWorkspace.id} />
-            )}
+
+            {/* Tabs for Comments and Attachments */}
+            <Tabs defaultValue="comments" className="flex-1 flex flex-col">
+              <div className="px-4 py-2 border-b border-gray-200">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="comments" className="flex items-center space-x-2">
+                    <Activity size={14} />
+                    <span>Comments</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="attachments" className="flex items-center space-x-2">
+                    <Paperclip size={14} />
+                    <span>Attachments</span>
+                    {(task.attachmentCount && task.attachmentCount > 0 ) ? (
+                      <Badge variant="secondary" className="ml-1 bg-blue-100 text-blue-700 text-xs">
+                        {task.attachmentCount}
+                      </Badge>
+                    ): (
+                      <></>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="comments" className="flex-1 m-0">
+                {user && currentWorkspace && (
+                  <TaskComments taskId={task.id} workspaceId={task.workspaceId || currentWorkspace.id} />
+                )}
+              </TabsContent>
+
+              <TabsContent value="attachments" className="flex-1 m-0 p-4">
+                {user && currentWorkspace && (
+                  <TaskAttachments
+                    taskId={task.id}
+                    workspaceId={task.workspaceId || currentWorkspace.id}
+                    canUpload={canUploadAttachments}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </DialogContent>

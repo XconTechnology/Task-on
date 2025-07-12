@@ -71,7 +71,7 @@ export default function SearchFilterBar() {
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-80 border-gray-300 "
+            className="pl-10 w-80 border-gray-300 text-xs "
           />
           {searchQuery && (
             <Button
@@ -92,8 +92,8 @@ export default function SearchFilterBar() {
               variant="outline"
               className={`relative ${activeFilterCount > 0 ? "border-blue-500 bg-blue-50" : ""}`}
             >
-              <Filter size={16} className="mr-2" />
-              <span>Filter</span>
+              <Filter size={14} className="mr-2" />
+              <span className="text-xs">Filter</span>
               {activeFilterCount > 0 && (
                 <Badge
                   variant="secondary"

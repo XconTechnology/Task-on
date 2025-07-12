@@ -4,7 +4,7 @@ import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
 import { firebaseStorageService } from "@/lib/firebase-storage"
 
-// GET /api/documents/[id]/download - Download document from Firebase Storage
+// GET /api/tasks/attachments/[id]/download - Download attachment
 export async function GET(request, { params }) {
   try {
     const user = getUserFromRequest(request)
@@ -12,6 +12,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
+    const attachmentId = params.id
     const headerWorkspaceId = request.headers.get("x-workspace-id")
     const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)
 
@@ -20,22 +21,22 @@ export async function GET(request, { params }) {
     }
 
     const db = await getDatabase()
-    const documentsCollection = db.collection("documents")
+    const attachmentsCollection = db.collection("taskAttachments")
 
-    const document = await documentsCollection.findOne({
-      id: params.id,
+    const attachment = await attachmentsCollection.findOne({
+      id: attachmentId,
       workspaceId: currentWorkspaceId,
     })
 
-    if (!document) {
-      return NextResponse.json({ success: false, error: "Document not found" }, { status: 404 })
+    if (!attachment) {
+      return NextResponse.json({ success: false, error: "Attachment not found" }, { status: 404 })
     }
 
     try {
       // Get fresh download URL from Firebase Storage
-      const downloadURL = document.storagePath
-        ? await firebaseStorageService.getDownloadURL(document.storagePath)
-        : document.fileUrl
+      const downloadURL = attachment.storagePath
+        ? await firebaseStorageService.getDownloadURL(attachment.storagePath)
+        : attachment.fileUrl
 
       // Redirect to the Firebase Storage download URL
       return NextResponse.redirect(downloadURL)
@@ -44,7 +45,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ success: false, error: "Failed to generate download link" }, { status: 500 })
     }
   } catch (error) {
-    console.error("Download document error:", error)
+    console.error("Download attachment error:", error)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }

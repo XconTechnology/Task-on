@@ -24,6 +24,9 @@ import UserTargets from "./user-targets"
 import UserAttendance from "./user-attendance"
 import ExportButton from "./export-button"
 import type { User as UserType, Task, Project, TimeEntry, RecentActivity, WorkspaceMember } from "@/lib/types"
+import TaskDetailModal from "../task-detail-modal"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 interface ProfileContentProps {
   user: UserType & {
@@ -77,6 +80,10 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
   currentUserRole,
 }) => {
   // Helper function to get the right time value based on timeframe
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  
+  const router= useRouter()
   const getTimeValue = () => {
     if (timeframe === "all") {
       return stats?.allTimeHours ? `${stats.allTimeHours.toFixed(1)}h` : "0h"
@@ -102,6 +109,12 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
         return "This week"
     }
   }
+
+    const handleTaskClick = (task: Task) => {
+      setSelectedTask(task);
+      setIsTaskDetailOpen(true);
+    };
+
 
   // Format salary display
   const formatSalary = (salary: { amount: number; currency: string }) => {
@@ -275,11 +288,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     <Target className="w-5 h-5 text-blue-600" />
                     <span className="text-lg">Recent Tasks</span>
                   </CardTitle>
-                  {tasks.data.length > 4 && (
-                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-                      View All <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {tasks.data.length === 0 ? (
@@ -291,7 +299,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                     tasks.data.slice(0, 4).map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                        onClick={() => handleTaskClick(task)}
+                        className="flex items-center space-x-3 p-3 cursor-pointer rounded-lg hover:bg-gray-50 transition-colors"
                       >
                         <div className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`} />
                         <div className="flex-1 min-w-0">
@@ -334,6 +343,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
                       return (
                         <div
                           key={project.id}
+                          onClick={() => router.push(`/projects/${project.id}`)}
                           className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -543,8 +553,22 @@ const ProfileContent: React.FC<ProfileContentProps> = ({
           </TabsContent>
         </Tabs>
       </div>
+         <TaskDetailModal
+              task={selectedTask}
+              isOpen={isTaskDetailOpen}
+              onClose={() => {
+                setIsTaskDetailOpen(false);
+                setSelectedTask(null);
+              }}
+              onUpdateTask={() => {
+                // Just close the modal - no update handling needed
+                setIsTaskDetailOpen(false);
+                setSelectedTask(null);
+              }}
+            />
     </div>
   )
 }
+
 
 export default ProfileContent

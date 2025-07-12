@@ -442,7 +442,7 @@ export const POSITION_CATEGORIES = {
 } as const
 
 // Helper function to get categories for a specific position
-export const getCategoriesForPosition = (position: string): string[] => {
+export const getCategoriesForPosition = (position: string) => {
   return POSITION_CATEGORIES[position as keyof typeof POSITION_CATEGORIES] || []
 }
 

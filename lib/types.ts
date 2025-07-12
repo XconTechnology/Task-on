@@ -205,6 +205,40 @@ export interface Task {
   // Add time tracking fields
   totalTimeTracked?: number; // in seconds
   isTimerRunning?: boolean;
+  category:string
+  // New: attachments count for performance
+  attachmentCount?: number;
+}
+
+export interface TaskAttachment {
+  id: string;
+  taskId: string;
+  name: string;
+  description?: string;
+  fileName: string;
+  fileSize: number;
+  originalFileSize?: number; // Before compression
+  fileType: string;
+  fileUrl: string; // Firebase Storage download URL
+  storagePath: string; // Firebase Storage path
+  thumbnailUrl?: string; // For image previews
+  workspaceId: string;
+  uploadedBy: string;
+  createdAt: string;
+  updatedAt: string;
+  // Populated fields
+  uploader?: {
+    id: string;
+    username: string;
+    email: string;
+    profilePictureUrl?: string;
+  };
+}
+
+export interface TaskAttachmentFilters {
+  taskId?: string;
+  fileType?: string;
+  uploadedBy?: string;
 }
 
 export interface OnboardingData {

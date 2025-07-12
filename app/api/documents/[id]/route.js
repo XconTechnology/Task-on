@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server"
+import {  NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId } from "@/lib/workspace-utils"
-import { unlink } from "fs/promises"
-import { join } from "path"
+import { firebaseStorageService } from "@/lib/firebase-storage"
 
 // GET /api/documents/[id] - Get document by ID
 export async function GET(request, { params }) {
@@ -96,7 +95,7 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE /api/documents/[id] - Delete document
+// DELETE /api/documents/[id] - Delete document with Firebase Storage cleanup
 export async function DELETE(request, { params }) {
   try {
     const user = getUserFromRequest(request)
@@ -123,15 +122,20 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ success: false, error: "Document not found" }, { status: 404 })
     }
 
-    // Delete file from disk
+    // Delete file from Firebase Storage
     try {
-      const filePath = join(process.cwd(), "public", document.fileUrl)
-      await unlink(filePath)
-    } catch (fileError) {
-      console.error("Error deleting file:", fileError)
-      // Continue with database deletion even if file deletion fails
+      if (document.storagePath) {
+        await firebaseStorageService.deleteFile(document.storagePath)
+        console.log(`File deleted from Firebase Storage: ${document.storagePath}`)
+      } else {
+        console.warn(`No storage path found for document: ${document.id}`)
+      }
+    } catch (storageError) {
+      console.error("Error deleting file from Firebase Storage:", storageError)
+      // Continue with database deletion even if storage deletion fails
     }
 
+    // Delete document from database
     await documentsCollection.deleteOne({ id: params.id })
 
     return NextResponse.json({

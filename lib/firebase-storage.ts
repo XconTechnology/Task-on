@@ -143,6 +143,7 @@ export class FirebaseStorageService {
       await getMetadata(storageRef)
       return true
     } catch (error) {
+      console.log(error)
       return false
     }
   }

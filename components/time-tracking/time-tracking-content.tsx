@@ -7,7 +7,6 @@ import {
   Calendar,
   BarChart3,
   Filter,
-  Download,
   Trash2,
   Play,
   Square,
@@ -265,14 +264,56 @@ export default function TimeTrackingContent() {
     );
   }
 
+  const statsData = [
+  {
+    title: "Today",
+    value: `${stats?.todayHours?.toFixed(1) || "0.0"}h`,
+    dotColor: "bg-blue-500",
+    textColor: "text-blue-600",
+    description: "Hours tracked",
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-600",
+    Icon: Calendar,
+  },
+  {
+    title: "This Week",
+    value: `${stats?.weekHours?.toFixed(1) || "0.0"}h`,
+    dotColor: "bg-green-500",
+    textColor: "text-green-600",
+    description: "Total hours",
+    iconBg: "bg-green-100",
+    iconColor: "text-green-600",
+    Icon: BarChart3,
+  },
+  {
+    title: "Avg/Day",
+    value: `${stats?.avgDailyHours?.toFixed(1) || "0.0"}h`,
+    dotColor: "bg-purple-500",
+    textColor: "text-purple-600",
+    description: "Daily average",
+    iconBg: "bg-purple-100",
+    iconColor: "text-purple-600",
+    Icon: Clock,
+  },
+  {
+    title: "Productivity",
+    value: `${stats?.productivity || 94}%`,
+    dotColor: "bg-orange-500",
+    textColor: "text-orange-600",
+    description: "Efficiency score",
+    iconBg: "bg-orange-100",
+    iconColor: "text-orange-600",
+    Icon: BarChart3,
+  },
+];
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Time Tracking</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-xl font-bold text-gray-900">Time Tracking</h1>
+          <p className="text-gray-600 mt-1 text-medium">
             Track time spent on tasks and monitor your productivity.
           </p>
         </div>
@@ -284,108 +325,41 @@ export default function TimeTrackingContent() {
             <Filter size={16} className="mr-2" />
             Filter
           </Button>
-          <Button
-            variant="outline"
-            className="border-gray-300 hover:bg-gray-50"
-          >
-            <Download size={16} className="mr-2" />
-            Export
-          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-white shadow-sm border-0 rounded-xl overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Today
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats?.todayHours?.toFixed(1) || "0.0"}h
-                </p>
-                <div className="flex items-center mt-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-                  <span className="text-sm text-blue-600">Hours tracked</span>
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {statsData.map(
+          ({ title, value, dotColor, textColor, description, iconBg, iconColor, Icon }, i) => (
+            <Card
+              key={i}
+              className="bg-white shadow-sm border-0 rounded-xl overflow-hidden"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-medium font-medium text-gray-500 uppercase tracking-wide">
+                      {title}
+                    </p>
+                    <p className="text-xl font-bold text-gray-900 mt-1">{value}</p>
+                    <div className="flex items-center mt-2">
+                      <div className={`w-2 h-2 ${dotColor} rounded-full mr-2`} />
+                      <span className={`text-medium ${textColor}`}>{description}</span>
+                    </div>
+                  </div>
+                  <div
+                    className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center`}
+                  >
+                    <Icon className={`w-5 h-5 ${iconColor}`} />
+                  </div>
                 </div>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-sm border-0 rounded-xl overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  This Week
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats?.weekHours?.toFixed(1) || "0.0"}h
-                </p>
-                <div className="flex items-center mt-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                  <span className="text-sm text-green-600">Total hours</span>
-                </div>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-sm border-0 rounded-xl overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Avg/Day
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats?.avgDailyHours?.toFixed(1) || "0.0"}h
-                </p>
-                <div className="flex items-center mt-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full mr-2" />
-                  <span className="text-sm text-purple-600">Daily average</span>
-                </div>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Clock className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-sm border-0 rounded-xl overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Productivity
-                </p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats?.productivity || 94}%
-                </p>
-                <div className="flex items-center mt-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full mr-2" />
-                  <span className="text-sm text-orange-600">
-                    Efficiency score
-                  </span>
-                </div>
-              </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )
+        )}
       </div>
+
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -444,7 +418,7 @@ export default function TimeTrackingContent() {
       {/* Recent Time Entries */}
       <Card className="bg-white shadow-sm border-0 rounded-xl overflow-hidden">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">
+          <CardTitle className="text-lg font-semibold">
             Recent Time Entries
           </CardTitle>
         </CardHeader>

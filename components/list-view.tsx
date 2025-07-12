@@ -217,7 +217,7 @@ export default function ListView({ projectId }: ListViewProps) {
                               <span className="text-medium">{task.assignee.username}</span>
                             </div>
                           ) : (
-                            <span className="text-muted">Unassigned</span>
+                            <span className="text-medium text-muted">Unassigned</span>
                           )}
                         </div>
 
@@ -229,7 +229,7 @@ export default function ListView({ projectId }: ListViewProps) {
                               <span className="text-medium">{format(new Date(task.dueDate), "MMM dd")}</span>
                             </div>
                           ) : (
-                            <span className="text-muted">No due date</span>
+                            <span className="text-medium text-muted">No due date</span>
                           )}
                         </div>
 

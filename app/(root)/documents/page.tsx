@@ -205,12 +205,12 @@ export default function DocumentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="text-gray-600 mt-1">Manage and organize your workspace documents</p>
+          <h1 className="text-xl font-bold text-gray-900">Documents</h1>
+          <p className="text-medium text-gray-600 mt-1">Manage and organize your workspace documents</p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)} className="bg-emerald-600 hover:bg-emerald-700">
           <Plus className="h-4 w-4 mr-2" />
-          Upload Document
+          <h1 className="text-medium">Upload Document</h1>
         </Button>
       </div>
 
@@ -223,19 +223,19 @@ export default function DocumentsPage() {
               placeholder="Search documents, projects, or tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-xs"
             />
           </div>
         </div>
 
         <Select value={selectedProject} onValueChange={setSelectedProject}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="All Projects" />
+          <SelectTrigger className="w-full sm:w-48 text-xs">
+            <SelectValue  placeholder="All Projects" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Projects</SelectItem>
+          <SelectContent >
+            <SelectItem  value="all">All Projects</SelectItem>
             {projects.map((project) => (
-              <SelectItem key={project.id} value={project.id}>
+              <SelectItem className="text-xs" key={project.id} value={project.id}>
                 {project.name}
               </SelectItem>
             ))}
@@ -243,13 +243,13 @@ export default function DocumentsPage() {
         </Select>
 
         <Select value={selectedTask} onValueChange={setSelectedTask}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-48 text-xs">
             <SelectValue placeholder="All Tasks" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Tasks</SelectItem>
+            <SelectItem className="text-xs" value="all">All Tasks</SelectItem>
             {tasks.map((task) => (
-              <SelectItem key={task.id} value={task.id}>
+              <SelectItem className="text-xs" key={task.id} value={task.id}>
                 {task.title}
               </SelectItem>
             ))}
@@ -296,7 +296,7 @@ export default function DocumentsPage() {
               <div key={index} className="space-y-4">
                 {/* Group Header */}
                 <div className="border-b pb-2">
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-large text-gray-900">
                     {group.projectName && group.taskTitle
                       ? `${group.projectName} → ${group.taskTitle}`
                       : group.projectName
@@ -305,7 +305,7 @@ export default function DocumentsPage() {
                           ? `Task: ${group.taskTitle}`
                           : "Unassigned Documents"}
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-medium text-gray-500">
                     {group.documents.length} document{group.documents.length !== 1 ? "s" : ""}
                   </p>
                 </div>

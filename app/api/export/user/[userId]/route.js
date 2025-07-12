@@ -1,11 +1,10 @@
-import { type NextRequest, NextResponse } from "next/server"
+import {  NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import { getUserFromRequest } from "@/lib/auth"
 import { getCurrentWorkspaceId, getWorkspaceMember } from "@/lib/workspace-utils"
 import { PDFGenerator } from "@/lib/pdf-generator"
-import type { User, Task, Project, TimeEntry, WorkspaceMember } from "@/lib/types"
 
-export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function POST(request, { params }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
     }
 
     // Get user details
-    const targetUser = (await usersCollection.findOne({ id: userId })) as User | null
+    const targetUser = (await usersCollection.findOne({ id: userId }))
     if (!targetUser) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 })
     }
@@ -63,7 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
     // Calculate date range based on timeframe
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    let startDate: Date | null = null
+    let startDate = null
 
     switch (timeframe) {
       case "week":
@@ -105,7 +104,7 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
       : allProjects
 
     // Get time entries
-    const timeEntriesQuery: any = {
+    const timeEntriesQuery = {
       userId: userId,
       workspaceId: currentWorkspaceId,
     }
@@ -137,7 +136,7 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
         map[project.id] = project.name
         return map
       },
-      {} as Record<string, string>,
+      {} 
     )
 
     // Calculate project progress

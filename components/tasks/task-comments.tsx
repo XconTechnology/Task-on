@@ -151,7 +151,7 @@ export default function TaskComments({ taskId, workspaceId }: TaskCommentsProps)
           ))
         ) : comments.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-gray-500">No comments yet. Be the first to comment!</p>
+            <p className="text-gray-500 text-medium">No comments yet. Be the first to comment!</p>
           </div>
         ) : (
           comments.map((comment) => (
