@@ -26,11 +26,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Not authenticated" }, { status: 401 })
     }
 
-    // Users can only view their own targets (unless they're admin/owner, but that's handled in main targets page)
-    if (user.userId !== targetUserId) {
-      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 })
-    }
-
     // Try to get workspace ID from header first, then fallback to user's workspace
     const headerWorkspaceId = request.headers.get("x-workspace-id")
     const currentWorkspaceId = await getCurrentWorkspaceId(user.userId, headerWorkspaceId || undefined)

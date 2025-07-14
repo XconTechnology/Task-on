@@ -287,6 +287,25 @@ export default function TargetsContent() {
           </div>
         </div>
 
+       {filteredTargets.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <TargetIcon size={48} className="mx-auto text-gray-300 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {searchQuery || statusFilter !== "all" ? "No targets found" : "No targets yet"}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {searchQuery || statusFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "Create your first target to get started"}
+              </p>
+              {!searchQuery && statusFilter === "all" && (
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateModalOpen(true)}>
+                  <Plus size={16} className="mr-2" />
+                  Create Target
+                </Button>
+              )}
+            </div>
+          )}
         {/* Targets List */}
         <div className="gap-3 grid grid-cols-3">
           {filteredTargets.map((target) => {
@@ -385,25 +404,7 @@ export default function TargetsContent() {
             )
           })}
 
-          {filteredTargets.length === 0 && !isLoading && (
-            <div className="text-center py-12">
-              <TargetIcon size={48} className="mx-auto text-gray-300 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {searchQuery || statusFilter !== "all" ? "No targets found" : "No targets yet"}
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {searchQuery || statusFilter !== "all"
-                  ? "Try adjusting your search or filters"
-                  : "Create your first target to get started"}
-              </p>
-              {!searchQuery && statusFilter === "all" && (
-                <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsCreateModalOpen(true)}>
-                  <Plus size={16} className="mr-2" />
-                  Create Target
-                </Button>
-              )}
-            </div>
-          )}
+         
 
           {/* Load More Button */}
           {hasMore && filteredTargets.length > 0 && searchQuery === "" && statusFilter === "all" && (

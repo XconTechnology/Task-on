@@ -12,13 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { targetApi } from "@/lib/api"
-import { useFormState } from "react-dom"
 
 
 
 export default function UserTargets({ userId, timeframe }) {
   const [targets, setTargets] = useState([])
-  const [stats, setStats] = useFormState(null)
+  const [stats, setStats] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState("all")
   const [editingTarget, setEditingTarget] = useState(null)
@@ -51,6 +50,7 @@ export default function UserTargets({ userId, timeframe }) {
   useEffect(() => {
     fetchTargets()
   }, [userId, timeframe, statusFilter])
+  console.log('stats', stats)
 
   // Handle target card click
   const handleTargetClick = (target) => {
@@ -284,8 +284,7 @@ export default function UserTargets({ userId, timeframe }) {
         {/* Filter */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">My Targets</h3>
-            <p className="text-sm text-gray-600">Click on active targets to update progress</p>
+
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-36 border-gray-200">
@@ -301,15 +300,17 @@ export default function UserTargets({ userId, timeframe }) {
           </Select>
         </div>
 
-        {/* Targets List */}
-        <div className="gap-3 grid grid-cols-3">
-          {targets.length === 0 ? (
-            <div className="text-center py-12">
+        {targets.length === 0 && (
+          <div className="text-center py-12 ">
               <Target size={48} className="mx-auto text-gray-300 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No targets assigned</h3>
               <p className="text-gray-600">You don&apos;t have any targets assigned for the selected timeframe.</p>
             </div>
-          ) : (
+         )}
+
+        {/* Targets List */}
+        <div className="gap-3 grid grid-cols-3">
+          {targets.length > 0 && (
             targets.map((target) => {
               const statusConfig = getStatusConfig(target.status)
               const StatusIcon = statusConfig.icon
@@ -324,7 +325,7 @@ export default function UserTargets({ userId, timeframe }) {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className={`font-semibold text-lg ${cardStyling.contentClass}`}>{target.title}</h3>
+                          <h3 className={`font-semibold text-base ${cardStyling.contentClass}`}>{target.title}</h3>
                           <Badge className={`${statusConfig.color} border text-xs font-medium px-2 py-1`}>
                             <StatusIcon size={12} className="mr-1" />
                             {target.status}
@@ -336,7 +337,7 @@ export default function UserTargets({ userId, timeframe }) {
                             </Badge>
                           )}
                         </div>
-                        <p className={`text-sm mb-4 ${cardStyling.contentClass}`}>{target.description}</p>
+                        <p className={`text-medium mb-4 ${cardStyling.contentClass}`}>{target.description}</p>
                       </div>
                     </div>
 
@@ -344,7 +345,7 @@ export default function UserTargets({ userId, timeframe }) {
                       <div className="flex items-center gap-2">
                         <Calendar size={16} className="text-gray-400" />
                         <div>
-                          <p className={`text-sm font-medium ${cardStyling.contentClass}`}>
+                          <p className={`text-medium font-medium ${cardStyling.contentClass}`}>
                             {formatDate(target.deadline)}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -357,7 +358,7 @@ export default function UserTargets({ userId, timeframe }) {
                         <div className="flex items-center gap-2">
                           <Target size={16} className="text-gray-400" />
                           <div>
-                            <p className={`text-sm font-medium ${cardStyling.contentClass}`}>{target.project.name}</p>
+                            <p className={`text-medium font-medium ${cardStyling.contentClass}`}>{target.project.name}</p>
                             <p className="text-xs text-gray-500">Project</p>
                           </div>
                         </div>
@@ -366,10 +367,10 @@ export default function UserTargets({ userId, timeframe }) {
 
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className={`text-sm font-medium ${cardStyling.contentClass}`}>
+                        <span className={`text-medium font-medium ${cardStyling.contentClass}`}>
                           {target.currentValue.toLocaleString()} / {target.targetValue.toLocaleString()} {target.unit}
                         </span>
-                        <span className={`text-sm font-semibold ${cardStyling.contentClass}`}>
+                        <span className={`text-medium font-semibold ${cardStyling.contentClass}`}>
                           {Math.round(progressPercentage)}%
                         </span>
                       </div>

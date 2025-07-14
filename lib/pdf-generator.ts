@@ -2,6 +2,23 @@ import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
 import type { User, Task, Project, TimeEntry, WorkspaceMember } from "./types"
 
+interface CategoryAnalytics {
+  byCategory: Record<
+    string,
+    {
+      total: number
+      completed: number
+      inProgress: number
+      toDo: number
+      underReview: number
+      uncategorized?: boolean
+    }
+  >
+  totalCategorized: number
+  totalUncategorized: number
+  userPosition: string
+}
+
 interface UserExportData {
   user: User & {
     salary?: WorkspaceMember["salary"]
@@ -19,6 +36,7 @@ interface UserExportData {
   tasks: Array<
     Task & {
       projectName?: string
+      category?: string // NEW
     }
   >
   projects: Array<
@@ -27,6 +45,7 @@ interface UserExportData {
     }
   >
   timeEntries: TimeEntry[]
+  categoryAnalytics: CategoryAnalytics // NEW
   timeframe: string
   generatedAt: string
 }
@@ -118,6 +137,7 @@ export class PDFGenerator {
     const userInfo = [
       ["Name", data.user.username],
       ["Email", data.user.email],
+      ["Position", data.categoryAnalytics.userPosition], // NEW: Show user position
       ["Member Since", new Date(data.user.createdAt).toLocaleDateString()],
     ]
 
@@ -167,6 +187,84 @@ export class PDFGenerator {
 
     this.currentY = (this.doc as any).lastAutoTable.finalY + 20
 
+    // NEW: Category Analytics Section
+    if (Object.keys(data.categoryAnalytics.byCategory).length > 0) {
+      this.addNewPageIfNeeded(80)
+      this.doc.setFontSize(16)
+      this.doc.setTextColor(44, 62, 80)
+      this.doc.text("Task Categories Analysis", this.margin, this.currentY)
+      this.currentY += 5
+
+      // Add position context
+      this.doc.setFontSize(10)
+      this.doc.setTextColor(127, 140, 141)
+      this.doc.text(`Based on position: ${data.categoryAnalytics.userPosition}`, this.margin, this.currentY)
+      this.currentY += 10
+
+      const categoryData: string[][] = []
+
+      // Sort categories: put "Uncategorized" last, sort others alphabetically
+      const sortedCategories = Object.keys(data.categoryAnalytics.byCategory).sort((a, b) => {
+        if (a === "Uncategorized") return 1
+        if (b === "Uncategorized") return -1
+        return a.localeCompare(b)
+      })
+
+      sortedCategories.forEach((category) => {
+        const stats = data.categoryAnalytics.byCategory[category]
+        const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
+
+        categoryData.push([
+          category,
+          stats.total.toString(),
+          stats.completed.toString(),
+          stats.inProgress.toString(),
+          stats.toDo.toString(),
+          stats.underReview.toString(),
+          `${completionRate}%`,
+        ])
+      })
+
+      autoTable(this.doc, {
+        startY: this.currentY,
+        head: [["Category", "Total", "Completed", "In Progress", "To Do", "Under Review", "Completion %"]],
+        body: categoryData,
+        theme: "grid",
+        headStyles: { fillColor: [142, 68, 173], textColor: 255 },
+        margin: { left: this.margin, right: this.margin },
+        styles: { fontSize: 8 },
+        columnStyles: {
+          0: { cellWidth: 35 }, // Category name
+          1: { cellWidth: 15 }, // Total
+          2: { cellWidth: 20 }, // Completed
+          3: { cellWidth: 20 }, // In Progress
+          4: { cellWidth: 15 }, // To Do
+          5: { cellWidth: 20 }, // Under Review
+          6: { cellWidth: 20 }, // Completion %
+        },
+        // Highlight uncategorized tasks
+        didParseCell: (data) => {
+          if (
+            data.row.index >= 0 &&
+            categoryData[data.row.index] &&
+            categoryData[data.row.index][0] === "Uncategorized"
+          ) {
+            data.cell.styles.fillColor = [255, 248, 220] // Light yellow background
+            data.cell.styles.textColor = [139, 69, 19] // Brown text
+          }
+        },
+      })
+
+      this.currentY = (this.doc as any).lastAutoTable.finalY + 15
+
+      // Add category summary
+      this.doc.setFontSize(10)
+      this.doc.setTextColor(127, 140, 141)
+      const summaryText = `Summary: ${data.categoryAnalytics.totalCategorized} categorized tasks, ${data.categoryAnalytics.totalUncategorized} uncategorized tasks`
+      this.doc.text(summaryText, this.margin, this.currentY)
+      this.currentY += 15
+    }
+
     // Tasks Section
     if (data.tasks.length > 0) {
       this.addNewPageIfNeeded(60)
@@ -175,24 +273,31 @@ export class PDFGenerator {
       this.doc.text("Tasks Overview", this.margin, this.currentY)
       this.currentY += 10
 
-      const taskData = data.tasks
-        .slice(0, 20)
-        .map((task) => [
-          task.title.length > 30 ? task.title.substring(0, 30) + "..." : task.title,
-          task.status,
-          task.priority,
-          task.projectName || "N/A",
-          task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date",
-        ])
+      const taskData = data.tasks.slice(0, 20).map((task) => [
+        task.title.length > 25 ? task.title.substring(0, 25) + "..." : task.title,
+        task.status,
+        task.priority,
+        task.category || "No Category", // NEW: Show category
+        task.projectName || "N/A",
+        task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date",
+      ])
 
       autoTable(this.doc, {
         startY: this.currentY,
-        head: [["Task", "Status", "Priority", "Project", "Due Date"]],
+        head: [["Task", "Status", "Priority", "Category", "Project", "Due Date"]], // NEW: Added Category column
         body: taskData,
         theme: "grid",
         headStyles: { fillColor: [155, 89, 182], textColor: 255 },
         margin: { left: this.margin, right: this.margin },
-        styles: { fontSize: 8 },
+        styles: { fontSize: 7 }, // Smaller font to fit category column
+        columnStyles: {
+          0: { cellWidth: 35 }, // Task
+          1: { cellWidth: 20 }, // Status
+          2: { cellWidth: 15 }, // Priority
+          3: { cellWidth: 25 }, // Category
+          4: { cellWidth: 25 }, // Project
+          5: { cellWidth: 25 }, // Due Date
+        },
       })
 
       this.currentY = (this.doc as any).lastAutoTable.finalY + 20
